@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="记录一次Python异步爬虫生产环境内存泄漏的完整排查过程，从OOM现象到根因定位，再到稳定解决方案的实施，包含详细的调试技巧和性能优化代码，为异步爬虫开发提供实战经验。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程">
+<meta property="og:url" content="http://example.com/2024/05/17/python-async-crawler-memory-leak-troubleshooting-practice/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="记录一次Python异步爬虫生产环境内存泄漏的完整排查过程，从OOM现象到根因定位，再到稳定解决方案的实施，包含详细的调试技巧和性能优化代码，为异步爬虫开发提供实战经验。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-05-17T08:45:00.000Z">
+<meta property="article:modified_time" content="2025-08-26T23:45:59.450Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="生产故障">
+<meta property="article:tag" content="asyncio">
+<meta property="article:tag" content="内存泄漏">
+<meta property="article:tag" content="异步爬虫">
+<meta property="article:tag" content="aiohttp">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/05/17/python-async-crawler-memory-leak-troubleshooting-practice/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/05/17/python-async-crawler-memory-leak-troubleshooting-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-17 16:45:00" itemprop="dateCreated datePublished" datetime="2024-05-17T16:45:00+08:00">2024-05-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-27 07:45:59" itemprop="dateModified" datetime="2025-08-27T07:45:59+08:00">2025-08-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>16k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+            <div class="post-description">记录一次Python异步爬虫生产环境内存泄漏的完整排查过程，从OOM现象到根因定位，再到稳定解决方案的实施，包含详细的调试技巧和性能优化代码，为异步爬虫开发提供实战经验。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Python-异步爬虫内存泄漏排查实战：从-OOM-到稳定运行的完整解决过程"><a href="#Python-异步爬虫内存泄漏排查实战：从-OOM-到稳定运行的完整解决过程" class="headerlink" title="Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程"></a>Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程</h1><blockquote>
+<p>技术主题：Python 编程语言<br>内容方向：生产环境事故的解决过程（故障现象、根因分析、解决方案、预防措施）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>异步爬虫因其高并发、高性能的特点，在数据采集领域得到了广泛应用。然而，在生产环境中，异步编程的复杂性往往会带来一些隐蔽的问题。我们团队在运营一个大型商品信息采集系统时，遭遇了严重的内存泄漏问题：系统在运行6-8小时后就会出现OOM崩溃，严重影响了业务连续性。经过一周的深入排查，我们不仅解决了内存泄漏问题，还总结出了一套完整的异步爬虫内存管理最佳实践。本文将详细记录这次故障排查的完整过程。</p>
+<h2 id="一、故障现象与初步分析"><a href="#一、故障现象与初步分析" class="headerlink" title="一、故障现象与初步分析"></a>一、故障现象与初步分析</h2><h3 id="故障现象描述"><a href="#故障现象描述" class="headerlink" title="故障现象描述"></a>故障现象描述</h3><p>我们的异步爬虫系统在生产环境中表现出以下异常症状：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 典型的错误日志</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">2024-05-17 14:32:15 ERROR - Memory usage: 7.8GB/8GB (97.5%)</span></span><br><span class="line"><span class="string">2024-05-17 14:32:45 ERROR - aiohttp.ClientTimeout: Timeout context manager should be used inside a task</span></span><br><span class="line"><span class="string">2024-05-17 14:33:12 CRITICAL - OSError: [Errno 12] Cannot allocate memory</span></span><br><span class="line"><span class="string">2024-05-17 14:33:15 CRITICAL - Process killed by OOM killer</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>关键异常现象：</strong></p>
+<ul>
+<li>系统启动后内存使用量持续增长，从初始的800MB增长到8GB+</li>
+<li>在运行6-8小时后必然出现OOM崩溃</li>
+<li>爬虫并发数越高，内存增长速度越快</li>
+<li>重启后问题重现，表明不是偶发问题</li>
+</ul>
+<h3 id="系统基本信息"><a href="#系统基本信息" class="headerlink" title="系统基本信息"></a>系统基本信息</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 系统配置信息</span></span><br><span class="line">SYSTEM_CONFIG = &#123;</span><br><span class="line">    <span class="string">&quot;服务器配置&quot;</span>: <span class="string">&quot;8核16GB内存&quot;</span>,</span><br><span class="line">    <span class="string">&quot;Python版本&quot;</span>: <span class="string">&quot;3.9.7&quot;</span>, </span><br><span class="line">    <span class="string">&quot;主要依赖&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;aiohttp&quot;</span>: <span class="string">&quot;3.8.3&quot;</span>,</span><br><span class="line">        <span class="string">&quot;asyncio&quot;</span>: <span class="string">&quot;内置&quot;</span>,</span><br><span class="line">        <span class="string">&quot;aiofiles&quot;</span>: <span class="string">&quot;22.1.0&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;业务规模&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;目标网站&quot;</span>: <span class="string">&quot;500+个电商网站&quot;</span>,</span><br><span class="line">        <span class="string">&quot;并发度&quot;</span>: <span class="string">&quot;200个并发请求&quot;</span>, </span><br><span class="line">        <span class="string">&quot;日处理量&quot;</span>: <span class="string">&quot;100万+商品页面&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="二、问题排查过程"><a href="#二、问题排查过程" class="headerlink" title="二、问题排查过程"></a>二、问题排查过程</h2><h3 id="1-内存使用分析"><a href="#1-内存使用分析" class="headerlink" title="1. 内存使用分析"></a>1. 内存使用分析</h3><p>首先我们添加了详细的内存监控来观察内存使用模式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> psutil</span><br><span class="line"><span class="keyword">import</span> gc</span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">import</span> tracemalloc</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Dict</span>, <span class="type">List</span></span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryMonitor</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;内存监控器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, interval: <span class="built_in">int</span> = <span class="number">60</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.interval = interval</span><br><span class="line">        <span class="variable language_">self</span>.memory_history: <span class="type">List</span>[<span class="type">Dict</span>] = []</span><br><span class="line">        <span class="variable language_">self</span>.is_monitoring = <span class="literal">False</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 启用内存追踪</span></span><br><span class="line">        tracemalloc.start()</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">start_monitoring</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;开始内存监控&quot;&quot;&quot;</span></span><br><span class="line">        <span class="variable language_">self</span>.is_monitoring = <span class="literal">True</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> <span class="variable language_">self</span>.is_monitoring:</span><br><span class="line">            memory_info = <span class="variable language_">self</span>._collect_memory_info()</span><br><span class="line">            <span class="variable language_">self</span>.memory_history.append(memory_info)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 内存使用率超过80%时告警</span></span><br><span class="line">            <span class="keyword">if</span> memory_info[<span class="string">&quot;memory_percent&quot;</span>] &gt; <span class="number">80</span>:</span><br><span class="line">                logging.warning(<span class="string">f&quot;高内存使用率告警: <span class="subst">&#123;memory_info&#125;</span>&quot;</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 分析内存热点</span></span><br><span class="line">                <span class="variable language_">self</span>._analyze_memory_hotspots()</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">await</span> asyncio.sleep(<span class="variable language_">self</span>.interval)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_collect_memory_info</span>(<span class="params">self</span>) -&gt; <span class="type">Dict</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;收集内存信息&quot;&quot;&quot;</span></span><br><span class="line">        process = psutil.Process()</span><br><span class="line">        memory_info = process.memory_info()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 获取Python对象统计</span></span><br><span class="line">        gc.collect()  <span class="comment"># 强制垃圾回收</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&quot;timestamp&quot;</span>: asyncio.get_event_loop().time(),</span><br><span class="line">            <span class="string">&quot;rss_mb&quot;</span>: memory_info.rss / <span class="number">1024</span> / <span class="number">1024</span>,  <span class="comment"># 物理内存</span></span><br><span class="line">            <span class="string">&quot;vms_mb&quot;</span>: memory_info.vms / <span class="number">1024</span> / <span class="number">1024</span>,  <span class="comment"># 虚拟内存</span></span><br><span class="line">            <span class="string">&quot;memory_percent&quot;</span>: process.memory_percent(),</span><br><span class="line">            <span class="string">&quot;gc_counts&quot;</span>: gc.get_count(),</span><br><span class="line">            <span class="string">&quot;gc_stats&quot;</span>: gc.get_stats(),</span><br><span class="line">            <span class="string">&quot;active_tasks&quot;</span>: <span class="built_in">len</span>(asyncio.all_tasks())</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_analyze_memory_hotspots</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;分析内存热点&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 获取当前内存使用快照</span></span><br><span class="line">            snapshot = tracemalloc.take_snapshot()</span><br><span class="line">            top_stats = snapshot.statistics(<span class="string">&#x27;lineno&#x27;</span>)</span><br><span class="line">            </span><br><span class="line">            logging.info(<span class="string">&quot;=== 内存使用热点分析 ===&quot;</span>)</span><br><span class="line">            <span class="keyword">for</span> index, stat <span class="keyword">in</span> <span class="built_in">enumerate</span>(top_stats[:<span class="number">10</span>], <span class="number">1</span>):</span><br><span class="line">                logging.info(<span class="string">f&quot;#<span class="subst">&#123;index&#125;</span>: <span class="subst">&#123;stat&#125;</span>&quot;</span>)</span><br><span class="line">                </span><br><span class="line">            <span class="comment"># 分析最大内存消耗者</span></span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(top_stats) &gt; <span class="number">0</span>:</span><br><span class="line">                largest = top_stats[<span class="number">0</span>]</span><br><span class="line">                logging.warning(<span class="string">f&quot;最大内存消耗: <span class="subst">&#123;largest&#125;</span>&quot;</span>)</span><br><span class="line">                </span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            logging.error(<span class="string">f&quot;内存热点分析失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_memory_trend</span>(<span class="params">self</span>) -&gt; <span class="type">Dict</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取内存增长趋势&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(<span class="variable language_">self</span>.memory_history) &lt; <span class="number">2</span>:</span><br><span class="line">            <span class="keyword">return</span> &#123;<span class="string">&quot;trend&quot;</span>: <span class="string">&quot;insufficient_data&quot;</span>&#125;</span><br><span class="line">        </span><br><span class="line">        recent = <span class="variable language_">self</span>.memory_history[-<span class="number">10</span>:]  <span class="comment"># 最近10个采样点</span></span><br><span class="line">        </span><br><span class="line">        memory_values = [item[<span class="string">&quot;rss_mb&quot;</span>] <span class="keyword">for</span> item <span class="keyword">in</span> recent]</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(memory_values) &gt;= <span class="number">2</span>:</span><br><span class="line">            growth_rate = (memory_values[-<span class="number">1</span>] - memory_values[<span class="number">0</span>]) / <span class="built_in">len</span>(memory_values)</span><br><span class="line">            <span class="keyword">return</span> &#123;</span><br><span class="line">                <span class="string">&quot;current_memory_mb&quot;</span>: memory_values[-<span class="number">1</span>],</span><br><span class="line">                <span class="string">&quot;growth_rate_mb_per_minute&quot;</span>: growth_rate,</span><br><span class="line">                <span class="string">&quot;trend&quot;</span>: <span class="string">&quot;increasing&quot;</span> <span class="keyword">if</span> growth_rate &gt; <span class="number">1</span> <span class="keyword">else</span> <span class="string">&quot;stable&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;trend&quot;</span>: <span class="string">&quot;unknown&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 问题代码 - 导致内存泄漏的原始爬虫实现</span></span><br><span class="line"><span class="keyword">import</span> aiohttp</span><br><span class="line"><span class="keyword">import</span> aiofiles</span><br><span class="line"><span class="keyword">from</span> urllib.parse <span class="keyword">import</span> urljoin</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProblematicSpider</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;有问题的爬虫实现&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, max_concurrent: <span class="built_in">int</span> = <span class="number">200</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.max_concurrent = max_concurrent</span><br><span class="line">        <span class="comment"># 问题1: session没有正确管理</span></span><br><span class="line">        <span class="variable language_">self</span>.sessions = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.semaphore = asyncio.Semaphore(max_concurrent)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题2: 全局存储所有响应数据</span></span><br><span class="line">        <span class="variable language_">self</span>.response_cache = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.url_queue = asyncio.Queue()</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">crawl_website</span>(<span class="params">self, base_url: <span class="built_in">str</span>, urls: <span class="type">List</span>[<span class="built_in">str</span>]</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;爬取网站 - 问题版本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题3: 为每个网站创建新session但不清理</span></span><br><span class="line">        session = aiohttp.ClientSession(</span><br><span class="line">            timeout=aiohttp.ClientTimeout(total=<span class="number">30</span>),</span><br><span class="line">            connector=aiohttp.TCPConnector(limit=<span class="number">100</span>)</span><br><span class="line">        )</span><br><span class="line">        <span class="variable language_">self</span>.sessions[base_url] = session</span><br><span class="line">        </span><br><span class="line">        tasks = []</span><br><span class="line">        <span class="keyword">for</span> url <span class="keyword">in</span> urls:</span><br><span class="line">            task = asyncio.create_task(<span class="variable language_">self</span>._crawl_page(session, url))</span><br><span class="line">            tasks.append(task)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题4: 等待所有任务完成，但不清理任务引用</span></span><br><span class="line">        results = <span class="keyword">await</span> asyncio.gather(*tasks, return_exceptions=<span class="literal">True</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题5: 返回结果但保留在内存中</span></span><br><span class="line">        <span class="variable language_">self</span>.response_cache[base_url] = results</span><br><span class="line">        <span class="keyword">return</span> results</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_crawl_page</span>(<span class="params">self, session: aiohttp.ClientSession, url: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;爬取单个页面 - 问题版本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable language_">self</span>.semaphore:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                <span class="keyword">async</span> <span class="keyword">with</span> session.get(url) <span class="keyword">as</span> response:</span><br><span class="line">                    content = <span class="keyword">await</span> response.text()</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 问题6: 存储大量页面内容在内存中</span></span><br><span class="line">                    page_data = &#123;</span><br><span class="line">                        <span class="string">&quot;url&quot;</span>: url,</span><br><span class="line">                        <span class="string">&quot;content&quot;</span>: content,  <span class="comment"># 完整页面内容</span></span><br><span class="line">                        <span class="string">&quot;headers&quot;</span>: <span class="built_in">dict</span>(response.headers),</span><br><span class="line">                        <span class="string">&quot;timestamp&quot;</span>: asyncio.get_event_loop().time()</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 问题7: 解析后的数据也全部保存</span></span><br><span class="line">                    parsed_data = <span class="keyword">await</span> <span class="variable language_">self</span>._parse_page(content)</span><br><span class="line">                    page_data[<span class="string">&quot;parsed&quot;</span>] = parsed_data</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">return</span> page_data</span><br><span class="line">                    </span><br><span class="line">            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                <span class="comment"># 问题8: 异常处理中没有释放资源</span></span><br><span class="line">                logging.error(<span class="string">f&quot;爬取页面失败: <span class="subst">&#123;url&#125;</span>, 错误: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                <span class="keyword">return</span> &#123;<span class="string">&quot;url&quot;</span>: url, <span class="string">&quot;error&quot;</span>: <span class="built_in">str</span>(e)&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_parse_page</span>(<span class="params">self, content: <span class="built_in">str</span></span>) -&gt; <span class="type">Dict</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;解析页面内容 - 问题版本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题9: 创建大量临时对象不及时清理</span></span><br><span class="line">        <span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</span><br><span class="line">        </span><br><span class="line">        soup = BeautifulSoup(content, <span class="string">&#x27;html.parser&#x27;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 提取所有可能的数据，导致内存消耗巨大</span></span><br><span class="line">        extracted_data = &#123;</span><br><span class="line">            <span class="string">&quot;title&quot;</span>: soup.title.string <span class="keyword">if</span> soup.title <span class="keyword">else</span> <span class="string">&quot;&quot;</span>,</span><br><span class="line">            <span class="string">&quot;links&quot;</span>: [urljoin(<span class="string">&quot;&quot;</span>, link.get(<span class="string">&#x27;href&#x27;</span>, <span class="string">&#x27;&#x27;</span>)) <span class="keyword">for</span> link <span class="keyword">in</span> soup.find_all(<span class="string">&#x27;a&#x27;</span>)],</span><br><span class="line">            <span class="string">&quot;images&quot;</span>: [img.get(<span class="string">&#x27;src&#x27;</span>, <span class="string">&#x27;&#x27;</span>) <span class="keyword">for</span> img <span class="keyword">in</span> soup.find_all(<span class="string">&#x27;img&#x27;</span>)],</span><br><span class="line">            <span class="string">&quot;text_content&quot;</span>: soup.get_text(),  <span class="comment"># 完整文本内容</span></span><br><span class="line">            <span class="string">&quot;all_tags&quot;</span>: [<span class="built_in">str</span>(tag) <span class="keyword">for</span> tag <span class="keyword">in</span> soup.find_all()],  <span class="comment"># 所有标签</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> extracted_data</span><br></pre></td></tr></table></figure>
+
+<p>通过内存监控，我们发现了几个关键问题：</p>
+<ul>
+<li><strong>内存持续增长</strong>：每小时增长约1GB，没有回收迹象</li>
+<li><strong>对象数量激增</strong>：aiohttp相关对象和BeautifulSoup对象大量堆积</li>
+<li><strong>任务泄漏</strong>：asyncio任务数量持续增加，从200增长到2000+</li>
+</ul>
+<h3 id="2-根因定位"><a href="#2-根因定位" class="headerlink" title="2. 根因定位"></a>2. 根因定位</h3><p>通过深入分析，我们确定了内存泄漏的根本原因：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 根因分析总结</span></span><br><span class="line">ROOT_CAUSES = &#123;</span><br><span class="line">    <span class="string">&quot;Session管理不当&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;问题&quot;</span>: <span class="string">&quot;aiohttp.ClientSession创建后未正确关闭&quot;</span>,</span><br><span class="line">        <span class="string">&quot;影响&quot;</span>: <span class="string">&quot;连接池和相关资源无法释放&quot;</span>,</span><br><span class="line">        <span class="string">&quot;证据&quot;</span>: <span class="string">&quot;sessions字典持续增长，connector对象堆积&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;数据过度缓存&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;问题&quot;</span>: <span class="string">&quot;将所有响应数据和解析结果存储在内存中&quot;</span>,</span><br><span class="line">        <span class="string">&quot;影响&quot;</span>: <span class="string">&quot;内存使用量与处理的页面数成正比增长&quot;</span>,</span><br><span class="line">        <span class="string">&quot;证据&quot;</span>: <span class="string">&quot;response_cache字典占用内存达到GB级别&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;任务引用泄漏&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;问题&quot;</span>: <span class="string">&quot;asyncio任务完成后引用未清理&quot;</span>,</span><br><span class="line">        <span class="string">&quot;影响&quot;</span>: <span class="string">&quot;任务对象和相关数据无法被垃圾回收&quot;</span>,</span><br><span class="line">        <span class="string">&quot;证据&quot;</span>: <span class="string">&quot;asyncio.all_tasks()数量持续增长&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;解析对象堆积&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;问题&quot;</span>: <span class="string">&quot;BeautifulSoup对象创建后未及时释放&quot;</span>,</span><br><span class="line">        <span class="string">&quot;影响&quot;</span>: <span class="string">&quot;大量DOM解析对象占用内存&quot;</span>,</span><br><span class="line">        <span class="string">&quot;证据&quot;</span>: <span class="string">&quot;内存热点分析显示bs4相关对象占主要部分&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、解决方案设计与实现"><a href="#三、解决方案设计与实现" class="headerlink" title="三、解决方案设计与实现"></a>三、解决方案设计与实现</h2><h3 id="1-优化的爬虫实现"><a href="#1-优化的爬虫实现" class="headerlink" title="1. 优化的爬虫实现"></a>1. 优化的爬虫实现</h3><p>基于根因分析，我们重新设计了内存友好的爬虫架构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">import</span> aiohttp</span><br><span class="line"><span class="keyword">import</span> weakref</span><br><span class="line"><span class="keyword">from</span> contextlib <span class="keyword">import</span> asynccontextmanager</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> AsyncGenerator, <span class="type">Optional</span></span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">OptimizedSpider</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;优化后的爬虫实现&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, max_concurrent: <span class="built_in">int</span> = <span class="number">200</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.max_concurrent = max_concurrent</span><br><span class="line">        <span class="variable language_">self</span>.semaphore = asyncio.Semaphore(max_concurrent)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 移除全局缓存，改用流式处理</span></span><br><span class="line">        <span class="variable language_">self</span>.stats = &#123;</span><br><span class="line">            <span class="string">&quot;processed_pages&quot;</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">&quot;failed_pages&quot;</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">&quot;current_memory_mb&quot;</span>: <span class="number">0</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line"><span class="meta">    @asynccontextmanager</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">get_session</span>(<span class="params">self</span>) -&gt; AsyncGenerator[aiohttp.ClientSession, <span class="literal">None</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;会话上下文管理器&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        connector = aiohttp.TCPConnector(</span><br><span class="line">            limit=<span class="number">100</span>,</span><br><span class="line">            limit_per_host=<span class="number">20</span>,</span><br><span class="line">            ttl_dns_cache=<span class="number">300</span>,</span><br><span class="line">            use_dns_cache=<span class="literal">True</span>,</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        timeout = aiohttp.ClientTimeout(total=<span class="number">30</span>, connect=<span class="number">10</span>)</span><br><span class="line">        </span><br><span class="line">        session = aiohttp.ClientSession(</span><br><span class="line">            connector=connector,</span><br><span class="line">            timeout=timeout</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">yield</span> session</span><br><span class="line">        <span class="keyword">finally</span>:</span><br><span class="line">            <span class="comment"># 确保session正确关闭</span></span><br><span class="line">            <span class="keyword">await</span> session.close()</span><br><span class="line">            <span class="comment"># 等待底层连接关闭</span></span><br><span class="line">            <span class="keyword">await</span> asyncio.sleep(<span class="number">0.1</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">crawl_website</span>(<span class="params">self, base_url: <span class="built_in">str</span>, urls: <span class="type">List</span>[<span class="built_in">str</span>], </span></span><br><span class="line"><span class="params">                           callback=<span class="literal">None</span></span>) -&gt; <span class="type">Dict</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;爬取网站 - 优化版本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable language_">self</span>.get_session() <span class="keyword">as</span> session:</span><br><span class="line">            <span class="comment"># 使用批处理避免创建过多任务</span></span><br><span class="line">            batch_size = <span class="number">50</span></span><br><span class="line">            results = &#123;</span><br><span class="line">                <span class="string">&quot;processed&quot;</span>: <span class="number">0</span>,</span><br><span class="line">                <span class="string">&quot;failed&quot;</span>: <span class="number">0</span>,</span><br><span class="line">                <span class="string">&quot;success&quot;</span>: <span class="number">0</span></span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>, <span class="built_in">len</span>(urls), batch_size):</span><br><span class="line">                batch_urls = urls[i:i + batch_size]</span><br><span class="line">                batch_tasks = []</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">for</span> url <span class="keyword">in</span> batch_urls:</span><br><span class="line">                    task = <span class="variable language_">self</span>._crawl_page_optimized(session, url, callback)</span><br><span class="line">                    batch_tasks.append(task)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 处理当前批次</span></span><br><span class="line">                batch_results = <span class="keyword">await</span> asyncio.gather(*batch_tasks, return_exceptions=<span class="literal">True</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 统计结果并清理引用</span></span><br><span class="line">                <span class="keyword">for</span> result <span class="keyword">in</span> batch_results:</span><br><span class="line">                    <span class="keyword">if</span> <span class="built_in">isinstance</span>(result, Exception):</span><br><span class="line">                        results[<span class="string">&quot;failed&quot;</span>] += <span class="number">1</span></span><br><span class="line">                        logging.error(<span class="string">f&quot;批次处理异常: <span class="subst">&#123;result&#125;</span>&quot;</span>)</span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        results[<span class="string">&quot;processed&quot;</span>] += <span class="number">1</span></span><br><span class="line">                        <span class="keyword">if</span> result.get(<span class="string">&quot;success&quot;</span>):</span><br><span class="line">                            results[<span class="string">&quot;success&quot;</span>] += <span class="number">1</span></span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 主动触发垃圾回收</span></span><br><span class="line">                <span class="keyword">del</span> batch_tasks</span><br><span class="line">                <span class="keyword">del</span> batch_results</span><br><span class="line">                gc.collect()</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 更新统计信息</span></span><br><span class="line">                <span class="variable language_">self</span>.stats[<span class="string">&quot;processed_pages&quot;</span>] += <span class="built_in">len</span>(batch_urls)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 记录内存使用</span></span><br><span class="line">                current_memory = psutil.Process().memory_info().rss / <span class="number">1024</span> / <span class="number">1024</span></span><br><span class="line">                <span class="variable language_">self</span>.stats[<span class="string">&quot;current_memory_mb&quot;</span>] = current_memory</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> i % (batch_size * <span class="number">10</span>) == <span class="number">0</span>:  <span class="comment"># 每处理500个URL记录一次</span></span><br><span class="line">                    logging.info(<span class="string">f&quot;处理进度: <span class="subst">&#123;i&#125;</span>/<span class="subst">&#123;<span class="built_in">len</span>(urls)&#125;</span>, 内存使用: <span class="subst">&#123;current_memory:<span class="number">.1</span>f&#125;</span>MB&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> results</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_crawl_page_optimized</span>(<span class="params">self, session: aiohttp.ClientSession, </span></span><br><span class="line"><span class="params">                                  url: <span class="built_in">str</span>, callback=<span class="literal">None</span></span>) -&gt; <span class="type">Dict</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;优化的页面爬取方法&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable language_">self</span>.semaphore:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                <span class="keyword">async</span> <span class="keyword">with</span> session.get(url) <span class="keyword">as</span> response:</span><br><span class="line">                    <span class="keyword">if</span> response.status != <span class="number">200</span>:</span><br><span class="line">                        <span class="keyword">return</span> &#123;<span class="string">&quot;url&quot;</span>: url, <span class="string">&quot;success&quot;</span>: <span class="literal">False</span>, <span class="string">&quot;error&quot;</span>: <span class="string">f&quot;HTTP <span class="subst">&#123;response.status&#125;</span>&quot;</span>&#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 流式读取，避免一次性加载大量内容</span></span><br><span class="line">                    content = <span class="keyword">await</span> response.text()</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 立即处理内容，不保存在内存中</span></span><br><span class="line">                    parsed_data = <span class="keyword">await</span> <span class="variable language_">self</span>._parse_page_lightweight(content)</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 如果提供了回调，立即处理数据</span></span><br><span class="line">                    <span class="keyword">if</span> callback:</span><br><span class="line">                        <span class="keyword">await</span> callback(url, parsed_data)</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment"># 只返回必要的元数据</span></span><br><span class="line">                    <span class="keyword">return</span> &#123;</span><br><span class="line">                        <span class="string">&quot;url&quot;</span>: url,</span><br><span class="line">                        <span class="string">&quot;success&quot;</span>: <span class="literal">True</span>,</span><br><span class="line">                        <span class="string">&quot;content_length&quot;</span>: <span class="built_in">len</span>(content),</span><br><span class="line">                        <span class="string">&quot;parsed_items&quot;</span>: <span class="built_in">len</span>(parsed_data)</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">            <span class="keyword">except</span> asyncio.TimeoutError:</span><br><span class="line">                <span class="keyword">return</span> &#123;<span class="string">&quot;url&quot;</span>: url, <span class="string">&quot;success&quot;</span>: <span class="literal">False</span>, <span class="string">&quot;error&quot;</span>: <span class="string">&quot;timeout&quot;</span>&#125;</span><br><span class="line">            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                <span class="keyword">return</span> &#123;<span class="string">&quot;url&quot;</span>: url, <span class="string">&quot;success&quot;</span>: <span class="literal">False</span>, <span class="string">&quot;error&quot;</span>: <span class="built_in">str</span>(e)&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_parse_page_lightweight</span>(<span class="params">self, content: <span class="built_in">str</span></span>) -&gt; <span class="type">List</span>[<span class="type">Dict</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;轻量级页面解析&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 使用lxml替代BeautifulSoup以提高性能和降低内存使用</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">from</span> lxml <span class="keyword">import</span> html</span><br><span class="line">            tree = html.fromstring(content)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 只提取必要的数据</span></span><br><span class="line">            products = []</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 使用XPath精确提取，避免解析整个DOM</span></span><br><span class="line">            product_elements = tree.xpath(<span class="string">&#x27;//div[@class=&quot;product-item&quot;]&#x27;</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> element <span class="keyword">in</span> product_elements:</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    product = &#123;</span><br><span class="line">                        <span class="string">&quot;title&quot;</span>: element.xpath(<span class="string">&#x27;.//h3/text()&#x27;</span>)[<span class="number">0</span>] <span class="keyword">if</span> element.xpath(<span class="string">&#x27;.//h3/text()&#x27;</span>) <span class="keyword">else</span> <span class="string">&quot;&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;price&quot;</span>: element.xpath(<span class="string">&#x27;.//span[@class=&quot;price&quot;]/text()&#x27;</span>)[<span class="number">0</span>] <span class="keyword">if</span> element.xpath(<span class="string">&#x27;.//span[@class=&quot;price&quot;]/text()&#x27;</span>) <span class="keyword">else</span> <span class="string">&quot;&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;link&quot;</span>: element.xpath(<span class="string">&#x27;.//a/@href&#x27;</span>)[<span class="number">0</span>] <span class="keyword">if</span> element.xpath(<span class="string">&#x27;.//a/@href&#x27;</span>) <span class="keyword">else</span> <span class="string">&quot;&quot;</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">if</span> product[<span class="string">&quot;title&quot;</span>]:  <span class="comment"># 只保存有效数据</span></span><br><span class="line">                        products.append(product)</span><br><span class="line">                        </span><br><span class="line">                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                    logging.debug(<span class="string">f&quot;解析产品元素失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                    <span class="keyword">continue</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> products</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">except</span> ImportError:</span><br><span class="line">            <span class="comment"># 降级到BeautifulSoup，但限制解析范围</span></span><br><span class="line">            <span class="keyword">from</span> bs4 <span class="keyword">import</span> BeautifulSoup</span><br><span class="line">            </span><br><span class="line">            soup = BeautifulSoup(content, <span class="string">&#x27;lxml&#x27;</span>)</span><br><span class="line">            products = []</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 只解析产品相关区域</span></span><br><span class="line">            product_containers = soup.find_all(<span class="string">&#x27;div&#x27;</span>, class_=<span class="string">&#x27;product-item&#x27;</span>)[:<span class="number">50</span>]  <span class="comment"># 限制数量</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> container <span class="keyword">in</span> product_containers:</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    title_elem = container.find(<span class="string">&#x27;h3&#x27;</span>)</span><br><span class="line">                    price_elem = container.find(<span class="string">&#x27;span&#x27;</span>, class_=<span class="string">&#x27;price&#x27;</span>)</span><br><span class="line">                    link_elem = container.find(<span class="string">&#x27;a&#x27;</span>)</span><br><span class="line">                    </span><br><span class="line">                    product = &#123;</span><br><span class="line">                        <span class="string">&quot;title&quot;</span>: title_elem.get_text(strip=<span class="literal">True</span>) <span class="keyword">if</span> title_elem <span class="keyword">else</span> <span class="string">&quot;&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;price&quot;</span>: price_elem.get_text(strip=<span class="literal">True</span>) <span class="keyword">if</span> price_elem <span class="keyword">else</span> <span class="string">&quot;&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;link&quot;</span>: link_elem.get(<span class="string">&#x27;href&#x27;</span>, <span class="string">&#x27;&#x27;</span>) <span class="keyword">if</span> link_elem <span class="keyword">else</span> <span class="string">&quot;&quot;</span></span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">if</span> product[<span class="string">&quot;title&quot;</span>]:</span><br><span class="line">                        products.append(product)</span><br><span class="line">                        </span><br><span class="line">                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                    logging.debug(<span class="string">f&quot;BeautifulSoup解析失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                    <span class="keyword">continue</span></span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 主动清理BeautifulSoup对象</span></span><br><span class="line">            <span class="keyword">del</span> soup</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> products</span><br><span class="line"></span><br><span class="line"><span class="comment"># 数据处理回调函数</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">save_data_callback</span>(<span class="params">url: <span class="built_in">str</span>, products: <span class="type">List</span>[<span class="type">Dict</span>]</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;数据保存回调 - 流式处理&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> products:</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="comment"># 异步写入文件，避免内存堆积</span></span><br><span class="line">        <span class="keyword">import</span> aiofiles</span><br><span class="line">        <span class="keyword">import</span> json</span><br><span class="line">        </span><br><span class="line">        filename = <span class="string">f&quot;data/<span class="subst">&#123;url.replace(<span class="string">&#x27;/&#x27;</span>, <span class="string">&#x27;_&#x27;</span>).replace(<span class="string">&#x27;:&#x27;</span>, <span class="string">&#x27;&#x27;</span>)&#125;</span>.json&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> aiofiles.<span class="built_in">open</span>(filename, <span class="string">&#x27;w&#x27;</span>, encoding=<span class="string">&#x27;utf-8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            <span class="keyword">await</span> f.write(json.dumps(products, ensure_ascii=<span class="literal">False</span>, indent=<span class="number">2</span>))</span><br><span class="line">        </span><br><span class="line">        logging.info(<span class="string">f&quot;保存数据成功: <span class="subst">&#123;url&#125;</span>, 产品数: <span class="subst">&#123;<span class="built_in">len</span>(products)&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        logging.error(<span class="string">f&quot;保存数据失败: <span class="subst">&#123;url&#125;</span>, 错误: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-内存管理组件"><a href="#2-内存管理组件" class="headerlink" title="2. 内存管理组件"></a>2. 内存管理组件</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MemoryManager</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;内存管理器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, max_memory_mb: <span class="built_in">int</span> = <span class="number">4096</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.max_memory_mb = max_memory_mb</span><br><span class="line">        <span class="variable language_">self</span>.memory_warning_threshold = max_memory_mb * <span class="number">0.8</span></span><br><span class="line">        <span class="variable language_">self</span>.gc_threshold = max_memory_mb * <span class="number">0.9</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">monitor_and_control</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;内存监控和控制&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            current_memory = psutil.Process().memory_info().rss / <span class="number">1024</span> / <span class="number">1024</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> current_memory &gt; <span class="variable language_">self</span>.gc_threshold:</span><br><span class="line">                logging.warning(<span class="string">f&quot;内存使用过高 (<span class="subst">&#123;current_memory:<span class="number">.1</span>f&#125;</span>MB)，执行强制GC&quot;</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 强制垃圾回收</span></span><br><span class="line">                collected = gc.collect()</span><br><span class="line">                logging.info(<span class="string">f&quot;GC回收对象数: <span class="subst">&#123;collected&#125;</span>&quot;</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="comment"># 检查内存是否降低</span></span><br><span class="line">                new_memory = psutil.Process().memory_info().rss / <span class="number">1024</span> / <span class="number">1024</span></span><br><span class="line">                logging.info(<span class="string">f&quot;GC后内存: <span class="subst">&#123;new_memory:<span class="number">.1</span>f&#125;</span>MB&quot;</span>)</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> new_memory &gt; <span class="variable language_">self</span>.memory_warning_threshold:</span><br><span class="line">                    logging.error(<span class="string">&quot;内存回收效果不佳，可能存在内存泄漏&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">elif</span> current_memory &gt; <span class="variable language_">self</span>.memory_warning_threshold:</span><br><span class="line">                logging.warning(<span class="string">f&quot;内存使用率超过阈值: <span class="subst">&#123;current_memory:<span class="number">.1</span>f&#125;</span>MB&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">await</span> asyncio.sleep(<span class="number">30</span>)  <span class="comment"># 每30秒检查一次</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="四、解决效果验证"><a href="#四、解决效果验证" class="headerlink" title="四、解决效果验证"></a>四、解决效果验证</h2><h3 id="修复效果对比"><a href="#修复效果对比" class="headerlink" title="修复效果对比"></a>修复效果对比</h3><p>通过实施优化方案，我们取得了显著的改善效果：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>修复前</th>
+<th>修复后</th>
+<th>改善幅度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>内存峰值使用</td>
+<td>8GB+</td>
+<td>1.2GB</td>
+<td>-85%</td>
+</tr>
+<tr>
+<td>连续运行时间</td>
+<td>6-8小时</td>
+<td>72小时+</td>
+<td>+900%</td>
+</tr>
+<tr>
+<td>处理速度</td>
+<td>1000页&#x2F;分钟</td>
+<td>1500页&#x2F;分钟</td>
+<td>+50%</td>
+</tr>
+<tr>
+<td>CPU使用率</td>
+<td>95%+</td>
+<td>65%</td>
+<td>-32%</td>
+</tr>
+<tr>
+<td>内存增长率</td>
+<td>1GB&#x2F;小时</td>
+<td>50MB&#x2F;小时</td>
+<td>-95%</td>
+</tr>
+</tbody></table>
+<h3 id="压力测试验证"><a href="#压力测试验证" class="headerlink" title="压力测试验证"></a>压力测试验证</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">stress_test</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;压力测试验证&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    spider = OptimizedSpider(max_concurrent=<span class="number">300</span>)</span><br><span class="line">    memory_manager = MemoryManager()</span><br><span class="line">    monitor = MemoryMonitor(interval=<span class="number">30</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 启动内存监控</span></span><br><span class="line">    asyncio.create_task(memory_manager.monitor_and_control())</span><br><span class="line">    asyncio.create_task(monitor.start_monitoring())</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 模拟大规模爬取</span></span><br><span class="line">    test_urls = [<span class="string">f&quot;https://example.com/page/<span class="subst">&#123;i&#125;</span>&quot;</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">10000</span>)]</span><br><span class="line">    </span><br><span class="line">    start_time = asyncio.get_event_loop().time()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        results = <span class="keyword">await</span> spider.crawl_website(</span><br><span class="line">            <span class="string">&quot;https://example.com&quot;</span>,</span><br><span class="line">            test_urls,</span><br><span class="line">            callback=save_data_callback</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        end_time = asyncio.get_event_loop().time()</span><br><span class="line">        duration = end_time - start_time</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;压力测试完成:&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;处理URL数量: <span class="subst">&#123;<span class="built_in">len</span>(test_urls)&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;总耗时: <span class="subst">&#123;duration:<span class="number">.2</span>f&#125;</span>秒&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;处理速度: <span class="subst">&#123;<span class="built_in">len</span>(test_urls)/duration:<span class="number">.1</span>f&#125;</span> URL/秒&quot;</span>)</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;成功率: <span class="subst">&#123;results[<span class="string">&#x27;success&#x27;</span>]/results[<span class="string">&#x27;processed&#x27;</span>]*<span class="number">100</span>:<span class="number">.1</span>f&#125;</span>%&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分析内存趋势</span></span><br><span class="line">        memory_trend = monitor.get_memory_trend()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;内存趋势: <span class="subst">&#123;memory_trend&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">        logging.error(<span class="string">f&quot;压力测试失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、预防措施与最佳实践"><a href="#五、预防措施与最佳实践" class="headerlink" title="五、预防措施与最佳实践"></a>五、预防措施与最佳实践</h2><h3 id="核心最佳实践"><a href="#核心最佳实践" class="headerlink" title="核心最佳实践"></a>核心最佳实践</h3><ol>
+<li><p><strong>资源管理</strong>：</p>
+<ul>
+<li>使用上下文管理器确保资源正确释放</li>
+<li>批处理任务避免过多并发</li>
+<li>定期执行垃圾回收</li>
+</ul>
+</li>
+<li><p><strong>内存优化</strong>：</p>
+<ul>
+<li>流式处理大数据，避免全量加载</li>
+<li>使用轻量级解析器（lxml vs BeautifulSoup）</li>
+<li>限制缓存大小和生命周期</li>
+</ul>
+</li>
+<li><p><strong>监控告警</strong>：</p>
+<ul>
+<li>实时监控内存使用趋势</li>
+<li>设置合理的告警阈值</li>
+<li>建立自动回收机制</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 最佳实践代码模板</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">production_crawler_template</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;生产级爬虫模板&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 1. 资源管理</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">with</span> OptimizedSpider(max_concurrent=<span class="number">200</span>) <span class="keyword">as</span> spider:</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 内存监控</span></span><br><span class="line">        memory_manager = MemoryManager(max_memory_mb=<span class="number">4096</span>)</span><br><span class="line">        monitoring_task = asyncio.create_task(memory_manager.monitor_and_control())</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 3. 流式处理</span></span><br><span class="line">            <span class="keyword">await</span> spider.crawl_website(</span><br><span class="line">                base_url=<span class="string">&quot;https://target-site.com&quot;</span>,</span><br><span class="line">                urls=get_url_list(),</span><br><span class="line">                callback=async_data_processor</span><br><span class="line">            )</span><br><span class="line">        <span class="keyword">finally</span>:</span><br><span class="line">            <span class="comment"># 4. 清理工作</span></span><br><span class="line">            monitoring_task.cancel()</span><br><span class="line">            gc.collect()</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次Python异步爬虫内存泄漏的排查过程让我们深刻认识到：<strong>异步编程的高性能优势必须建立在正确的资源管理基础之上</strong>。</p>
+<p><strong>核心经验总结：</strong></p>
+<ol>
+<li><strong>资源生命周期要清晰</strong>：每个资源都要有明确的创建和销毁时机</li>
+<li><strong>监控体系要完善</strong>：实时监控是发现和预防问题的关键</li>
+<li><strong>处理模式要合适</strong>：流式处理比批量缓存更适合大规模数据采集</li>
+<li><strong>测试验证要充分</strong>：压力测试能暴露生产环境中的潜在问题</li>
+</ol>
+<p><strong>实际应用价值：</strong></p>
+<ul>
+<li>内存使用量减少85%，从8GB降至1.2GB</li>
+<li>系统稳定性大幅提升，连续运行时间从8小时提升到72小时+</li>
+<li>处理性能提升50%，同时降低了资源消耗</li>
+</ul>
+<p>通过这次故障排查，我们不仅解决了当前的内存泄漏问题，还建立了一套完整的异步爬虫最佳实践。这套方法已在多个生产项目中得到验证，为团队的技术能力提升奠定了坚实基础。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2024/05/17/python-async-crawler-memory-leak-troubleshooting-practice/" title="Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程">http://example.com/2024/05/17/python-async-crawler-memory-leak-troubleshooting-practice/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/" rel="tag"># 性能优化</a>
+              <a href="/tags/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" rel="tag"># 生产故障</a>
+              <a href="/tags/asyncio/" rel="tag"># asyncio</a>
+              <a href="/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" rel="tag"># 内存泄漏</a>
+              <a href="/tags/%E5%BC%82%E6%AD%A5%E7%88%AC%E8%99%AB/" rel="tag"># 异步爬虫</a>
+              <a href="/tags/aiohttp/" rel="tag"># aiohttp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/05/10/enterprise-rpa-architecture-design-technology-selection-practice/" rel="prev" title="企业级 RPA 项目架构设计与技术选型实战：从影刀到 UIBot 的完整对比与落地经验">
+      <i class="fa fa-chevron-left"></i> 企业级 RPA 项目架构设计与技术选型实战：从影刀到 UIBot 的完整对比与落地经验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/05/24/java-spring-cloud-microservices-avalanche-failure-troubleshooting-practice/" rel="next" title="Java Spring Cloud 微服务雪崩故障排查实战：从全链路熔断到系统重建的完整过程">
+      Java Spring Cloud 微服务雪崩故障排查实战：从全链路熔断到系统重建的完整过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Python-%E5%BC%82%E6%AD%A5%E7%88%AC%E8%99%AB%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E6%8E%92%E6%9F%A5%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E-OOM-%E5%88%B0%E7%A8%B3%E5%AE%9A%E8%BF%90%E8%A1%8C%E7%9A%84%E5%AE%8C%E6%95%B4%E8%A7%A3%E5%86%B3%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">Python 异步爬虫内存泄漏排查实战：从 OOM 到稳定运行的完整解决过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1%E4%B8%8E%E5%88%9D%E6%AD%A5%E5%88%86%E6%9E%90"><span class="nav-number">1.2.</span> <span class="nav-text">一、故障现象与初步分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1%E6%8F%8F%E8%BF%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">故障现象描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%9F%BA%E6%9C%AC%E4%BF%A1%E6%81%AF"><span class="nav-number">1.2.2.</span> <span class="nav-text">系统基本信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E9%97%AE%E9%A2%98%E6%8E%92%E6%9F%A5%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">二、问题排查过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%86%85%E5%AD%98%E4%BD%BF%E7%94%A8%E5%88%86%E6%9E%90"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 内存使用分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%A0%B9%E5%9B%A0%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 根因定位</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.4.</span> <span class="nav-text">三、解决方案设计与实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BC%98%E5%8C%96%E7%9A%84%E7%88%AC%E8%99%AB%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 优化的爬虫实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%BB%84%E4%BB%B6"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 内存管理组件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E8%A7%A3%E5%86%B3%E6%95%88%E6%9E%9C%E9%AA%8C%E8%AF%81"><span class="nav-number">1.5.</span> <span class="nav-text">四、解决效果验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E6%95%88%E6%9E%9C%E5%AF%B9%E6%AF%94"><span class="nav-number">1.5.1.</span> <span class="nav-text">修复效果对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95%E9%AA%8C%E8%AF%81"><span class="nav-number">1.5.2.</span> <span class="nav-text">压力测试验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E9%A2%84%E9%98%B2%E6%8E%AA%E6%96%BD%E4%B8%8E%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.6.</span> <span class="nav-text">五、预防措施与最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.6.1.</span> <span class="nav-text">核心最佳实践</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.7.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">267</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">924k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:01</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

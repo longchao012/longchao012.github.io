@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在远程桌面&#x2F;Citrix 场景下，传统控件注入与选择器失效，本文给出“图像+OCR+坐标”的混合定位与工程化方案，包括问题画像、排查路径、核心技术点与可用的 Python 代码骨架，显著提升稳定性与可回放性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPA 远程桌面&#x2F;Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位">
+<meta property="og:url" content="http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="在远程桌面&#x2F;Citrix 场景下，传统控件注入与选择器失效，本文给出“图像+OCR+坐标”的混合定位与工程化方案，包括问题画像、排查路径、核心技术点与可用的 Python 代码骨架，显著提升稳定性与可回放性。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-26T08:25:00.000Z">
+<meta property="article:modified_time" content="2025-08-26T12:41:43.040Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RPA">
+<meta property="article:tag" content="选择器">
+<meta property="article:tag" content="Citrix">
+<meta property="article:tag" content="Remote Desktop">
+<meta property="article:tag" content="图像识别">
+<meta property="article:tag" content="OCR">
+<meta property="article:tag" content="OpenCV">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPA 远程桌面/Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPA 远程桌面/Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 16:25:00 / 修改时间：20:41:43" itemprop="dateCreated datePublished" datetime="2025-08-26T16:25:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">在远程桌面/Citrix 场景下，传统控件注入与选择器失效，本文给出“图像+OCR+坐标”的混合定位与工程化方案，包括问题画像、排查路径、核心技术点与可用的 Python 代码骨架，显著提升稳定性与可回放性。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPA-远程桌面-Citrix-场景自动化工程化实践：从无法注入到“图像-OCR-坐标”混合定位"><a href="#RPA-远程桌面-Citrix-场景自动化工程化实践：从无法注入到“图像-OCR-坐标”混合定位" class="headerlink" title="RPA 远程桌面&#x2F;Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位"></a>RPA 远程桌面&#x2F;Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位</h1><blockquote>
+<p>技术主题：RPA 技术（机器人流程自动化）<br>内容方向：关键技术点讲解（核心原理、实现逻辑、技术难点解析）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>一旦把自动化场景搬到 Citrix&#x2F;远程桌面，很多“本地桌面可用”的控件注入、选择器定位立刻失效：目标应用运行在远端，来到本地的只是“视频帧”；你看得到按钮，但抓不到控件。本文以实际落地为背景，给出一套“图像模板匹配 + OCR 文本定位 + 坐标点击”的混合方案，并通过焦点管理、DPI 缩放适配与回退机制，让脚本在 Citrix 等虚拟化环境中稳定可回放。</p>
+<h2 id="一、问题画像与排查路径"><a href="#一、问题画像与排查路径" class="headerlink" title="一、问题画像与排查路径"></a>一、问题画像与排查路径</h2><ul>
+<li>现象：<ul>
+<li>选择器全灰：UI 树抓不到控件句柄；</li>
+<li>输入无效：键盘输入“打到空气里”；</li>
+<li>坐标漂移：不同分辨率&#x2F;DPI、窗口移动导致偏移；</li>
+<li>视觉相似干扰：多个相似图标同时存在；</li>
+</ul>
+</li>
+<li>排查：<ol>
+<li>确认目标窗口是否为远程桌面进程（Citrix&#x2F;Remote Desktop）；</li>
+<li>检查本地是否具备“辅助功能&#x2F;可访问性”权限（键鼠注入前提）；</li>
+<li>固定远程会话分辨率和缩放（能固定就固定，降低不确定性）；</li>
+<li>采集关键 UI 的模板图与语义标签，构建特征库；</li>
+<li>选择“图像→文本→坐标”三段式定位路径，并设计回退与超时。</li>
+</ol>
+</li>
+</ul>
+<h2 id="二、总体方案与关键技术点"><a href="#二、总体方案与关键技术点" class="headerlink" title="二、总体方案与关键技术点"></a>二、总体方案与关键技术点</h2><ul>
+<li>图像模板匹配（OpenCV）：<ul>
+<li>多尺度匹配 + 非极大值抑制，提升对缩放&#x2F;分辨率变化的鲁棒性；</li>
+<li>以“锚点-相对偏移”的方式减少全屏搜索开销；</li>
+</ul>
+</li>
+<li>OCR 文本定位（Tesseract）：<ul>
+<li>对文本密集区域（菜单、列表）优先用 OCR，避免图标相似干扰；</li>
+<li>为关键语言&#x2F;字体训练或指定语言包；</li>
+</ul>
+</li>
+<li>焦点管理与输入：<ul>
+<li>点击前先激活窗口（标题或图标锚点）；</li>
+<li>键盘输入采用系统级注入，必要时加入小抖动（sleep&#x2F;jitter）；</li>
+</ul>
+</li>
+<li>DPI&#x2F;缩放：<ul>
+<li>获取屏幕分辨率，结合多尺度模板，提高对缩放的容忍度；</li>
+</ul>
+</li>
+<li>观测与回放：<ul>
+<li>每一步保留屏幕快照、匹配得分、选点坐标，便于回放与复盘；</li>
+</ul>
+</li>
+<li>回退机制：<ul>
+<li>图像失败 → OCR 文本定位 → 语义邻域放大搜索 → 人工兜底（可配置）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="三、Python-代码骨架（OpenCV-Tesseract-mss-pyautogui）"><a href="#三、Python-代码骨架（OpenCV-Tesseract-mss-pyautogui）" class="headerlink" title="三、Python 代码骨架（OpenCV + Tesseract + mss + pyautogui）"></a>三、Python 代码骨架（OpenCV + Tesseract + mss + pyautogui）</h2><blockquote>
+<p>依赖：opencv-python, numpy, pytesseract, mss, pyautogui（macOS 需开启“辅助功能”权限）</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># python</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Tuple</span>, <span class="type">Optional</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> cv2</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pytesseract</span><br><span class="line"><span class="keyword">from</span> mss <span class="keyword">import</span> mss</span><br><span class="line"><span class="keyword">import</span> pyautogui</span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Match</span>:</span><br><span class="line">    box: <span class="type">Tuple</span>[<span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>]  <span class="comment"># x, y, w, h</span></span><br><span class="line">    score: <span class="built_in">float</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Screen</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.sct = mss()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">grab</span>(<span class="params">self, region: <span class="type">Optional</span>[<span class="type">Tuple</span>[<span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>]] = <span class="literal">None</span></span>) -&gt; np.ndarray:</span><br><span class="line">        <span class="comment"># region: (left, top, width, height)</span></span><br><span class="line">        <span class="keyword">if</span> region <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            mon = <span class="variable language_">self</span>.sct.monitors[<span class="number">1</span>]</span><br><span class="line">            shot = <span class="variable language_">self</span>.sct.grab(mon)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            left, top, w, h = region</span><br><span class="line">            shot = <span class="variable language_">self</span>.sct.grab(&#123;<span class="string">&quot;left&quot;</span>: left, <span class="string">&quot;top&quot;</span>: top, <span class="string">&quot;width&quot;</span>: w, <span class="string">&quot;height&quot;</span>: h&#125;)</span><br><span class="line">        img = np.array(shot)[:, :, :<span class="number">3</span>][:, :, ::-<span class="number">1</span>]  <span class="comment"># BGRA-&gt;BGR-&gt;RGB</span></span><br><span class="line">        <span class="keyword">return</span> img</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Locator</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, screen: Screen</span>):</span><br><span class="line">        <span class="variable language_">self</span>.screen = screen</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">match_template</span>(<span class="params">self, template: np.ndarray, region=<span class="literal">None</span>, scales=(<span class="params"><span class="number">0.8</span>, <span class="number">1.0</span>, <span class="number">1.2</span></span>), threshold=<span class="number">0.82</span></span>) -&gt; <span class="type">List</span>[Match]:</span><br><span class="line">        img = <span class="variable language_">self</span>.screen.grab(region)</span><br><span class="line">        H, W = img.shape[:<span class="number">2</span>]</span><br><span class="line">        matches: <span class="type">List</span>[Match] = []</span><br><span class="line">        <span class="keyword">for</span> s <span class="keyword">in</span> scales:</span><br><span class="line">            t = cv2.resize(template, <span class="literal">None</span>, fx=s, fy=s, interpolation=cv2.INTER_AREA)</span><br><span class="line">            res = cv2.matchTemplate(img, t, cv2.TM_CCOEFF_NORMED)</span><br><span class="line">            ys, xs = np.where(res &gt;= threshold)</span><br><span class="line">            <span class="keyword">for</span> (y, x) <span class="keyword">in</span> <span class="built_in">zip</span>(ys, xs):</span><br><span class="line">                w, h = t.shape[<span class="number">1</span>], t.shape[<span class="number">0</span>]</span><br><span class="line">                matches.append(Match((x, y, w, h), <span class="built_in">float</span>(res[y, x])))</span><br><span class="line">        <span class="comment"># NMS</span></span><br><span class="line">        boxes = np.array([[x, y, x + w, y + h] <span class="keyword">for</span> (x, y, w, h), _ <span class="keyword">in</span> [(m.box, m.score) <span class="keyword">for</span> m <span class="keyword">in</span> matches]])</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(boxes) == <span class="number">0</span>:</span><br><span class="line">            <span class="keyword">return</span> []</span><br><span class="line">        scores = np.array([m.score <span class="keyword">for</span> m <span class="keyword">in</span> matches])</span><br><span class="line">        keep = <span class="variable language_">self</span>.nms(boxes, scores, iou_thresh=<span class="number">0.3</span>)</span><br><span class="line">        <span class="keyword">return</span> [matches[i] <span class="keyword">for</span> i <span class="keyword">in</span> keep]</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">nms</span>(<span class="params">boxes: np.ndarray, scores: np.ndarray, iou_thresh=<span class="number">0.3</span></span>) -&gt; <span class="type">List</span>[<span class="built_in">int</span>]:</span><br><span class="line">        x1, y1, x2, y2 = boxes[:, <span class="number">0</span>], boxes[:, <span class="number">1</span>], boxes[:, <span class="number">2</span>], boxes[:, <span class="number">3</span>]</span><br><span class="line">        areas = (x2 - x1 + <span class="number">1</span>) * (y2 - y1 + <span class="number">1</span>)</span><br><span class="line">        order = scores.argsort()[::-<span class="number">1</span>]</span><br><span class="line">        keep = []</span><br><span class="line">        <span class="keyword">while</span> order.size &gt; <span class="number">0</span>:</span><br><span class="line">            i = order[<span class="number">0</span>]</span><br><span class="line">            keep.append(i)</span><br><span class="line">            xx1 = np.maximum(x1[i], x1[order[<span class="number">1</span>:]])</span><br><span class="line">            yy1 = np.maximum(y1[i], y1[order[<span class="number">1</span>:]])</span><br><span class="line">            xx2 = np.minimum(x2[i], x2[order[<span class="number">1</span>:]])</span><br><span class="line">            yy2 = np.minimum(y2[i], y2[order[<span class="number">1</span>:]])</span><br><span class="line">            w = np.maximum(<span class="number">0.0</span>, xx2 - xx1 + <span class="number">1</span>)</span><br><span class="line">            h = np.maximum(<span class="number">0.0</span>, yy2 - yy1 + <span class="number">1</span>)</span><br><span class="line">            inter = w * h</span><br><span class="line">            iou = inter / (areas[i] + areas[order[<span class="number">1</span>:]] - inter)</span><br><span class="line">            inds = np.where(iou &lt;= iou_thresh)[<span class="number">0</span>]</span><br><span class="line">            order = order[inds + <span class="number">1</span>]</span><br><span class="line">        <span class="keyword">return</span> keep</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">ocr_find_text</span>(<span class="params">self, keywords: <span class="type">List</span>[<span class="built_in">str</span>], region=<span class="literal">None</span></span>) -&gt; <span class="type">List</span>[Match]:</span><br><span class="line">        img = <span class="variable language_">self</span>.screen.grab(region)</span><br><span class="line">        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)</span><br><span class="line">        gray = cv2.threshold(gray, <span class="number">0</span>, <span class="number">255</span>, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[<span class="number">1</span>]</span><br><span class="line">        d = pytesseract.image_to_data(gray, lang=<span class="string">&#x27;eng+chi_sim&#x27;</span>, output_type=pytesseract.Output.DICT)</span><br><span class="line">        matches = []</span><br><span class="line">        <span class="keyword">for</span> i, text <span class="keyword">in</span> <span class="built_in">enumerate</span>(d[<span class="string">&#x27;text&#x27;</span>]):</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> text:</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            <span class="keyword">for</span> kw <span class="keyword">in</span> keywords:</span><br><span class="line">                <span class="keyword">if</span> kw.lower() <span class="keyword">in</span> text.lower():</span><br><span class="line">                    x, y, w, h = d[<span class="string">&#x27;left&#x27;</span>][i], d[<span class="string">&#x27;top&#x27;</span>][i], d[<span class="string">&#x27;width&#x27;</span>][i], d[<span class="string">&#x27;height&#x27;</span>][i]</span><br><span class="line">                    matches.append(Match((x, y, w, h), <span class="number">0.9</span>))</span><br><span class="line">        <span class="keyword">return</span> matches</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Actor</span>:</span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">click_center</span>(<span class="params">box: <span class="type">Tuple</span>[<span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>, <span class="built_in">int</span>]</span>):</span><br><span class="line">        x, y, w, h = box</span><br><span class="line">        cx, cy = x + w // <span class="number">2</span>, y + h // <span class="number">2</span></span><br><span class="line">        pyautogui.moveTo(cx, cy, duration=<span class="number">0.05</span>)</span><br><span class="line">        pyautogui.click()</span><br><span class="line">        time.sleep(<span class="number">0.2</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">type_text</span>(<span class="params">text: <span class="built_in">str</span></span>):</span><br><span class="line">        pyautogui.typewrite(text, interval=<span class="number">0.02</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 示例流程：先用模板匹配点击“登录”按钮，失败则用 OCR</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">login_flow</span>(<span class="params">template_login_btn: np.ndarray</span>):</span><br><span class="line">    screen = Screen()</span><br><span class="line">    loc = Locator(screen)</span><br><span class="line">    actor = Actor()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Step1: 尝试模板匹配</span></span><br><span class="line">    matches = loc.match_template(template_login_btn, threshold=<span class="number">0.85</span>)</span><br><span class="line">    <span class="keyword">if</span> matches:</span><br><span class="line">        actor.click_center(matches[<span class="number">0</span>].box)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="comment"># Step2: OCR 回退</span></span><br><span class="line">        t_matches = loc.ocr_find_text([<span class="string">&quot;登录&quot;</span>, <span class="string">&quot;Sign in&quot;</span>, <span class="string">&quot;Log in&quot;</span>]) </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> t_matches:</span><br><span class="line">            <span class="keyword">raise</span> RuntimeError(<span class="string">&quot;找不到登录入口&quot;</span>)</span><br><span class="line">        actor.click_center(t_matches[<span class="number">0</span>].box)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># Step3: 输入账号密码（示例）</span></span><br><span class="line">    Actor.type_text(<span class="string">&quot;user@example.com&quot;</span>)</span><br><span class="line">    pyautogui.press(<span class="string">&#x27;tab&#x27;</span>)</span><br><span class="line">    Actor.type_text(<span class="string">&quot;P@ssw0rd!&quot;</span>)</span><br><span class="line">    pyautogui.press(<span class="string">&#x27;enter&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li>先局部后全局：优先以“窗口标题&#x2F;导航栏”为锚点，在锚点附近做小范围搜索；</li>
+<li>模板图片尽量截图“高信息量”区域，避免过于简单的纯色块；</li>
+<li>OCR 需根据语言安装字库（如中文 <code>chi_sim</code>），并对图像二值化提升识别率；</li>
+<li>点击与输入之间加入短延迟，降低远端编码&#x2F;网络抖动的影响。</li>
+</ul>
+<h2 id="四、工程化落地与调试清单"><a href="#四、工程化落地与调试清单" class="headerlink" title="四、工程化落地与调试清单"></a>四、工程化落地与调试清单</h2><ul>
+<li>环境固定：<ul>
+<li>远程会话分辨率、缩放比与主题尽量固定；</li>
+<li>本地开启键鼠注入权限（Windows 管理员、macOS 辅助功能）；</li>
+</ul>
+</li>
+<li>资产管理：<ul>
+<li>模板图与 OCR 关键字建立版本库，命名包含页面&#x2F;语义&#x2F;版本；</li>
+</ul>
+</li>
+<li>观测与回放：<ul>
+<li>记录每步屏幕快照、匹配得分、候选数量与被选坐标；</li>
+<li>失败时输出“最近三步快照”到工单，便于远程排查；</li>
+</ul>
+</li>
+<li>回退策略：<ul>
+<li>图像→文本→语义邻域（扩大搜索）→人工兜底（暂停+通知）；</li>
+</ul>
+</li>
+<li>性能优化：<ul>
+<li>优先局部截图 + 多尺度缓存（模板金字塔），避免全屏反复匹配；</li>
+</ul>
+</li>
+<li>稳定性：<ul>
+<li>引入重试上限与超时，保证有界失败；</li>
+<li>对关键按钮设置“点击后状态验证”（比如出现“已登录”标签）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>在 Citrix&#x2F;远程桌面这类“只给你图像”的环境里，想要稳定自动化，就必须从控件注入思维切换到“视觉+文本+坐标”的组合拳：模板匹配负责形态，OCR 补充语义，焦点与坐标确保动作落地，再配上回退机制与可观测性，才能实现可回放、可定位、可复盘的工程化自动化。在你的项目里，把这套能力沉淀为“定位服务 + 资产库 + 执行器”的小框架，会极大降低维护成本与线上不确定性。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/" title="RPA 远程桌面&#x2F;Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位">http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RPA/" rel="tag"># RPA</a>
+              <a href="/tags/%E9%80%89%E6%8B%A9%E5%99%A8/" rel="tag"># 选择器</a>
+              <a href="/tags/Citrix/" rel="tag"># Citrix</a>
+              <a href="/tags/Remote-Desktop/" rel="tag"># Remote Desktop</a>
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E8%AF%86%E5%88%AB/" rel="tag"># 图像识别</a>
+              <a href="/tags/OCR/" rel="tag"># OCR</a>
+              <a href="/tags/OpenCV/" rel="tag"># OpenCV</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/08/26/java-springboot-distributed-lock-selection-practice/" rel="prev" title="Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验">
+      <i class="fa fa-chevron-left"></i> Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/08/26/rpa-browser-file-download-stabilization-engineering-practice/" rel="next" title="RPA 浏览器文件下载稳定化工程实践：从原生弹窗到无头下载与断点续传">
+      RPA 浏览器文件下载稳定化工程实践：从原生弹窗到无头下载与断点续传 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPA-%E8%BF%9C%E7%A8%8B%E6%A1%8C%E9%9D%A2-Citrix-%E5%9C%BA%E6%99%AF%E8%87%AA%E5%8A%A8%E5%8C%96%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%AE%9E%E8%B7%B5%EF%BC%9A%E4%BB%8E%E6%97%A0%E6%B3%95%E6%B3%A8%E5%85%A5%E5%88%B0%E2%80%9C%E5%9B%BE%E5%83%8F-OCR-%E5%9D%90%E6%A0%87%E2%80%9D%E6%B7%B7%E5%90%88%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.</span> <span class="nav-text">RPA 远程桌面&#x2F;Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%94%BB%E5%83%8F%E4%B8%8E%E6%8E%92%E6%9F%A5%E8%B7%AF%E5%BE%84"><span class="nav-number">1.2.</span> <span class="nav-text">一、问题画像与排查路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%80%BB%E4%BD%93%E6%96%B9%E6%A1%88%E4%B8%8E%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">二、总体方案与关键技术点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Python-%E4%BB%A3%E7%A0%81%E9%AA%A8%E6%9E%B6%EF%BC%88OpenCV-Tesseract-mss-pyautogui%EF%BC%89"><span class="nav-number">1.4.</span> <span class="nav-text">三、Python 代码骨架（OpenCV + Tesseract + mss + pyautogui）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%B7%A5%E7%A8%8B%E5%8C%96%E8%90%BD%E5%9C%B0%E4%B8%8E%E8%B0%83%E8%AF%95%E6%B8%85%E5%8D%95"><span class="nav-number">1.5.</span> <span class="nav-text">四、工程化落地与调试清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">267</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">924k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:01</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

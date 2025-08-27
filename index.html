@@ -175,7 +175,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/11/01/rpa-exception-handling-mechanism-design-practice/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/java-threadpool-configuration-fault-handling-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -189,7 +189,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/11/01/rpa-exception-handling-mechanism-design-practice/" class="post-title-link" itemprop="url">RPA项目中的异常处理机制设计与实践：从理论到生产环境的完整方案</a>
+            <a href="/2025/08/26/java-threadpool-configuration-fault-handling-practice/" class="post-title-link" itemprop="url">Java 线程池配置故障处理实战：从性能瓶颈到高效并发的完整解决方案</a>
         </h2>
 
         <div class="post-meta">
@@ -198,403 +198,21 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-11-01 15:30:00" itemprop="dateCreated datePublished" datetime="2022-11-01T15:30:00+08:00">2022-11-01</time>
+              <time title="创建时间：2025-08-26 19:15:00 / 修改时间：22:33:42" itemprop="dateCreated datePublished" datetime="2025-08-26T19:15:00+08:00">2025-08-26</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 13:08:51" itemprop="dateModified" datetime="2025-08-26T13:08:51+08:00">2025-08-26</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
                 </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>9.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>深入探讨RPA项目中异常处理机制的设计原理和实践经验，从常见异常类型分析到完整容错方案实施，帮助构建稳定可靠的RPA系统。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/11/01/rpa-exception-handling-mechanism-design-practice/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/31/%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/31/%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/" class="post-title-link" itemprop="url">我们应该从哪些方面思考公司场景是否适合RPA流程自动化</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-31 21:10:00" itemprop="dateCreated datePublished" datetime="2022-10-31T21:10:00+08:00">2022-10-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
+                  ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>17k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>16 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>提供一个系统性的评估框架，帮助企业从业务、技术、组织、经济和风险多个维度判断特定场景是否适合RPA流程自动化。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/31/%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/29/%E5%B8%B8%E8%A7%81%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E9%94%99%E8%AF%AF%E5%8F%8A%E5%85%B6%E6%95%99%E8%AE%AD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/29/%E5%B8%B8%E8%A7%81%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E9%94%99%E8%AF%AF%E5%8F%8A%E5%85%B6%E6%95%99%E8%AE%AD/" class="post-title-link" itemprop="url">常见的RPA项目错误及其教训</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-29 18:20:00" itemprop="dateCreated datePublished" datetime="2022-10-29T18:20:00+08:00">2022-10-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>13k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>深入分析RPA项目中最常见的错误类型，通过真实案例剖析错误根源，提供系统性的解决方案和预防策略。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/29/%E5%B8%B8%E8%A7%81%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E9%94%99%E8%AF%AF%E5%8F%8A%E5%85%B6%E6%95%99%E8%AE%AD/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/27/%E5%B0%8F%E6%A1%88%E4%BE%8B%EF%BC%9A%E5%88%B6%E4%BD%9C%E3%80%8A%E6%95%B0%E6%8D%AE%E6%B5%81%E5%9B%BE%E3%80%8B%E4%B8%8E%E3%80%8A%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B%E5%9B%BE%E3%80%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/27/%E5%B0%8F%E6%A1%88%E4%BE%8B%EF%BC%9A%E5%88%B6%E4%BD%9C%E3%80%8A%E6%95%B0%E6%8D%AE%E6%B5%81%E5%9B%BE%E3%80%8B%E4%B8%8E%E3%80%8A%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B%E5%9B%BE%E3%80%8B/" class="post-title-link" itemprop="url">小案例：制作《数据流图》与《业务流程图》</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-27 13:45:00" itemprop="dateCreated datePublished" datetime="2022-10-27T13:45:00+08:00">2022-10-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>5k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>通过一个电商订单处理的实际案例，详细介绍如何制作专业的数据流图和业务流程图，帮助开发团队更好地理解业务需求。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/27/%E5%B0%8F%E6%A1%88%E4%BE%8B%EF%BC%9A%E5%88%B6%E4%BD%9C%E3%80%8A%E6%95%B0%E6%8D%AE%E6%B5%81%E5%9B%BE%E3%80%8B%E4%B8%8E%E3%80%8A%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B%E5%9B%BE%E3%80%8B/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/25/%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/25/%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/" class="post-title-link" itemprop="url">基于UiBot的滑动验证码检测实例</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-25 16:30:00" itemprop="dateCreated datePublished" datetime="2022-10-25T16:30:00+08:00">2022-10-25</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 15:03:18" itemprop="dateModified" datetime="2025-08-26T15:03:18+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                  <a href="/categories/Java/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
                 </span>
             </span>
 
@@ -623,10 +241,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>详细介绍如何使用UiBot结合Python实现滑动验证码的智能检测和自动破解，包括图像处理、缺口识别、轨迹生成等技术环节。</p>
+          <p>记录一次生产环境中Java应用线程池配置不当导致的性能瓶颈故障，从故障现象到根因分析，再到完整的解决方案和预防措施，包含可直接应用的配置优化和监控代码。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/25/%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/">
+              <a class="btn" href="/2025/08/26/java-threadpool-configuration-fault-handling-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -650,7 +268,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/23/%E5%9F%BA%E4%BA%8EUiBot%E5%BC%80%E5%8F%91%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E4%B8%AD%E5%90%84%E7%B1%BB%E9%93%B6%E8%A1%8C%E6%93%8D%E4%BD%9C%E6%B5%81%E7%A8%8B/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/ai-agent-memory-system-design-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -664,7 +282,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/23/%E5%9F%BA%E4%BA%8EUiBot%E5%BC%80%E5%8F%91%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E4%B8%AD%E5%90%84%E7%B1%BB%E9%93%B6%E8%A1%8C%E6%93%8D%E4%BD%9C%E6%B5%81%E7%A8%8B/" class="post-title-link" itemprop="url">基于UiBot开发的RPA项目中各类银行操作流程</a>
+            <a href="/2025/08/26/ai-agent-memory-system-design-practice/" class="post-title-link" itemprop="url">AI Agent 记忆系统设计实战：从短期记忆到长期知识管理的完整方案</a>
         </h2>
 
         <div class="post-meta">
@@ -673,23 +291,21 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-10-23 09:40:00" itemprop="dateCreated datePublished" datetime="2022-10-23T09:40:00+08:00">2022-10-23</time>
+              <time title="创建时间：2025-08-26 18:00:00 / 修改时间：22:30:43" itemprop="dateCreated datePublished" datetime="2025-08-26T18:00:00+08:00">2025-08-26</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">项目实践</span></a>
                 </span>
             </span>
 
@@ -718,10 +334,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>详细介绍基于UiBot开发的RPA项目中各类银行操作流程的自动化解决方案，包括银行流水下载、自动填写付款单、账户余额查询等核心业务场景。</p>
+          <p>分享构建AI Agent记忆系统的完整实践经验，从技术选型到落地实现，包含短期记忆、长期记忆、知识图谱等多层次记忆架构的设计思路和代码实现。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/23/%E5%9F%BA%E4%BA%8EUiBot%E5%BC%80%E5%8F%91%E7%9A%84RPA%E9%A1%B9%E7%9B%AE%E4%B8%AD%E5%90%84%E7%B1%BB%E9%93%B6%E8%A1%8C%E6%93%8D%E4%BD%9C%E6%B5%81%E7%A8%8B/">
+              <a class="btn" href="/2025/08/26/ai-agent-memory-system-design-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -745,7 +361,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/21/%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/ai-agent-tool-timeout-cancellation-debugging-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -759,7 +375,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/21/%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/" class="post-title-link" itemprop="url">国家电网某超高压变电公司RPA案例分享</a>
+            <a href="/2025/08/26/ai-agent-tool-timeout-cancellation-debugging-practice/" class="post-title-link" itemprop="url">AI Agent 工具调用超时与“卡死”的调试实录：从取消传播到结构化并发的落地</a>
         </h2>
 
         <div class="post-meta">
@@ -768,23 +384,21 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-10-21 12:25:00" itemprop="dateCreated datePublished" datetime="2022-10-21T12:25:00+08:00">2022-10-21</time>
+              <time title="创建时间：2025-08-26 17:35:00 / 修改时间：21:37:57" itemprop="dateCreated datePublished" datetime="2025-08-26T17:35:00+08:00">2025-08-26</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%88%E4%BE%8B%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">案例研究</span></a>
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E8%B0%83%E8%AF%95%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">调试实践</span></a>
                 </span>
             </span>
 
@@ -794,197 +408,7 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>5.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>分享国家电网超高压变电公司RPA自动化项目的完整实施过程，包括设备巡检、缺陷管理、运行报表等业务流程的自动化改造。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/21/%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/19/%E5%87%A0%E7%A7%8D%E5%A5%BD%E7%94%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB%E5%B7%A5%E5%85%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/19/%E5%87%A0%E7%A7%8D%E5%A5%BD%E7%94%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">几种好用的数据迁移工具</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-19 15:50:00" itemprop="dateCreated datePublished" datetime="2022-10-19T15:50:00+08:00">2022-10-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>5k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>详细介绍几种主流的数据迁移工具，包括Kettle、DataX、DataPipeline、Talend等，帮助您根据实际需求选择最适合的解决方案。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/10/19/%E5%87%A0%E7%A7%8D%E5%A5%BD%E7%94%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E8%BF%81%E7%A7%BB%E5%B7%A5%E5%85%B7/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/17/%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/10/17/%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/" class="post-title-link" itemprop="url">几个新的常用Python库，旧的可以淘汰了</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-10-17 20:15:00" itemprop="dateCreated datePublished" datetime="2022-10-17T20:15:00+08:00">2022-10-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 12:06:54" itemprop="dateModified" datetime="2025-08-26T12:06:54+08:00">2025-08-26</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.4k</span>
+              <span>3.9k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -1003,10 +427,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>介绍几个值得关注的现代Python库，可以有效替代传统工具，包括pathlib、secrets、zoneinfo、dataclasses等，让Python开发更加高效和现代化。</p>
+          <p>一次 AI Agent 工具调用在高并发场景下出现“超时不返回”“后台任务卡死”的调试实录，覆盖现象、复现与定位、根因（取消未传播、后台任务泄漏、无背压）、解决方案（结构化并发、超时与取消、背压与资源清理）与关键代码，助你把问题一把梭清。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/17/%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/">
+              <a class="btn" href="/2025/08/26/ai-agent-tool-timeout-cancellation-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1030,7 +454,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/10/15/rpa-project-implementation-experience/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/rpa-desktop-selector-stability-debugging-case/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -1044,7 +468,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/10/15/rpa-project-implementation-experience/" class="post-title-link" itemprop="url">RPA 项目从 POC 到规模化落地：工具选型与踩坑实录</a>
+            <a href="/2025/08/26/rpa-desktop-selector-stability-debugging-case/" class="post-title-link" itemprop="url">RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9稳定性的落地方案</a>
         </h2>
 
         <div class="post-meta">
@@ -1054,14 +478,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2022-10-15 08:30:00" itemprop="dateCreated datePublished" datetime="2022-10-15T08:30:00+08:00">2022-10-15</time>
+              <time title="创建时间：2025-08-26 17:20:00" itemprop="dateCreated datePublished" datetime="2025-08-26T17:20:00+08:00">2025-08-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-26 11:54:56" itemprop="dateModified" datetime="2025-08-26T11:54:56+08:00">2025-08-26</time>
+                <time title="修改时间：2025-08-27 16:16:48" itemprop="dateModified" datetime="2025-08-27T16:16:48+08:00">2025-08-27</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1069,7 +493,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E8%B0%83%E8%AF%95%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">调试实践</span></a>
                 </span>
             </span>
 
@@ -1079,7 +507,379 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>5.8k</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>一次关于 Windows 桌面应用 RPA 选择器随机失败的真实调试过程，从现象、排查、根因到工程化落地，给出“稳定选择器策略 + 等待与重试 + 焦点管理 + DPI 适配 + 图像/OCR 兜底”的组合方案与 Python 代码示例。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/rpa-desktop-selector-stability-debugging-case/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/ai-agent-rate-limit-cascade-failure-incident-postmortem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/ai-agent-rate-limit-cascade-failure-incident-postmortem/" class="post-title-link" itemprop="url">AI Agent 并行工具调用导致速率限制与级联失败的生产事故复盘：从突发流量到“配额+限流+排队+重试”的闭环</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 17:10:00 / 修改时间：20:58:11" itemprop="dateCreated datePublished" datetime="2025-08-26T17:10:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E4%BA%8B%E6%95%85%E5%A4%8D%E7%9B%98/" itemprop="url" rel="index"><span itemprop="name">生产环境事故复盘</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>一次因 AI Agent 并行工具调用击穿第三方 API 配额与速率限制，触发 429/5xx、重试风暴与级联失败的事故复盘。涵盖现象、根因、工程化修复（配额治理、令牌桶限流、优雅排队、退避重试、熔断与观测）以及可直接落地的 Python 代码骨架。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/ai-agent-rate-limit-cascade-failure-incident-postmortem/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/rpa-complex-element-locating-advanced-strategies/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/rpa-complex-element-locating-advanced-strategies/" class="post-title-link" itemprop="url">RPA 复杂页面元素定位技术深度解析：ShadowDOM、iframe 与动态内容的终极定位策略</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 17:10:00 / 修改时间：22:25:58" itemprop="dateCreated datePublished" datetime="2025-08-26T17:10:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">关键技术</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>16k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>深入讲解RPA中复杂页面元素定位的核心技术，包括ShadowDOM穿透、iframe嵌套处理、动态内容识别等高级定位策略，提供完整的技术实现方案和最佳实践。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/rpa-complex-element-locating-advanced-strategies/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/rpa-browser-file-download-stabilization-engineering-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/rpa-browser-file-download-stabilization-engineering-practice/" class="post-title-link" itemprop="url">RPA 浏览器文件下载稳定化工程实践：从原生弹窗到无头下载与断点续传</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 16:50:00 / 修改时间：20:50:10" itemprop="dateCreated datePublished" datetime="2025-08-26T16:50:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>总结浏览器自动化中的文件下载稳定化方案，覆盖对话框规避、无头下载、Blob/重定向处理、会话直连与断点续传，并提供可落地的 Python 代码骨架与调试清单。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/rpa-browser-file-download-stabilization-engineering-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/" class="post-title-link" itemprop="url">RPA 远程桌面/Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 16:25:00 / 修改时间：20:41:43" itemprop="dateCreated datePublished" datetime="2025-08-26T16:25:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.2k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -1098,10 +898,196 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>基于在某制造企业推进RPA项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，为RPA落地提供可参考的方法论。</p>
+          <p>在远程桌面/Citrix 场景下，传统控件注入与选择器失效，本文给出“图像+OCR+坐标”的混合定位与工程化方案，包括问题画像、排查路径、核心技术点与可用的 Python 代码骨架，显著提升稳定性与可回放性。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2022/10/15/rpa-project-implementation-experience/">
+              <a class="btn" href="/2025/08/26/rpa-citrix-remote-desktop-automation-engineering-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/java-springboot-distributed-lock-selection-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/java-springboot-distributed-lock-selection-practice/" class="post-title-link" itemprop="url">Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 16:20:00 / 修改时间：22:22:56" itemprop="dateCreated datePublished" datetime="2025-08-26T16:20:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">项目实践</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分享在Spring Boot微服务项目中实现分布式锁的完整经验，从最初的Redis SETNX到最终选择Redisson的技术选型过程，包含具体的代码实现、踩坑经验和性能优化建议。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/java-springboot-distributed-lock-selection-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/python-http-client-timeouts-retry-pooling-circuit-breaker-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2025/08/26/python-http-client-timeouts-retry-pooling-circuit-breaker-practice/" class="post-title-link" itemprop="url">Python 生产级 HTTP 客户端实践：超时、重试、连接池与熔断的工程化落地</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 16:05:00 / 修改时间：20:38:27" itemprop="dateCreated datePublished" datetime="2025-08-26T16:05:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>从常见踩坑出发，系统讲解如何在 Python 中打造生产级 HTTP 客户端：统一 Session+连接池、分级超时、幂等重试、指数退避+抖动、熔断隔离与结构化观测，附完整可用的代码骨架与调试方法。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2025/08/26/python-http-client-timeouts-retry-pooling-circuit-breaker-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1124,7 +1110,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1192,16 +1178,16 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">35</span>
+          <span class="site-state-item-count">87</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">37</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">116</span>
+        <span class="site-state-item-count">267</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -1255,12 +1241,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">430k</span>
+    <span title="站点总字数">924k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">6:31</span>
+    <span title="站点阅读时长">14:01</span>
 </div>
 
         

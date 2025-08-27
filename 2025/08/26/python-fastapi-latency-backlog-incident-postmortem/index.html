@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一次 FastAPI 生产接口时延飙升与连接积压事故复盘，覆盖故障现象、排查、根因（阻塞 I&#x2F;O、连接池耗尽、超时误用、进程&#x2F;线程配置不当）、修复方案（全局连接池、并发限流、超时与取消、熔断降级）与关键代码。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断">
+<meta property="og:url" content="http://example.com/2025/08/26/python-fastapi-latency-backlog-incident-postmortem/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="一次 FastAPI 生产接口时延飙升与连接积压事故复盘，覆盖故障现象、排查、根因（阻塞 I&#x2F;O、连接池耗尽、超时误用、进程&#x2F;线程配置不当）、修复方案（全局连接池、并发限流、超时与取消、熔断降级）与关键代码。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-26T07:10:00.000Z">
+<meta property="article:modified_time" content="2025-08-26T12:21:24.310Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="熔断">
+<meta property="article:tag" content="超时">
+<meta property="article:tag" content="asyncio">
+<meta property="article:tag" content="连接池">
+<meta property="article:tag" content="FastAPI">
+<meta property="article:tag" content="Uvicorn">
+<meta property="article:tag" content="Gunicorn">
+<meta property="article:tag" content="httpx">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2025/08/26/python-fastapi-latency-backlog-incident-postmortem/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I/O 到优雅熔断 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2025/08/26/python-fastapi-latency-backlog-incident-postmortem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I/O 到优雅熔断
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2025-08-26 15:10:00 / 修改时间：20:21:24" itemprop="dateCreated datePublished" datetime="2025-08-26T15:10:00+08:00">2025-08-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E4%BA%8B%E6%95%85/" itemprop="url" rel="index"><span itemprop="name">生产事故</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+            <div class="post-description">一次 FastAPI 生产接口时延飙升与连接积压事故复盘，覆盖故障现象、排查、根因（阻塞 I/O、连接池耗尽、超时误用、进程/线程配置不当）、修复方案（全局连接池、并发限流、超时与取消、熔断降级）与关键代码。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Python-FastAPI-时延飙升与连接积压生产事故复盘：从阻塞-I-O-到优雅熔断"><a href="#Python-FastAPI-时延飙升与连接积压生产事故复盘：从阻塞-I-O-到优雅熔断" class="headerlink" title="Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断"></a>Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断</h1><blockquote>
+<p>技术主题：Python 编程语言<br>内容方向：生产环境事故的解决过程（故障现象、根因分析、解决方案、预防措施）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>一个平平无奇的促销晚高峰，我们的 API 网关监控突然报警：P95 时延从 120ms 飙到 3.2s，活跃连接上升，错误率波动。现场表现是“接口卡住不动”，一查容器里 Uvicorn 进程占用不高，但下游 HTTP 调用响应堆积。本文复盘这次事故，从现象到根因，再到系统性修复，最后给出可直接复用的代码骨架与配置清单。</p>
+<h2 id="一、故障现象与影响"><a href="#一、故障现象与影响" class="headerlink" title="一、故障现象与影响"></a>一、故障现象与影响</h2><ul>
+<li>P95 从 ~120ms → 3.2s，长尾 P99 超 10s；</li>
+<li>Gunicorn backlog 上升（等待接受连接），部分 502&#x2F;504；</li>
+<li>下游服务 QPS 波动，重试风暴短时出现；</li>
+<li>应用容器 CPU 占用不高，但线程池耗尽告警出现。</li>
+</ul>
+<h2 id="二、排查与复现场景"><a href="#二、排查与复现场景" class="headerlink" title="二、排查与复现场景"></a>二、排查与复现场景</h2><ol>
+<li>观测与采样：抓取慢请求日志（含 trace_id）、连接数、线程池指标、事件循环滞后；</li>
+<li>火焰图&#x2F;采样：确认部分 handler 存在阻塞调用（CPU 计算&#x2F;阻塞 I&#x2F;O）；</li>
+<li>httpx 侧：发现每次请求都新建客户端，连接复用率极低，TIME_WAIT 增多；</li>
+<li>部署参数：Gunicorn workers 偏少，keepalive&#x2F;timeout 不合理，导致等待队列放大；</li>
+<li>超时语义：上游&#x2F;下游超时配置不一致，取消传播缺失，导致“僵尸请求”。</li>
+</ol>
+<h2 id="三、根因分析"><a href="#三、根因分析" class="headerlink" title="三、根因分析"></a>三、根因分析</h2><ul>
+<li>事件循环被阻塞：在 async 视图里执行阻塞 I&#x2F;O&#x2F;CPU，挤占事件循环；</li>
+<li>连接池耗尽：httpx 客户端每次 new，池内连接无法复用，外加 keep-alive 失配引发积压；</li>
+<li>线程池饱和：默认 ThreadPoolExecutor 规模偏小，阻塞任务排队，扩大尾延迟；</li>
+<li>超时与取消策略缺失：没有 per-request 超时与取消传播，重试与超时不成套；</li>
+<li>进程&#x2F;线程&#x2F;连接参数不匹配：Gunicorn worker 数、Uvicorn worker-class、keepalive、backlog、timeout 设置不当。</li>
+</ul>
+<h2 id="四、修复方案与关键代码"><a href="#四、修复方案与关键代码" class="headerlink" title="四、修复方案与关键代码"></a>四、修复方案与关键代码</h2><h3 id="4-1-全局异步客户端与连接池配置"><a href="#4-1-全局异步客户端与连接池配置" class="headerlink" title="4.1 全局异步客户端与连接池配置"></a>4.1 全局异步客户端与连接池配置</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># app/deps.py</span></span><br><span class="line"><span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI</span><br><span class="line"><span class="keyword">import</span> httpx</span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line">client: httpx.AsyncClient | <span class="literal">None</span> = <span class="literal">None</span></span><br><span class="line">upstream_sema: asyncio.Semaphore | <span class="literal">None</span> = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">init_clients</span>(<span class="params">app: FastAPI</span>):</span><br><span class="line">    <span class="keyword">global</span> client, upstream_sema</span><br><span class="line">    <span class="comment"># 适度的连接池与超时（按下游 SLO 调整）</span></span><br><span class="line">    limits = httpx.Limits(max_connections=<span class="number">200</span>, max_keepalive_connections=<span class="number">100</span>)</span><br><span class="line">    timeouts = httpx.Timeout(connect=<span class="number">2.0</span>, read=<span class="number">3.0</span>, write=<span class="number">3.0</span>, pool=<span class="number">2.0</span>)</span><br><span class="line">    client = httpx.AsyncClient(limits=limits, timeout=timeouts, http2=<span class="literal">True</span>)</span><br><span class="line">    upstream_sema = asyncio.Semaphore(<span class="number">100</span>)  <span class="comment"># 下游并发上限</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">close_clients</span>():</span><br><span class="line">    <span class="keyword">global</span> client</span><br><span class="line">    <span class="keyword">if</span> client:</span><br><span class="line">        <span class="keyword">await</span> client.aclose()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># app/main.py</span></span><br><span class="line"><span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, HTTPException</span><br><span class="line"><span class="keyword">from</span> app.deps <span class="keyword">import</span> init_clients, close_clients, client, upstream_sema</span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line">app = FastAPI()</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.on_event(<span class="params"><span class="string">&quot;startup&quot;</span></span>)</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_startup</span>():</span><br><span class="line">    init_clients(app)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.on_event(<span class="params"><span class="string">&quot;shutdown&quot;</span></span>)</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_shutdown</span>():</span><br><span class="line">    <span class="keyword">await</span> close_clients()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 阻塞任务包装（CPU/I-O 需丢到线程池）</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">run_blocking</span>(<span class="params">func, *args, loop=<span class="literal">None</span></span>):</span><br><span class="line">    loop = loop <span class="keyword">or</span> asyncio.get_running_loop()</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> loop.run_in_executor(<span class="literal">None</span>, <span class="keyword">lambda</span>: func(*args))</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">call_upstream</span>(<span class="params">path: <span class="built_in">str</span>, timeout_sec: <span class="built_in">float</span> = <span class="number">2.5</span></span>):</span><br><span class="line">    <span class="comment"># 并发限流 + 超时 + 取消传播</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">with</span> upstream_sema:  <span class="comment"># 背压</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> asyncio.wait_for(</span><br><span class="line">                client.get(<span class="string">f&quot;https://api.example.com/<span class="subst">&#123;path&#125;</span>&quot;</span>, headers=&#123;<span class="string">&quot;X-Trace&quot;</span>: <span class="string">&quot;...&quot;</span>&#125;),</span><br><span class="line">                timeout=timeout_sec,</span><br><span class="line">            )</span><br><span class="line">        <span class="keyword">except</span> asyncio.TimeoutError:</span><br><span class="line">            <span class="keyword">raise</span> HTTPException(status_code=<span class="number">504</span>, detail=<span class="string">&quot;upstream timeout&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.get(<span class="params"><span class="string">&quot;/search&quot;</span></span>)</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">search</span>(<span class="params">q: <span class="built_in">str</span></span>):</span><br><span class="line">    <span class="comment"># 示例：混合阻塞逻辑（比如本地 PDF 解析）+ 下游调用</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">cpu_task</span>(<span class="params">x: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="comment"># 假设较重的 CPU 处理</span></span><br><span class="line">        <span class="keyword">return</span> x.upper()</span><br><span class="line"></span><br><span class="line">    text = <span class="keyword">await</span> run_blocking(cpu_task, q)</span><br><span class="line">    resp = <span class="keyword">await</span> call_upstream(<span class="string">f&quot;search?q=<span class="subst">&#123;text&#125;</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> &#123;<span class="string">&quot;q&quot;</span>: q, <span class="string">&quot;data&quot;</span>: resp.json()&#125;</span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li>全局 AsyncClient 复用连接池；</li>
+<li>设置合理 limits&#x2F;timeout，开启 HTTP&#x2F;2 提升复用；</li>
+<li>使用 Semaphore 限制对下游的并发度，形成背压；</li>
+<li>阻塞代码用 run_in_executor 隔离，避免阻塞事件循环。</li>
+</ul>
+<h3 id="4-2-熔断与降级（简化版）"><a href="#4-2-熔断与降级（简化版）" class="headerlink" title="4.2 熔断与降级（简化版）"></a>4.2 熔断与降级（简化版）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># app/circuit.py</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Circuit</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, fail_threshold: <span class="built_in">int</span> = <span class="number">20</span>, cool_ms: <span class="built_in">int</span> = <span class="number">2000</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.fail = <span class="number">0</span></span><br><span class="line">        <span class="variable language_">self</span>.open_until = <span class="number">0</span></span><br><span class="line">        <span class="variable language_">self</span>.threshold = fail_threshold</span><br><span class="line">        <span class="variable language_">self</span>.cool_ms = cool_ms</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">allow</span>(<span class="params">self</span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="keyword">return</span> time.time() * <span class="number">1000</span> &gt;= <span class="variable language_">self</span>.open_until</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">record</span>(<span class="params">self, ok: <span class="built_in">bool</span></span>):</span><br><span class="line">        <span class="keyword">if</span> ok:</span><br><span class="line">            <span class="variable language_">self</span>.fail = <span class="number">0</span></span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="variable language_">self</span>.fail += <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.fail &gt;= <span class="variable language_">self</span>.threshold:</span><br><span class="line">            <span class="variable language_">self</span>.open_until = time.time() * <span class="number">1000</span> + <span class="variable language_">self</span>.cool_ms</span><br><span class="line">            <span class="variable language_">self</span>.fail = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">circuit = Circuit()</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">guarded_call</span>(<span class="params">coro, *, fallback</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> circuit.allow():</span><br><span class="line">        <span class="keyword">return</span> fallback()</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        res = <span class="keyword">await</span> coro</span><br><span class="line">        circuit.record(<span class="literal">True</span>)</span><br><span class="line">        <span class="keyword">return</span> res</span><br><span class="line">    <span class="keyword">except</span> Exception:</span><br><span class="line">        circuit.record(<span class="literal">False</span>)</span><br><span class="line">        <span class="keyword">return</span> fallback()</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-3-部署与运行参数（Gunicorn-UvicornWorker）"><a href="#4-3-部署与运行参数（Gunicorn-UvicornWorker）" class="headerlink" title="4.3 部署与运行参数（Gunicorn + UvicornWorker）"></a>4.3 部署与运行参数（Gunicorn + UvicornWorker）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># gunicorn.conf.py（示例，按 CPU/内存与 SLO 调整）</span></span><br><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line">workers = <span class="built_in">max</span>(<span class="number">2</span>, multiprocessing.cpu_count())        <span class="comment"># 进程数</span></span><br><span class="line">worker_class = <span class="string">&quot;uvicorn.workers.UvicornWorker&quot;</span></span><br><span class="line">threads = <span class="number">1</span>                                          <span class="comment"># 线程仅用于阻塞少的场景</span></span><br><span class="line">worker_connections = <span class="number">1000</span>                            <span class="comment"># 每 worker 的并发连接上限（异步）</span></span><br><span class="line">backlog = <span class="number">2048</span>                                       <span class="comment"># 未接受连接队列</span></span><br><span class="line">keepalive = <span class="number">5</span>                                        <span class="comment"># keep-alive 秒数</span></span><br><span class="line">timeout = <span class="number">30</span>                                         <span class="comment"># worker 处理超时（不要太大）</span></span><br><span class="line">gracetimeout = <span class="number">30</span></span><br><span class="line">loglevel = <span class="string">&quot;info&quot;</span></span><br><span class="line">bind = <span class="string">&quot;0.0.0.0:8000&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gunicorn -c gunicorn.conf.py app.main:app</span><br></pre></td></tr></table></figure>
+
+<p>调参建议：</p>
+<ul>
+<li>workers ≈ CPU 核心数（异步 worker 不要盲目加 threads）；</li>
+<li>keepalive 过大可能放大连接占用；</li>
+<li>timeout 不宜无限制，配合业务超时&#x2F;取消传播；</li>
+<li>结合容器内核参数（fd 上限）与 httpx 连接池上限。</li>
+</ul>
+<h2 id="五、验证与观测"><a href="#五、验证与观测" class="headerlink" title="五、验证与观测"></a>五、验证与观测</h2><ul>
+<li>压测：维持原始 QPS × 1.5，P95 降回 &lt;150ms，错误率 &lt;0.1%；</li>
+<li>连接：TIME_WAIT 总数明显下降，httpx 连接复用率 &gt;90%；</li>
+<li>线程池：executor 队列长度接近 0，事件循环滞后指标恢复；</li>
+<li>熔断：下游故障时，开启后失败率断崖式下降，平均延迟稳定；</li>
+<li>可观测：暴露指标（并发度、队列长度、超时次数、熔断状态）。</li>
+</ul>
+<h2 id="六、防复发清单"><a href="#六、防复发清单" class="headerlink" title="六、防复发清单"></a>六、防复发清单</h2><ul>
+<li>代码层：<ul>
+<li>禁止在 async handler 内直接做阻塞 I&#x2F;O&#x2F;CPU；</li>
+<li>统一全局 httpx AsyncClient 与连接池；</li>
+<li>为所有外部调用设置超时与取消传播；</li>
+<li>对下游加 Semaphore 并发上限与退避重试（避免风暴）；</li>
+</ul>
+</li>
+<li>部署层：<ul>
+<li>Gunicorn&#x2F;Uvicorn 参数配套（workers、backlog、keepalive、timeout）；</li>
+<li>容器 fd 与内核参数按峰值 QPS 校核；</li>
+</ul>
+</li>
+<li>观测层：<ul>
+<li>打点：事件循环滞后、线程池队列、httpx 连接池、熔断状态；</li>
+<li>日志：慢请求采样、trace_id 贯通、异常分类；</li>
+</ul>
+</li>
+<li>灰度与压测：<ul>
+<li>变更前压测 + 金丝雀发布，观察并回滚预案。</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次事故看似“下游慢”，实则是我们在异步栈上的工程约束缺位：阻塞 I&#x2F;O 入侵事件循环、连接池与超时配置不当、部署参数与负载不匹配。补齐“全局连接池 + 并发限流 + 超时取消 + 熔断降级”的四件套后，系统在高峰时也能优雅退让，把不可控的延迟与错误约束在可控范围内。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2025/08/26/python-fastapi-latency-backlog-incident-postmortem/" title="Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断">http://example.com/2025/08/26/python-fastapi-latency-backlog-incident-postmortem/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E7%86%94%E6%96%AD/" rel="tag"># 熔断</a>
+              <a href="/tags/%E8%B6%85%E6%97%B6/" rel="tag"># 超时</a>
+              <a href="/tags/asyncio/" rel="tag"># asyncio</a>
+              <a href="/tags/%E8%BF%9E%E6%8E%A5%E6%B1%A0/" rel="tag"># 连接池</a>
+              <a href="/tags/FastAPI/" rel="tag"># FastAPI</a>
+              <a href="/tags/Uvicorn/" rel="tag"># Uvicorn</a>
+              <a href="/tags/Gunicorn/" rel="tag"># Gunicorn</a>
+              <a href="/tags/httpx/" rel="tag"># httpx</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/08/26/ai-agent-tool-idempotency-reentrancy-incident-postmortem/" rel="prev" title="AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用">
+      <i class="fa fa-chevron-left"></i> AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/08/26/ai-agent-tool-contract-json-schema-validation-practice/" rel="next" title="AI Agent 工具调用“合约驱动”实践：用 JSON Schema 与强校验把幻觉挡在协议外">
+      AI Agent 工具调用“合约驱动”实践：用 JSON Schema 与强校验把幻觉挡在协议外 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Python-FastAPI-%E6%97%B6%E5%BB%B6%E9%A3%99%E5%8D%87%E4%B8%8E%E8%BF%9E%E6%8E%A5%E7%A7%AF%E5%8E%8B%E7%94%9F%E4%BA%A7%E4%BA%8B%E6%95%85%E5%A4%8D%E7%9B%98%EF%BC%9A%E4%BB%8E%E9%98%BB%E5%A1%9E-I-O-%E5%88%B0%E4%BC%98%E9%9B%85%E7%86%94%E6%96%AD"><span class="nav-number">1.</span> <span class="nav-text">Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1%E4%B8%8E%E5%BD%B1%E5%93%8D"><span class="nav-number">1.2.</span> <span class="nav-text">一、故障现象与影响</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8E%92%E6%9F%A5%E4%B8%8E%E5%A4%8D%E7%8E%B0%E5%9C%BA%E6%99%AF"><span class="nav-number">1.3.</span> <span class="nav-text">二、排查与复现场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90"><span class="nav-number">1.4.</span> <span class="nav-text">三、根因分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%A1%88%E4%B8%8E%E5%85%B3%E9%94%AE%E4%BB%A3%E7%A0%81"><span class="nav-number">1.5.</span> <span class="nav-text">四、修复方案与关键代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-%E5%85%A8%E5%B1%80%E5%BC%82%E6%AD%A5%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%8E%E8%BF%9E%E6%8E%A5%E6%B1%A0%E9%85%8D%E7%BD%AE"><span class="nav-number">1.5.1.</span> <span class="nav-text">4.1 全局异步客户端与连接池配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-%E7%86%94%E6%96%AD%E4%B8%8E%E9%99%8D%E7%BA%A7%EF%BC%88%E7%AE%80%E5%8C%96%E7%89%88%EF%BC%89"><span class="nav-number">1.5.2.</span> <span class="nav-text">4.2 熔断与降级（简化版）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-%E9%83%A8%E7%BD%B2%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8F%82%E6%95%B0%EF%BC%88Gunicorn-UvicornWorker%EF%BC%89"><span class="nav-number">1.5.3.</span> <span class="nav-text">4.3 部署与运行参数（Gunicorn + UvicornWorker）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E9%AA%8C%E8%AF%81%E4%B8%8E%E8%A7%82%E6%B5%8B"><span class="nav-number">1.6.</span> <span class="nav-text">五、验证与观测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E9%98%B2%E5%A4%8D%E5%8F%91%E6%B8%85%E5%8D%95"><span class="nav-number">1.7.</span> <span class="nav-text">六、防复发清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">267</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">924k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:01</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

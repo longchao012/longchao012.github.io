@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="分享在Java Spring Boot微服务项目中建设完整监控体系的实践经验，从技术选型、架构设计到生产环境优化，包含详细的代码实现和踩坑经验，帮助团队快速建立企业级监控方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验">
+<meta property="og:url" content="http://example.com/2024/05/03/java-spring-boot-microservices-monitoring-system-practice/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="分享在Java Spring Boot微服务项目中建设完整监控体系的实践经验，从技术选型、架构设计到生产环境优化，包含详细的代码实现和踩坑经验，帮助团队快速建立企业级监控方案。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-05-03T03:30:00.000Z">
+<meta property="article:modified_time" content="2025-08-26T23:39:45.100Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="可观测性">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="Spring Boot">
+<meta property="article:tag" content="微服务监控">
+<meta property="article:tag" content="Prometheus">
+<meta property="article:tag" content="Grafana">
+<meta property="article:tag" content="Micrometer">
+<meta property="article:tag" content="APM">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2024/05/03/java-spring-boot-microservices-monitoring-system-practice/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2024/05/03/java-spring-boot-microservices-monitoring-system-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-03 11:30:00" itemprop="dateCreated datePublished" datetime="2024-05-03T11:30:00+08:00">2024-05-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-27 07:39:45" itemprop="dateModified" datetime="2025-08-27T07:39:45+08:00">2025-08-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>19k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>17 分钟</span>
+            </span>
+            <div class="post-description">分享在Java Spring Boot微服务项目中建设完整监控体系的实践经验，从技术选型、架构设计到生产环境优化，包含详细的代码实现和踩坑经验，帮助团队快速建立企业级监控方案。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Java-Spring-Boot-微服务监控体系建设实践：从零搭建到生产优化的完整经验"><a href="#Java-Spring-Boot-微服务监控体系建设实践：从零搭建到生产优化的完整经验" class="headerlink" title="Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验"></a>Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验</h1><blockquote>
+<p>技术主题：Java 编程语言<br>内容方向：实际使用经验分享（工具&#x2F;框架选型、项目落地心得）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在微服务架构日益普及的今天，如何有效监控数十个甚至上百个服务的运行状态，成为了每个技术团队必须面对的挑战。我们团队在过去两年中，从零开始构建了一套完整的Java Spring Boot微服务监控体系，覆盖了从基础指标监控到复杂业务监控的全方位需求。这套监控体系不仅帮助我们将线上故障发现时间从平均30分钟缩短到2分钟，还为系统优化提供了强有力的数据支撑。本文将分享我们在监控体系建设中的完整经验，包括技术选型的考量、架构设计的演进以及生产环境的优化实践。</p>
+<h2 id="一、技术选型与架构设计"><a href="#一、技术选型与架构设计" class="headerlink" title="一、技术选型与架构设计"></a>一、技术选型与架构设计</h2><h3 id="1-监控技术栈选型过程"><a href="#1-监控技术栈选型过程" class="headerlink" title="1. 监控技术栈选型过程"></a>1. 监控技术栈选型过程</h3><p>在项目初期，我们对市面上主流的监控解决方案进行了深入调研：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 技术选型对比分析</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitoringStackComparison</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 监控技术栈对比</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> Map&lt;String, TechStackInfo&gt; TECH_STACKS = Map.of(</span><br><span class="line">        <span class="string">&quot;Prometheus + Grafana&quot;</span>, <span class="keyword">new</span> <span class="title class_">TechStackInfo</span>(</span><br><span class="line">            Arrays.asList(<span class="string">&quot;开源免费&quot;</span>, <span class="string">&quot;生态丰富&quot;</span>, <span class="string">&quot;查询语言强大&quot;</span>, <span class="string">&quot;社区活跃&quot;</span>),</span><br><span class="line">            Arrays.asList(<span class="string">&quot;存储有限&quot;</span>, <span class="string">&quot;集群复杂&quot;</span>),</span><br><span class="line">            <span class="string">&quot;中大型微服务项目&quot;</span></span><br><span class="line">        ),</span><br><span class="line">        <span class="string">&quot;ELK Stack&quot;</span>, <span class="keyword">new</span> <span class="title class_">TechStackInfo</span>(</span><br><span class="line">            Arrays.asList(<span class="string">&quot;日志处理强大&quot;</span>, <span class="string">&quot;搜索能力优秀&quot;</span>, <span class="string">&quot;可视化丰富&quot;</span>),</span><br><span class="line">            Arrays.asList(<span class="string">&quot;资源消耗大&quot;</span>, <span class="string">&quot;配置复杂&quot;</span>, <span class="string">&quot;成本较高&quot;</span>),</span><br><span class="line">            <span class="string">&quot;日志分析为主的场景&quot;</span></span><br><span class="line">        ),</span><br><span class="line">        <span class="string">&quot;APM产品(New Relic/Datadog)&quot;</span>, <span class="keyword">new</span> <span class="title class_">TechStackInfo</span>(</span><br><span class="line">            Arrays.asList(<span class="string">&quot;功能完整&quot;</span>, <span class="string">&quot;开箱即用&quot;</span>, <span class="string">&quot;技术支持好&quot;</span>),</span><br><span class="line">            Arrays.asList(<span class="string">&quot;成本高昂&quot;</span>, <span class="string">&quot;数据外泄风险&quot;</span>, <span class="string">&quot;定制性差&quot;</span>),</span><br><span class="line">            <span class="string">&quot;预算充足的商业项目&quot;</span></span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Data</span></span><br><span class="line">    <span class="meta">@AllArgsConstructor</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">TechStackInfo</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> List&lt;String&gt; pros;</span><br><span class="line">        <span class="keyword">private</span> List&lt;String&gt; cons;</span><br><span class="line">        <span class="keyword">private</span> String bestFor;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>经过充分评估，我们最终选择了<strong>Micrometer + Prometheus + Grafana</strong>的组合，主要基于以下考虑：</p>
+<ul>
+<li><strong>成本可控</strong>：开源方案，无额外许可费用</li>
+<li><strong>技术匹配</strong>：与Spring Boot生态完美集成</li>
+<li><strong>扩展性强</strong>：支持自定义指标和告警规则</li>
+<li><strong>社区支持</strong>：文档丰富，问题解决方案充足</li>
+</ul>
+<h3 id="2-监控架构设计"><a href="#2-监控架构设计" class="headerlink" title="2. 监控架构设计"></a>2. 监控架构设计</h3><p>我们设计的监控架构采用分层设计模式：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableConfigurationProperties(MonitoringProperties.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitoringConfiguration</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 监控配置中心</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> MeterRegistry <span class="title function_">meterRegistry</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">PrometheusMeterRegistry</span>(PrometheusConfig.DEFAULT);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 自定义指标收集器</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> CustomMetricsCollector <span class="title function_">customMetricsCollector</span><span class="params">(MeterRegistry meterRegistry)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CustomMetricsCollector</span>(meterRegistry);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 业务指标监控切面</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> BusinessMetricsAspect <span class="title function_">businessMetricsAspect</span><span class="params">(MeterRegistry meterRegistry)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">BusinessMetricsAspect</span>(meterRegistry);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 健康检查配置</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> HealthIndicator <span class="title function_">customHealthIndicator</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CustomHealthIndicator</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@ConfigurationProperties(prefix = &quot;monitoring&quot;)</span></span><br><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitoringProperties</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">boolean</span> <span class="variable">enabled</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">private</span> String applicationName;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">MetricsConfig</span> <span class="variable">metrics</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MetricsConfig</span>();</span><br><span class="line">    <span class="keyword">private</span> <span class="type">AlertConfig</span> <span class="variable">alert</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AlertConfig</span>();</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Data</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">MetricsConfig</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">boolean</span> <span class="variable">enableCustomMetrics</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">boolean</span> <span class="variable">enableJvmMetrics</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">boolean</span> <span class="variable">enableHttpMetrics</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> <span class="variable">histogramBuckets</span> <span class="operator">=</span> <span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Data</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">AlertConfig</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> String webhookUrl;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> <span class="variable">thresholdCpu</span> <span class="operator">=</span> <span class="number">80</span>;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> <span class="variable">thresholdMemory</span> <span class="operator">=</span> <span class="number">85</span>;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> <span class="variable">thresholdErrorRate</span> <span class="operator">=</span> <span class="number">5</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="二、核心监控组件实现"><a href="#二、核心监控组件实现" class="headerlink" title="二、核心监控组件实现"></a>二、核心监控组件实现</h2><h3 id="1-自定义指标收集器"><a href="#1-自定义指标收集器" class="headerlink" title="1. 自定义指标收集器"></a>1. 自定义指标收集器</h3><p>基于Micrometer框架，我们开发了一套灵活的指标收集组件：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CustomMetricsCollector</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> MeterRegistry meterRegistry;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Timer.Sample startSample;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 业务指标计数器</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Counter orderCreatedCounter;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Counter paymentSuccessCounter;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Counter userLoginCounter;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 性能指标计时器</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Timer databaseQueryTimer;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Timer externalApiTimer;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 系统指标仪表盘</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Gauge activeConnectionGauge;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Gauge cacheHitRateGauge;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">CustomMetricsCollector</span><span class="params">(MeterRegistry meterRegistry)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.meterRegistry = meterRegistry;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 初始化业务指标</span></span><br><span class="line">        <span class="built_in">this</span>.orderCreatedCounter = Counter.builder(<span class="string">&quot;business.order.created.total&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;Total number of orders created&quot;</span>)</span><br><span class="line">                .tag(<span class="string">&quot;service&quot;</span>, <span class="string">&quot;order-service&quot;</span>)</span><br><span class="line">                .register(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">this</span>.paymentSuccessCounter = Counter.builder(<span class="string">&quot;business.payment.success.total&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;Total number of successful payments&quot;</span>)</span><br><span class="line">                .tag(<span class="string">&quot;service&quot;</span>, <span class="string">&quot;payment-service&quot;</span>)</span><br><span class="line">                .register(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 初始化性能指标</span></span><br><span class="line">        <span class="built_in">this</span>.databaseQueryTimer = Timer.builder(<span class="string">&quot;database.query.duration&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;Database query execution time&quot;</span>)</span><br><span class="line">                .register(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">this</span>.externalApiTimer = Timer.builder(<span class="string">&quot;external.api.duration&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;External API call duration&quot;</span>)</span><br><span class="line">                .register(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 初始化系统指标</span></span><br><span class="line">        <span class="built_in">this</span>.activeConnectionGauge = Gauge.builder(<span class="string">&quot;system.connections.active&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;Number of active database connections&quot;</span>)</span><br><span class="line">                .register(meterRegistry, <span class="built_in">this</span>, CustomMetricsCollector::getActiveConnections);</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">this</span>.cacheHitRateGauge = Gauge.builder(<span class="string">&quot;cache.hit.rate&quot;</span>)</span><br><span class="line">                .description(<span class="string">&quot;Cache hit rate percentage&quot;</span>)</span><br><span class="line">                .register(meterRegistry, <span class="built_in">this</span>, CustomMetricsCollector::getCacheHitRate);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 记录业务操作</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recordBusinessOperation</span><span class="params">(String operation, Map&lt;String, String&gt; tags)</span> &#123;</span><br><span class="line">        Timer.<span class="type">Sample</span> <span class="variable">sample</span> <span class="operator">=</span> Timer.start(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">switch</span> (operation) &#123;</span><br><span class="line">                <span class="keyword">case</span> <span class="string">&quot;order.created&quot;</span>:</span><br><span class="line">                    orderCreatedCounter.increment(</span><br><span class="line">                        Tags.of(<span class="string">&quot;status&quot;</span>, tags.getOrDefault(<span class="string">&quot;status&quot;</span>, <span class="string">&quot;unknown&quot;</span>))</span><br><span class="line">                    );</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">case</span> <span class="string">&quot;payment.success&quot;</span>:</span><br><span class="line">                    paymentSuccessCounter.increment(</span><br><span class="line">                        Tags.of(<span class="string">&quot;method&quot;</span>, tags.getOrDefault(<span class="string">&quot;method&quot;</span>, <span class="string">&quot;unknown&quot;</span>))</span><br><span class="line">                    );</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                <span class="keyword">default</span>:</span><br><span class="line">                    log.warn(<span class="string">&quot;Unknown business operation: &#123;&#125;&quot;</span>, operation);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            sample.stop(Timer.builder(<span class="string">&quot;business.operation.duration&quot;</span>)</span><br><span class="line">                    .tag(<span class="string">&quot;operation&quot;</span>, operation)</span><br><span class="line">                    .register(meterRegistry));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 记录数据库查询性能</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; T <span class="title function_">recordDatabaseQuery</span><span class="params">(String queryType, Supplier&lt;T&gt; queryOperation)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> databaseQueryTimer.recordCallable(() -&gt; &#123;</span><br><span class="line">            Timer.<span class="type">Sample</span> <span class="variable">sample</span> <span class="operator">=</span> Timer.start(meterRegistry);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="type">T</span> <span class="variable">result</span> <span class="operator">=</span> queryOperation.get();</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 记录查询成功</span></span><br><span class="line">                meterRegistry.counter(<span class="string">&quot;database.query.total&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;type&quot;</span>, queryType,</span><br><span class="line">                        <span class="string">&quot;status&quot;</span>, <span class="string">&quot;success&quot;</span></span><br><span class="line">                ).increment();</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">return</span> result;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                <span class="comment">// 记录查询失败</span></span><br><span class="line">                meterRegistry.counter(<span class="string">&quot;database.query.total&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;type&quot;</span>, queryType,</span><br><span class="line">                        <span class="string">&quot;status&quot;</span>, <span class="string">&quot;error&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;error&quot;</span>, e.getClass().getSimpleName()</span><br><span class="line">                ).increment();</span><br><span class="line">                <span class="keyword">throw</span> e;</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                sample.stop(Timer.builder(<span class="string">&quot;database.query.detailed.duration&quot;</span>)</span><br><span class="line">                        .tag(<span class="string">&quot;type&quot;</span>, queryType)</span><br><span class="line">                        .register(meterRegistry));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 记录外部API调用</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; T <span class="title function_">recordExternalApiCall</span><span class="params">(String apiName, String method, Supplier&lt;T&gt; apiCall)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Timer.Sample.start(meterRegistry)</span><br><span class="line">                .stop(externalApiTimer.wrap(() -&gt; &#123;</span><br><span class="line">                    <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">                    </span><br><span class="line">                    <span class="keyword">try</span> &#123;</span><br><span class="line">                        <span class="type">T</span> <span class="variable">result</span> <span class="operator">=</span> apiCall.get();</span><br><span class="line">                        </span><br><span class="line">                        <span class="comment">// 记录成功调用</span></span><br><span class="line">                        meterRegistry.counter(<span class="string">&quot;external.api.calls.total&quot;</span>,</span><br><span class="line">                                <span class="string">&quot;api&quot;</span>, apiName,</span><br><span class="line">                                <span class="string">&quot;method&quot;</span>, method,</span><br><span class="line">                                <span class="string">&quot;status&quot;</span>, <span class="string">&quot;success&quot;</span></span><br><span class="line">                        ).increment();</span><br><span class="line">                        </span><br><span class="line">                        <span class="keyword">return</span> result;</span><br><span class="line">                    &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                        <span class="comment">// 记录失败调用</span></span><br><span class="line">                        meterRegistry.counter(<span class="string">&quot;external.api.calls.total&quot;</span>,</span><br><span class="line">                                <span class="string">&quot;api&quot;</span>, apiName,</span><br><span class="line">                                <span class="string">&quot;method&quot;</span>, method,</span><br><span class="line">                                <span class="string">&quot;status&quot;</span>, <span class="string">&quot;error&quot;</span>,</span><br><span class="line">                                <span class="string">&quot;error&quot;</span>, e.getClass().getSimpleName()</span><br><span class="line">                        ).increment();</span><br><span class="line">                        <span class="keyword">throw</span> e;</span><br><span class="line">                    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                        <span class="type">long</span> <span class="variable">duration</span> <span class="operator">=</span> System.currentTimeMillis() - startTime;</span><br><span class="line">                        log.debug(<span class="string">&quot;External API call completed: &#123;&#125; &#123;&#125; in &#123;&#125;ms&quot;</span>, method, apiName, duration);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;));</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取活跃连接数（示例实现）</span></span><br><span class="line">    <span class="keyword">private</span> Number <span class="title function_">getActiveConnections</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="comment">// 这里应该从连接池获取实际的活跃连接数</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">42</span>; <span class="comment">// 示例值</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取缓存命中率（示例实现）</span></span><br><span class="line">    <span class="keyword">private</span> Number <span class="title function_">getCacheHitRate</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="comment">// 这里应该从缓存系统获取实际的命中率</span></span><br><span class="line">        <span class="keyword">return</span> <span class="number">0.85</span>; <span class="comment">// 示例值：85%命中率</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-业务监控切面"><a href="#2-业务监控切面" class="headerlink" title="2. 业务监控切面"></a>2. 业务监控切面</h3><p>利用Spring AOP实现无侵入的业务监控：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BusinessMetricsAspect</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> MeterRegistry meterRegistry;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, Timer&gt; methodTimers = <span class="keyword">new</span> <span class="title class_">ConcurrentHashMap</span>&lt;&gt;();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">BusinessMetricsAspect</span><span class="params">(MeterRegistry meterRegistry)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.meterRegistry = meterRegistry;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 监控所有标注了<span class="doctag">@Monitored</span>的方法</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Around(&quot;@annotation(monitored)&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">monitorMethod</span><span class="params">(ProceedingJoinPoint joinPoint, Monitored monitored)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">methodName</span> <span class="operator">=</span> joinPoint.getSignature().getName();</span><br><span class="line">        <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> joinPoint.getTarget().getClass().getSimpleName();</span><br><span class="line">        <span class="type">String</span> <span class="variable">metricName</span> <span class="operator">=</span> monitored.value().isEmpty() ? </span><br><span class="line">                String.format(<span class="string">&quot;%s.%s&quot;</span>, className, methodName) : monitored.value();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获取或创建计时器</span></span><br><span class="line">        <span class="type">Timer</span> <span class="variable">timer</span> <span class="operator">=</span> methodTimers.computeIfAbsent(metricName, </span><br><span class="line">                name -&gt; Timer.builder(<span class="string">&quot;method.execution.time&quot;</span>)</span><br><span class="line">                        .description(<span class="string">&quot;Method execution time&quot;</span>)</span><br><span class="line">                        .tag(<span class="string">&quot;method&quot;</span>, name)</span><br><span class="line">                        .tag(<span class="string">&quot;class&quot;</span>, className)</span><br><span class="line">                        .register(meterRegistry));</span><br><span class="line">        </span><br><span class="line">        Timer.<span class="type">Sample</span> <span class="variable">sample</span> <span class="operator">=</span> Timer.start(meterRegistry);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">Object</span> <span class="variable">result</span> <span class="operator">=</span> joinPoint.proceed();</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 记录成功执行</span></span><br><span class="line">            meterRegistry.counter(<span class="string">&quot;method.execution.total&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;method&quot;</span>, metricName,</span><br><span class="line">                    <span class="string">&quot;status&quot;</span>, <span class="string">&quot;success&quot;</span></span><br><span class="line">            ).increment();</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> result;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="comment">// 记录异常执行</span></span><br><span class="line">            meterRegistry.counter(<span class="string">&quot;method.execution.total&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;method&quot;</span>, metricName,</span><br><span class="line">                    <span class="string">&quot;status&quot;</span>, <span class="string">&quot;error&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;exception&quot;</span>, e.getClass().getSimpleName()</span><br><span class="line">            ).increment();</span><br><span class="line">            </span><br><span class="line">            log.error(<span class="string">&quot;Method execution failed: &#123;&#125;&quot;</span>, metricName, e);</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            sample.stop(timer);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 监控Service层的所有公共方法</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Around(&quot;execution(* com.example.service..*.*(..))&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">monitorServiceMethods</span><span class="params">(ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">serviceName</span> <span class="operator">=</span> joinPoint.getTarget().getClass().getSimpleName();</span><br><span class="line">        <span class="type">String</span> <span class="variable">methodName</span> <span class="operator">=</span> joinPoint.getSignature().getName();</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> Timer.Sample.start(meterRegistry)</span><br><span class="line">                .stop(Timer.builder(<span class="string">&quot;service.method.duration&quot;</span>)</span><br><span class="line">                        .description(<span class="string">&quot;Service method execution time&quot;</span>)</span><br><span class="line">                        .tag(<span class="string">&quot;service&quot;</span>, serviceName)</span><br><span class="line">                        .tag(<span class="string">&quot;method&quot;</span>, methodName)</span><br><span class="line">                        .register(meterRegistry)</span><br><span class="line">                        .wrap(() -&gt; &#123;</span><br><span class="line">                            <span class="keyword">try</span> &#123;</span><br><span class="line">                                <span class="keyword">return</span> joinPoint.proceed();</span><br><span class="line">                            &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">                                meterRegistry.counter(<span class="string">&quot;service.method.errors&quot;</span>,</span><br><span class="line">                                        <span class="string">&quot;service&quot;</span>, serviceName,</span><br><span class="line">                                        <span class="string">&quot;method&quot;</span>, methodName,</span><br><span class="line">                                        <span class="string">&quot;error&quot;</span>, e.getClass().getSimpleName()</span><br><span class="line">                                ).increment();</span><br><span class="line">                                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(e);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 自定义监控注解</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Target(ElementType.METHOD)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Monitored &#123;</span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">recordArguments</span><span class="params">()</span> <span class="keyword">default</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">recordResult</span><span class="params">()</span> <span class="keyword">default</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用示例</span></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">OrderService</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Monitored(&quot;order.create&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> Order <span class="title function_">createOrder</span><span class="params">(CreateOrderRequest request)</span> &#123;</span><br><span class="line">        <span class="comment">// 业务逻辑</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Order</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Monitored(value = &quot;order.query&quot;, recordArguments = true)</span></span><br><span class="line">    <span class="keyword">public</span> Order <span class="title function_">getOrder</span><span class="params">(Long orderId)</span> &#123;</span><br><span class="line">        <span class="comment">// 查询逻辑</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Order</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-健康检查组件"><a href="#3-健康检查组件" class="headerlink" title="3. 健康检查组件"></a>3. 健康检查组件</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CustomHealthIndicator</span> <span class="keyword">implements</span> <span class="title class_">HealthIndicator</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> DataSource dataSource;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedisTemplate&lt;String, Object&gt; redisTemplate;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> Health <span class="title function_">health</span><span class="params">()</span> &#123;</span><br><span class="line">        Health.<span class="type">Builder</span> <span class="variable">builder</span> <span class="operator">=</span> Health.up();</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 检查数据库连接</span></span><br><span class="line">            checkDatabase(builder);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 检查Redis连接</span></span><br><span class="line">            checkRedis(builder);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 检查外部依赖</span></span><br><span class="line">            checkExternalDependencies(builder);</span><br><span class="line">            </span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">return</span> Health.down()</span><br><span class="line">                    .withDetail(<span class="string">&quot;error&quot;</span>, e.getMessage())</span><br><span class="line">                    .build();</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> builder.build();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">checkDatabase</span><span class="params">(Health.Builder builder)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> (<span class="type">Connection</span> <span class="variable">connection</span> <span class="operator">=</span> dataSource.getConnection()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (connection.isValid(<span class="number">5</span>)) &#123;</span><br><span class="line">                builder.withDetail(<span class="string">&quot;database&quot;</span>, <span class="string">&quot;UP&quot;</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                builder.withDetail(<span class="string">&quot;database&quot;</span>, <span class="string">&quot;DOWN - Invalid connection&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (SQLException e) &#123;</span><br><span class="line">            builder.down().withDetail(<span class="string">&quot;database&quot;</span>, <span class="string">&quot;DOWN - &quot;</span> + e.getMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">checkRedis</span><span class="params">(Health.Builder builder)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">String</span> <span class="variable">pong</span> <span class="operator">=</span> redisTemplate.getConnectionFactory()</span><br><span class="line">                    .getConnection()</span><br><span class="line">                    .ping();</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> (<span class="string">&quot;PONG&quot;</span>.equals(pong)) &#123;</span><br><span class="line">                builder.withDetail(<span class="string">&quot;redis&quot;</span>, <span class="string">&quot;UP&quot;</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                builder.withDetail(<span class="string">&quot;redis&quot;</span>, <span class="string">&quot;DOWN - No response&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            builder.down().withDetail(<span class="string">&quot;redis&quot;</span>, <span class="string">&quot;DOWN - &quot;</span> + e.getMessage());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">checkExternalDependencies</span><span class="params">(Health.Builder builder)</span> &#123;</span><br><span class="line">        <span class="comment">// 检查关键外部服务</span></span><br><span class="line">        Map&lt;String, String&gt; dependencies = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 示例：检查用户服务</span></span><br><span class="line">        dependencies.put(<span class="string">&quot;user-service&quot;</span>, checkServiceHealth(<span class="string">&quot;http://user-service/actuator/health&quot;</span>));</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 示例：检查支付服务</span></span><br><span class="line">        dependencies.put(<span class="string">&quot;payment-service&quot;</span>, checkServiceHealth(<span class="string">&quot;http://payment-service/actuator/health&quot;</span>));</span><br><span class="line">        </span><br><span class="line">        builder.withDetail(<span class="string">&quot;external-dependencies&quot;</span>, dependencies);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> String <span class="title function_">checkServiceHealth</span><span class="params">(String healthUrl)</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 这里应该实现实际的HTTP健康检查</span></span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;UP&quot;</span>;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;DOWN - &quot;</span> + e.getMessage();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、生产环境优化经验"><a href="#三、生产环境优化经验" class="headerlink" title="三、生产环境优化经验"></a>三、生产环境优化经验</h2><h3 id="1-性能调优实践"><a href="#1-性能调优实践" class="headerlink" title="1. 性能调优实践"></a>1. 性能调优实践</h3><p>在生产环境中，我们遇到了监控系统本身影响应用性能的问题：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitoringOptimizationConfig</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 优化指标导出配置</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="meta">@ConditionalOnProperty(name = &quot;monitoring.optimization.enabled&quot;, havingValue = &quot;true&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> MeterRegistryCustomizer&lt;PrometheusMeterRegistry&gt; <span class="title function_">metricsCommonTags</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> registry -&gt; &#123;</span><br><span class="line">            <span class="comment">// 1. 减少不必要的标签维度</span></span><br><span class="line">            registry.config()</span><br><span class="line">                    .maximumExpectedTags(<span class="string">&quot;method.execution.time&quot;</span>, TagsEntry.of(<span class="string">&quot;method&quot;</span>, <span class="string">&quot;class&quot;</span>))</span><br><span class="line">                    .maximumExpectedTags(<span class="string">&quot;database.query.duration&quot;</span>, TagsEntry.of(<span class="string">&quot;type&quot;</span>))</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 2. 设置合理的直方图桶</span></span><br><span class="line">                    .defaultHistogramBuckets(Duration.ofMillis(<span class="number">1</span>), Duration.ofMillis(<span class="number">5</span>), </span><br><span class="line">                                           Duration.ofMillis(<span class="number">10</span>), Duration.ofMillis(<span class="number">50</span>), </span><br><span class="line">                                           Duration.ofMillis(<span class="number">100</span>), Duration.ofMillis(<span class="number">500</span>), </span><br><span class="line">                                           Duration.ofSeconds(<span class="number">1</span>), Duration.ofSeconds(<span class="number">5</span>))</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 3. 限制指标名称长度</span></span><br><span class="line">                    .namingConvention(NamingConvention.dot)</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 4. 启用指标过滤</span></span><br><span class="line">                    .meterFilter(MeterFilter.deny(id -&gt; &#123;</span><br><span class="line">                        <span class="comment">// 过滤掉不必要的JVM指标</span></span><br><span class="line">                        <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> id.getName();</span><br><span class="line">                        <span class="keyword">return</span> name.startsWith(<span class="string">&quot;jvm.threads.&quot;</span>) &amp;&amp; </span><br><span class="line">                               (name.contains(<span class="string">&quot;daemon&quot;</span>) || name.contains(<span class="string">&quot;peak&quot;</span>));</span><br><span class="line">                    &#125;))</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 5. 设置指标保留时间</span></span><br><span class="line">                    .meterFilter(MeterFilter.maximumExpectedTags(<span class="string">&quot;http.server.requests&quot;</span>, </span><br><span class="line">                                                                <span class="string">&quot;method&quot;</span>, <span class="string">&quot;uri&quot;</span>, <span class="string">&quot;status&quot;</span>, <span class="number">50</span>));</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 异步指标处理</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> AsyncMetricsProcessor <span class="title function_">asyncMetricsProcessor</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">AsyncMetricsProcessor</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">AsyncMetricsProcessor</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">ExecutorService</span> <span class="variable">executorService</span> <span class="operator">=</span> </span><br><span class="line">            Executors.newFixedThreadPool(<span class="number">2</span>, r -&gt; &#123;</span><br><span class="line">                <span class="type">Thread</span> <span class="variable">t</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Thread</span>(r, <span class="string">&quot;metrics-processor&quot;</span>);</span><br><span class="line">                t.setDaemon(<span class="literal">true</span>);</span><br><span class="line">                <span class="keyword">return</span> t;</span><br><span class="line">            &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> BlockingQueue&lt;MetricEvent&gt; eventQueue = <span class="keyword">new</span> <span class="title class_">LinkedBlockingQueue</span>&lt;&gt;(<span class="number">1000</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@PostConstruct</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">init</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="comment">// 启动异步处理线程</span></span><br><span class="line">        executorService.submit(<span class="built_in">this</span>::processMetricEvents);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">submitMetricEvent</span><span class="params">(MetricEvent event)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (!eventQueue.offer(event)) &#123;</span><br><span class="line">            log.warn(<span class="string">&quot;Metric event queue full, dropping event: &#123;&#125;&quot;</span>, event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">processMetricEvents</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">while</span> (!Thread.currentThread().isInterrupted()) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="type">MetricEvent</span> <span class="variable">event</span> <span class="operator">=</span> eventQueue.take();</span><br><span class="line">                processEvent(event);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                Thread.currentThread().interrupt();</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                log.error(<span class="string">&quot;Error processing metric event&quot;</span>, e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">processEvent</span><span class="params">(MetricEvent event)</span> &#123;</span><br><span class="line">        <span class="comment">// 批量处理指标事件，减少对主线程的影响</span></span><br><span class="line">        <span class="comment">// 具体实现根据需求定制</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Data</span></span><br><span class="line">    <span class="meta">@AllArgsConstructor</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">MetricEvent</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> String metricName;</span><br><span class="line">        <span class="keyword">private</span> Map&lt;String, String&gt; tags;</span><br><span class="line">        <span class="keyword">private</span> Object value;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">long</span> timestamp;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-监控数据存储优化"><a href="#2-监控数据存储优化" class="headerlink" title="2. 监控数据存储优化"></a>2. 监控数据存储优化</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Prometheus配置优化</span></span><br><span class="line"><span class="attr">global:</span></span><br><span class="line">  <span class="attr">scrape_interval:</span> <span class="string">15s</span></span><br><span class="line">  <span class="attr">evaluation_interval:</span> <span class="string">15s</span></span><br><span class="line">  <span class="comment"># 减少标签基数</span></span><br><span class="line">  <span class="attr">external_labels:</span></span><br><span class="line">    <span class="attr">cluster:</span> <span class="string">&#x27;production&#x27;</span></span><br><span class="line">    </span><br><span class="line"><span class="attr">rule_files:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&quot;alert_rules.yml&quot;</span></span><br><span class="line">  </span><br><span class="line"><span class="attr">scrape_configs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">job_name:</span> <span class="string">&#x27;spring-boot-apps&#x27;</span></span><br><span class="line">    <span class="attr">metrics_path:</span> <span class="string">&#x27;/actuator/prometheus&#x27;</span></span><br><span class="line">    <span class="attr">scrape_interval:</span> <span class="string">30s</span>  <span class="comment"># 适当增加采集间隔</span></span><br><span class="line">    <span class="attr">static_configs:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">targets:</span> [<span class="string">&#x27;app1:8080&#x27;</span>, <span class="string">&#x27;app2:8080&#x27;</span>]</span><br><span class="line">    <span class="attr">metric_relabel_configs:</span></span><br><span class="line">      <span class="comment"># 丢弃高基数指标</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">source_labels:</span> [<span class="string">__name__</span>]</span><br><span class="line">        <span class="attr">regex:</span> <span class="string">&#x27;jvm_gc_.*_percent&#x27;</span></span><br><span class="line">        <span class="attr">action:</span> <span class="string">drop</span></span><br><span class="line">      <span class="comment"># 限制URI标签的值</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">source_labels:</span> [<span class="string">uri</span>]</span><br><span class="line">        <span class="attr">regex:</span> <span class="string">&#x27;/api/users/[0-9]+&#x27;</span></span><br><span class="line">        <span class="attr">target_label:</span> <span class="string">uri</span></span><br><span class="line">        <span class="attr">replacement:</span> <span class="string">&#x27;/api/users/&#123;id&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 存储配置</span></span><br><span class="line"><span class="attr">storage:</span></span><br><span class="line">  <span class="attr">tsdb:</span></span><br><span class="line">    <span class="attr">retention.time:</span> <span class="string">15d</span></span><br><span class="line">    <span class="attr">retention.size:</span> <span class="string">50GB</span></span><br><span class="line">    <span class="comment"># 压缩配置</span></span><br><span class="line">    <span class="attr">compression:</span> <span class="string">snappy</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-告警规则设计"><a href="#3-告警规则设计" class="headerlink" title="3. 告警规则设计"></a>3. 告警规则设计</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># alert_rules.yml</span></span><br><span class="line"><span class="attr">groups:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">application-alerts</span></span><br><span class="line">    <span class="attr">rules:</span></span><br><span class="line">      <span class="comment"># 应用可用性告警</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">alert:</span> <span class="string">ApplicationDown</span></span><br><span class="line">        <span class="attr">expr:</span> <span class="string">up&#123;job=&quot;spring-boot-apps&quot;&#125;</span> <span class="string">==</span> <span class="number">0</span></span><br><span class="line">        <span class="attr">for:</span> <span class="string">1m</span></span><br><span class="line">        <span class="attr">labels:</span></span><br><span class="line">          <span class="attr">severity:</span> <span class="string">critical</span></span><br><span class="line">        <span class="attr">annotations:</span></span><br><span class="line">          <span class="attr">summary:</span> <span class="string">&quot;Application <span class="template-variable">&#123;&#123; $labels.instance &#125;&#125;</span> is down&quot;</span></span><br><span class="line">          <span class="attr">description:</span> <span class="string">&quot;Application has been down for more than 1 minute&quot;</span></span><br><span class="line">      </span><br><span class="line">      <span class="comment"># 高错误率告警</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">alert:</span> <span class="string">HighErrorRate</span></span><br><span class="line">        <span class="attr">expr:</span> <span class="string">rate(http_server_requests_total&#123;status=~&quot;5..&quot;&#125;[5m])</span> <span class="string">&gt;</span> <span class="number">0.1</span></span><br><span class="line">        <span class="attr">for:</span> <span class="string">2m</span></span><br><span class="line">        <span class="attr">labels:</span></span><br><span class="line">          <span class="attr">severity:</span> <span class="string">warning</span></span><br><span class="line">        <span class="attr">annotations:</span></span><br><span class="line">          <span class="attr">summary:</span> <span class="string">&quot;High error rate on <span class="template-variable">&#123;&#123; $labels.instance &#125;&#125;</span>&quot;</span></span><br><span class="line">          <span class="attr">description:</span> <span class="string">&quot;Error rate is <span class="template-variable">&#123;&#123; $value &#125;&#125;</span> requests per second&quot;</span></span><br><span class="line">      </span><br><span class="line">      <span class="comment"># 响应时间告警</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">alert:</span> <span class="string">HighResponseTime</span></span><br><span class="line">        <span class="attr">expr:</span> <span class="string">histogram_quantile(0.95,</span> <span class="string">rate(http_server_requests_duration_seconds_bucket[5m]))</span> <span class="string">&gt;</span> <span class="number">1</span></span><br><span class="line">        <span class="attr">for:</span> <span class="string">3m</span></span><br><span class="line">        <span class="attr">labels:</span></span><br><span class="line">          <span class="attr">severity:</span> <span class="string">warning</span></span><br><span class="line">        <span class="attr">annotations:</span></span><br><span class="line">          <span class="attr">summary:</span> <span class="string">&quot;High response time on <span class="template-variable">&#123;&#123; $labels.instance &#125;&#125;</span>&quot;</span></span><br><span class="line">          <span class="attr">description:</span> <span class="string">&quot;95th percentile response time is <span class="template-variable">&#123;&#123; $value &#125;&#125;</span>s&quot;</span></span><br><span class="line">      </span><br><span class="line">      <span class="comment"># JVM内存告警</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">alert:</span> <span class="string">HighMemoryUsage</span></span><br><span class="line">        <span class="attr">expr:</span> <span class="string">(jvm_memory_used_bytes</span> <span class="string">/</span> <span class="string">jvm_memory_max_bytes)</span> <span class="string">&gt;</span> <span class="number">0.8</span></span><br><span class="line">        <span class="attr">for:</span> <span class="string">5m</span></span><br><span class="line">        <span class="attr">labels:</span></span><br><span class="line">          <span class="attr">severity:</span> <span class="string">warning</span></span><br><span class="line">        <span class="attr">annotations:</span></span><br><span class="line">          <span class="attr">summary:</span> <span class="string">&quot;High memory usage on <span class="template-variable">&#123;&#123; $labels.instance &#125;&#125;</span>&quot;</span></span><br><span class="line">          <span class="attr">description:</span> <span class="string">&quot;Memory usage is <span class="template-variable">&#123;&#123; $value | humanizePercentage &#125;&#125;</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="四、团队协作与运维实践"><a href="#四、团队协作与运维实践" class="headerlink" title="四、团队协作与运维实践"></a>四、团队协作与运维实践</h2><h3 id="1-监控规范建设"><a href="#1-监控规范建设" class="headerlink" title="1. 监控规范建设"></a>1. 监控规范建设</h3><p>为了确保监控体系的有效性，我们建立了以下规范：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 监控指标命名规范</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitoringStandards</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 业务指标命名规范</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">BUSINESS_METRIC_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;business.&quot;</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">SYSTEM_METRIC_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;system.&quot;</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">EXTERNAL_METRIC_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;external.&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 标签规范</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String[] REQUIRED_TAGS = &#123;<span class="string">&quot;service&quot;</span>, <span class="string">&quot;environment&quot;</span>&#125;;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String[] OPTIONAL_TAGS = &#123;<span class="string">&quot;version&quot;</span>, <span class="string">&quot;instance&quot;</span>&#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 指标描述规范</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">buildMetricDescription</span><span class="params">(String action, String resource, String unit)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> String.format(<span class="string">&quot;%s of %s in %s&quot;</span>, action, resource, unit);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 示例：创建标准的业务指标</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Counter <span class="title function_">createBusinessCounter</span><span class="params">(MeterRegistry registry, String operation, String resource)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Counter.builder(BUSINESS_METRIC_PREFIX + operation + <span class="string">&quot;.&quot;</span> + resource + <span class="string">&quot;.total&quot;</span>)</span><br><span class="line">                .description(buildMetricDescription(<span class="string">&quot;Total number of &quot;</span> + operation, resource, <span class="string">&quot;count&quot;</span>))</span><br><span class="line">                .tag(<span class="string">&quot;operation&quot;</span>, operation)</span><br><span class="line">                .tag(<span class="string">&quot;resource&quot;</span>, resource)</span><br><span class="line">                .register(registry);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-监控看板设计"><a href="#2-监控看板设计" class="headerlink" title="2. 监控看板设计"></a>2. 监控看板设计</h3><p>我们设计了分层的监控看板体系：</p>
+<ul>
+<li><strong>基础设施层</strong>：服务器、网络、存储监控</li>
+<li><strong>应用层</strong>：JVM、HTTP请求、数据库连接监控  </li>
+<li><strong>业务层</strong>：订单量、支付成功率、用户活跃度监控</li>
+<li><strong>用户体验层</strong>：页面加载时间、API响应时间监控</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>经过两年的实践，我们的微服务监控体系已经成为团队不可或缺的技术基础设施。</p>
+<p><strong>核心经验总结：</strong></p>
+<ol>
+<li><strong>选型要务实</strong>：开源方案结合实际需求，不追求大而全</li>
+<li><strong>实施要渐进</strong>：从核心指标开始，逐步完善监控体系</li>
+<li><strong>性能要平衡</strong>：监控系统不能成为应用性能的负担</li>
+<li><strong>规范要建立</strong>：统一的指标命名和标签规范是长期维护的基础</li>
+</ol>
+<p><strong>实际应用价值：</strong></p>
+<ul>
+<li>故障发现时间从30分钟缩短到2分钟</li>
+<li>系统可用性从99.5%提升到99.9%</li>
+<li>为性能优化提供了精准的数据依据</li>
+<li>建立了完整的运维知识库</li>
+</ul>
+<p>这套监控体系不仅解决了我们当前的运维痛点，更为团队的技术成长和系统演进奠定了坚实基础。希望我们的经验能为其他团队在微服务监控建设的道路上提供有价值的参考。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2024/05/03/java-spring-boot-microservices-monitoring-system-practice/" title="Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验">http://example.com/2024/05/03/java-spring-boot-microservices-monitoring-system-practice/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7/" rel="tag"># 可观测性</a>
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/Spring-Boot/" rel="tag"># Spring Boot</a>
+              <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9B%91%E6%8E%A7/" rel="tag"># 微服务监控</a>
+              <a href="/tags/Prometheus/" rel="tag"># Prometheus</a>
+              <a href="/tags/Grafana/" rel="tag"># Grafana</a>
+              <a href="/tags/Micrometer/" rel="tag"># Micrometer</a>
+              <a href="/tags/APM/" rel="tag"># APM</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/04/26/ai-agent-conversation-state-management-debugging-practice/" rel="prev" title="AI Agent 多轮对话状态管理异常调试实战：从状态混乱到精确控制的解决过程">
+      <i class="fa fa-chevron-left"></i> AI Agent 多轮对话状态管理异常调试实战：从状态混乱到精确控制的解决过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/05/10/enterprise-rpa-architecture-design-technology-selection-practice/" rel="next" title="企业级 RPA 项目架构设计与技术选型实战：从影刀到 UIBot 的完整对比与落地经验">
+      企业级 RPA 项目架构设计与技术选型实战：从影刀到 UIBot 的完整对比与落地经验 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java-Spring-Boot-%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%9B%91%E6%8E%A7%E4%BD%93%E7%B3%BB%E5%BB%BA%E8%AE%BE%E5%AE%9E%E8%B7%B5%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%90%AD%E5%BB%BA%E5%88%B0%E7%94%9F%E4%BA%A7%E4%BC%98%E5%8C%96%E7%9A%84%E5%AE%8C%E6%95%B4%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.</span> <span class="nav-text">Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B%E4%B8%8E%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.2.</span> <span class="nav-text">一、技术选型与架构设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%9B%91%E6%8E%A7%E6%8A%80%E6%9C%AF%E6%A0%88%E9%80%89%E5%9E%8B%E8%BF%87%E7%A8%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">1. 监控技术栈选型过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%9B%91%E6%8E%A7%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.2.2.</span> <span class="nav-text">2. 监控架构设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A0%B8%E5%BF%83%E7%9B%91%E6%8E%A7%E7%BB%84%E4%BB%B6%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">二、核心监控组件实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%8C%87%E6%A0%87%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 自定义指标收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%B8%9A%E5%8A%A1%E7%9B%91%E6%8E%A7%E5%88%87%E9%9D%A2"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 业务监控切面</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E7%BB%84%E4%BB%B6"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. 健康检查组件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E4%BC%98%E5%8C%96%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.4.</span> <span class="nav-text">三、生产环境优化经验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 性能调优实践</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%9B%91%E6%8E%A7%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E4%BC%98%E5%8C%96"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 监控数据存储优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%91%8A%E8%AD%A6%E8%A7%84%E5%88%99%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.4.3.</span> <span class="nav-text">3. 告警规则设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%9B%A2%E9%98%9F%E5%8D%8F%E4%BD%9C%E4%B8%8E%E8%BF%90%E7%BB%B4%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.5.</span> <span class="nav-text">四、团队协作与运维实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%9B%91%E6%8E%A7%E8%A7%84%E8%8C%83%E5%BB%BA%E8%AE%BE"><span class="nav-number">1.5.1.</span> <span class="nav-text">1. 监控规范建设</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%9B%91%E6%8E%A7%E7%9C%8B%E6%9D%BF%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.5.2.</span> <span class="nav-text">2. 监控看板设计</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">87</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">37</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">267</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">924k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">14:01</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
