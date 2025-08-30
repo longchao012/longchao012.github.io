@@ -175,7 +175,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/30/java-jvm-outofmemoryerror-production-system-crash-troubleshooting/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/28/python-redis-distributed-lock-deadlock-debugging-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -189,7 +189,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/08/30/java-jvm-outofmemoryerror-production-system-crash-troubleshooting/" class="post-title-link" itemprop="url">Java JVM 内存溢出生产系统崩溃故障排查实战：从OutOfMemoryError到内存调优的完整解决过程</a>
+            <a href="/2022/07/28/python-redis-distributed-lock-deadlock-debugging-practice/" class="post-title-link" itemprop="url">Python Redis分布式锁死锁调试实战：从并发冲突到原子性重构的完整排查过程</a>
         </h2>
 
         <div class="post-meta">
@@ -199,311 +199,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-08-30 09:15:00" itemprop="dateCreated datePublished" datetime="2024-08-30T09:15:00+08:00">2024-08-30</time>
+              <time title="创建时间：2022-07-28 18:11:14" itemprop="dateCreated datePublished" datetime="2022-07-28T18:11:14+08:00">2022-07-28</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 17:00:17" itemprop="dateModified" datetime="2025-08-27T17:00:17+08:00">2025-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>13k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>记录一次Java生产系统JVM内存溢出导致服务崩溃的完整故障排查过程，从OutOfMemoryError现象到内存泄漏根因定位，再到JVM参数调优和代码优化，包含详细的内存分析工具使用和解决方案实施。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/08/30/java-jvm-outofmemoryerror-production-system-crash-troubleshooting/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/23/java-microservices-avalanche-failure-troubleshooting-practice/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/08/23/java-microservices-avalanche-failure-troubleshooting-practice/" class="post-title-link" itemprop="url">Java 微服务雪崩效应生产故障排查实战：从服务连锁失效到弹性架构重构的完整过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-08-23 14:45:00" itemprop="dateCreated datePublished" datetime="2024-08-23T14:45:00+08:00">2024-08-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 16:57:06" itemprop="dateModified" datetime="2025-08-27T16:57:06+08:00">2025-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>13k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>记录一次Java微服务系统雪崩效应的生产故障排查过程，从单点故障引发的连锁反应到弹性架构重构，包含详细的故障分析、熔断器实现和服务治理方案，为微服务架构提供容错设计参考。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/08/23/java-microservices-avalanche-failure-troubleshooting-practice/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/16/ai-agent-tool-calling-performance-bottleneck-debugging-practice/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/08/16/ai-agent-tool-calling-performance-bottleneck-debugging-practice/" class="post-title-link" itemprop="url">AI Agent 工具调用性能瓶颈调试实战：从响应延迟到高效执行的完整排查过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-08-16 11:30:00" itemprop="dateCreated datePublished" datetime="2024-08-16T11:30:00+08:00">2024-08-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 16:51:30" itemprop="dateModified" datetime="2025-08-27T16:51:30+08:00">2025-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/%E6%8A%80%E6%9C%AF%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">技术调试</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>16k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>15 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>记录一次AI Agent工具调用系统中性能瓶颈的完整调试过程，从响应时间异常到工具执行效率优化，包含详细的性能分析工具和代码优化实现，为AI Agent系统提供性能调优参考。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/08/16/ai-agent-tool-calling-performance-bottleneck-debugging-practice/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/09/python-async-http-connection-pool-reuse-debugging-practice/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/08/09/python-async-http-connection-pool-reuse-debugging-practice/" class="post-title-link" itemprop="url">Python 异步HTTP连接池复用异常调试实战：从连接泄漏到高效复用的排查过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-08-09 16:20:00" itemprop="dateCreated datePublished" datetime="2024-08-09T16:20:00+08:00">2024-08-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 16:46:32" itemprop="dateModified" datetime="2025-08-27T16:46:32+08:00">2025-08-27</time>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -515,7 +218,7 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/%E6%8A%80%E6%9C%AF%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">技术调试</span></a>
+                  <a href="/categories/Python/%E5%8A%9F%E8%83%BD%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">功能调试</span></a>
                 </span>
             </span>
 
@@ -525,14 +228,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>18k</span>
+              <span>12k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>17 分钟</span>
+              <span>11 分钟</span>
             </span>
 
         </div>
@@ -544,10 +247,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一次Python异步HTTP应用中连接池复用异常的完整调试过程，从连接数异常增长到连接复用失效，再到性能优化方案实施，包含详细的调试工具和代码优化实现。</p>
+          <p>深度分享Python Redis分布式锁死锁问题的完整调试过程，从并发冲突现象到原子性锁机制重构的全过程实战经验，包含详细的问题现象、排查步骤、解决思路和优化方案，为Python分布式系统开发提供实用的调试指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/08/09/python-async-http-connection-pool-reuse-debugging-practice/">
+              <a class="btn" href="/2022/07/28/python-redis-distributed-lock-deadlock-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -571,7 +274,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/08/02/python-coroutine-semaphore-leak-debugging-practice/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/21/python-requests-anti-scraping-debug/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -585,7 +288,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/08/02/python-coroutine-semaphore-leak-debugging-practice/" class="post-title-link" itemprop="url">Python 协程并发控制中的信号量泄漏调试实战：从并发失控到精准控制的排查过程</a>
+            <a href="/2022/07/21/python-requests-anti-scraping-debug/" class="post-title-link" itemprop="url">从调试到稳定抓取：一次 Python requests 反爬突破的完整记录</a>
         </h2>
 
         <div class="post-meta">
@@ -595,14 +298,109 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-08-02 13:45:00" itemprop="dateCreated datePublished" datetime="2024-08-02T13:45:00+08:00">2024-08-02</time>
+              <time title="创建时间：2022-07-21 11:39:53" itemprop="dateCreated datePublished" datetime="2022-07-21T11:39:53+08:00">2022-07-21</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 16:42:45" itemprop="dateModified" datetime="2025-08-27T16:42:45+08:00">2025-08-27</time>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分享用Python requests对接某资讯站点时，从出现问题到稳定抓取的完整调试过程与关键实现，提供一套可迁移的方法论。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/21/python-requests-anti-scraping-debug/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/16/python-web-application-memory-leak-server-crash-production-incident-postmortem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/16/python-web-application-memory-leak-server-crash-production-incident-postmortem/" class="post-title-link" itemprop="url">Python Web应用内存泄漏引发服务器宕机生产故障复盘：从内存异常到系统崩溃的完整排查修复过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-16 22:03:41" itemprop="dateCreated datePublished" datetime="2022-07-16T22:03:41+08:00">2022-07-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -614,7 +412,7 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/%E6%8A%80%E6%9C%AF%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">技术调试</span></a>
+                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
                 </span>
             </span>
 
@@ -624,14 +422,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>16k</span>
+              <span>10k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>14 分钟</span>
+              <span>9 分钟</span>
             </span>
 
         </div>
@@ -643,10 +441,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一次Python协程应用中信号量泄漏导致并发控制失效的完整调试过程，从问题现象发现到根因定位，再到解决方案实施，包含详细的调试工具使用和代码优化实现。</p>
+          <p>深度复盘一次Python Web应用内存泄漏引发的服务器宕机生产故障，从内存使用异常到整个服务集群崩溃的完整排查修复过程，包含详细的故障现象、根因分析、解决方案和预防措施，为Python Web应用内存管理提供重要的实战参考。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/08/02/python-coroutine-semaphore-leak-debugging-practice/">
+              <a class="btn" href="/2022/07/16/python-web-application-memory-leak-server-crash-production-incident-postmortem/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -670,7 +468,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/26/java-springboot-threadpool-deadlock-troubleshooting-practice/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/07/06/python-web-application-memory-overflow-production-incident-postmortem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -684,7 +482,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/07/26/java-springboot-threadpool-deadlock-troubleshooting-practice/" class="post-title-link" itemprop="url">Java SpringBoot 应用线程池死锁生产故障排查实战：从系统卡死到优雅恢复的完整解决过程</a>
+            <a href="/2022/07/06/python-web-application-memory-overflow-production-incident-postmortem/" class="post-title-link" itemprop="url">Python Web应用内存溢出生产故障排查实战：从系统崩溃到根治优化的完整修复过程</a>
         </h2>
 
         <div class="post-meta">
@@ -694,14 +492,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-07-26 10:30:00" itemprop="dateCreated datePublished" datetime="2024-07-26T10:30:00+08:00">2024-07-26</time>
+              <time title="创建时间：2022-07-06 17:15:02" itemprop="dateCreated datePublished" datetime="2022-07-06T17:15:02+08:00">2022-07-06</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 15:32:57" itemprop="dateModified" datetime="2025-08-27T15:32:57+08:00">2025-08-27</time>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -709,11 +507,304 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
+                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>复盘一次Python Web应用内存溢出引发的生产故障，从系统完全崩溃到最终根治优化的完整修复过程，包含详细的故障现象、排查思路、根因分析、解决方案和预防措施，为Python Web开发者提供内存管理和性能优化的实战指导。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/06/python-web-application-memory-overflow-production-incident-postmortem/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/29/python-web-framework-selection-implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/29/python-web-framework-selection-implementation/" class="post-title-link" itemprop="url">Python Web框架选型与项目落地实战：从FastAPI到Django的技术决策与实践经验</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-06-29 11:00:48" itemprop="dateCreated datePublished" datetime="2022-06-29T11:00:48+08:00">2022-06-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>44k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>40 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>通过一个真实的企业级项目案例，详细分享从Python Web框架技术调研、选型决策到项目落地的完整经验。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/06/29/python-web-framework-selection-implementation/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/26/python-web-memory-leak-debugging-optimization-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/26/python-web-memory-leak-debugging-optimization-practice/" class="post-title-link" itemprop="url">Python Web应用内存泄漏排查与优化调试实战：从异常监控到根因定位的完整调试过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-06-26 17:11:56" itemprop="dateCreated datePublished" datetime="2022-06-26T17:11:56+08:00">2022-06-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/%E6%80%A7%E8%83%BD%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">性能调试</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>深入分享Python Web应用内存泄漏问题的完整调试过程，从内存异常监控告警到根因定位分析，从临时缓解措施到系统性优化方案的全过程实战经验，为Python Web应用性能优化提供实用的调试思路和解决方案。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/06/26/python-web-memory-leak-debugging-optimization-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/18/python-web-redis-distributed-lock-deadlock-debugging-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/18/python-web-redis-distributed-lock-deadlock-debugging-practice/" class="post-title-link" itemprop="url">Python Web应用Redis分布式锁死锁调试实战：从锁竞争到性能优化的完整排查过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-06-18 15:47:22" itemprop="dateCreated datePublished" datetime="2022-06-18T15:47:22+08:00">2022-06-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Python/%E8%B0%83%E8%AF%95%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">调试实战</span></a>
                 </span>
             </span>
 
@@ -742,10 +833,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一次Java SpringBoot应用生产环境中线程池死锁导致系统完全卡死的故障排查过程，从问题现象到根因分析，再到解决方案实施和预防措施建立，包含详细的排查工具使用和优化代码实现。</p>
+          <p>深度解析Python Web应用中Redis分布式锁死锁问题的完整调试过程，从锁竞争现象识别、死锁排查分析到最终性能优化方案，提供Python分布式系统中锁管理问题的实战调试经验和解决思路。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/07/26/java-springboot-threadpool-deadlock-troubleshooting-practice/">
+              <a class="btn" href="/2022/06/18/python-web-redis-distributed-lock-deadlock-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -769,7 +860,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/19/java-g1-garbage-collector-deep-analysis-performance-tuning/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/12/python-web-session-management-login-state-loss-debugging-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -783,7 +874,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/07/19/java-g1-garbage-collector-deep-analysis-performance-tuning/" class="post-title-link" itemprop="url">Java G1 垃圾收集器深度解析与性能调优实践：从原理到生产环境优化的完整指南</a>
+            <a href="/2022/06/12/python-web-session-management-login-state-loss-debugging-practice/" class="post-title-link" itemprop="url">Python Web应用Session管理异常导致用户登录状态丢失调试实战：从随机掉线到会话管理重构的完整排查过程</a>
         </h2>
 
         <div class="post-meta">
@@ -793,212 +884,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-07-19 14:15:00" itemprop="dateCreated datePublished" datetime="2024-07-19T14:15:00+08:00">2024-07-19</time>
+              <time title="创建时间：2022-06-12 16:45:28" itemprop="dateCreated datePublished" datetime="2022-06-12T16:45:28+08:00">2022-06-12</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 08:22:00" itemprop="dateModified" datetime="2025-08-27T08:22:00+08:00">2025-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">关键技术</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>14k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>12 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>深入解析Java G1垃圾收集器的核心原理和实现机制，从分代收集算法到Region管理，从并发标记到混合收集，包含完整的性能调优实践和生产环境优化案例，全面掌握G1收集器的技术精髓。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/07/19/java-g1-garbage-collector-deep-analysis-performance-tuning/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/12/rpa-finance-automation-project-implementation-experience/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/07/12/rpa-finance-automation-project-implementation-experience/" class="post-title-link" itemprop="url">RPA 财务自动化项目实战：从手工作业到智能流程的完整落地经验</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-07-12 11:40:00" itemprop="dateCreated datePublished" datetime="2024-07-12T11:40:00+08:00">2024-07-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 08:17:08" itemprop="dateModified" datetime="2025-08-27T08:17:08+08:00">2025-08-27</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>9.1k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>分享在企业财务部门实施RPA自动化的完整项目经验，从需求调研、工具选型到流程设计和落地实施，包含影刀平台的实际应用案例和踩坑心得，为企业数字化转型提供实战参考。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/07/12/rpa-finance-automation-project-implementation-experience/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/07/05/python-asyncio-memory-leak-troubleshooting-production-incident/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/07/05/python-asyncio-memory-leak-troubleshooting-production-incident/" class="post-title-link" itemprop="url">Python 异步编程内存泄漏生产故障排查实战：从OOM崩溃到内存优化的完整解决过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-07-05 16:20:00" itemprop="dateCreated datePublished" datetime="2024-07-05T16:20:00+08:00">2024-07-05</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 08:14:14" itemprop="dateModified" datetime="2025-08-27T08:14:14+08:00">2025-08-27</time>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1010,7 +903,7 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">生产实践</span></a>
+                  <a href="/categories/Python/%E5%8A%9F%E8%83%BD%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">功能调试</span></a>
                 </span>
             </span>
 
@@ -1020,14 +913,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>11k</span>
+              <span>9.5k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
+              <span>9 分钟</span>
             </span>
 
         </div>
@@ -1039,10 +932,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一次Python异步Web服务生产环境中严重内存泄漏的完整排查过程，从服务频繁OOM崩溃到根因定位，再到内存优化方案的实施，包含详细的排查工具和优化代码，为异步编程提供内存安全保障。</p>
+          <p>深入分享Python Web应用中Session管理异常导致用户登录状态随机丢失的完整调试过程，从问题现象分析到根因定位的详细排查步骤，包含Session配置优化、存储机制改进和最终解决方案，为Python Web开发中的会话管理提供实用的调试指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/07/05/python-asyncio-memory-leak-troubleshooting-production-incident/">
+              <a class="btn" href="/2022/06/12/python-web-session-management-login-state-loss-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1066,7 +959,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2024/06/28/ai-agent-multi-agent-collaboration-architecture-design-practice/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/06/Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -1080,7 +973,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/06/28/ai-agent-multi-agent-collaboration-architecture-design-practice/" class="post-title-link" itemprop="url">AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验</a>
+            <a href="/2022/06/06/Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Python中常用的 pip 命令</a>
         </h2>
 
         <div class="post-meta">
@@ -1090,14 +983,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-06-28 09:30:00" itemprop="dateCreated datePublished" datetime="2024-06-28T09:30:00+08:00">2024-06-28</time>
+              <time title="创建时间：2022-06-06 14:47:09" itemprop="dateCreated datePublished" datetime="2022-06-06T14:47:09+08:00">2022-06-06</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2025-08-27 08:09:20" itemprop="dateModified" datetime="2025-08-27T08:09:20+08:00">2025-08-27</time>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1105,11 +998,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
                 </span>
             </span>
 
@@ -1119,14 +1008,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>17k</span>
+              <span>1.5k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>16 分钟</span>
+              <span>1 分钟</span>
             </span>
 
         </div>
@@ -1138,10 +1027,105 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>分享在构建企业级多Agent协作系统过程中的完整架构设计经验，从单体Agent到分布式协作的演进过程，包含任务分解、Agent通信、负载均衡等核心技术实现和踩坑心得。</p>
+          <p>pip 是 Python 的包管理工具，用于安装和管理 Python 包。它是 Python 标准库的一部分，提供了简单易用的命令行接口。本文将详细介绍 Python 中常用的 pip 命令及其用法。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/06/28/ai-agent-multi-agent-collaboration-architecture-design-practice/">
+              <a class="btn" href="/2022/06/06/Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/30/Python%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/05/30/Python%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/" class="post-title-link" itemprop="url">Python基础语法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-30 20:52:13" itemprop="dateCreated datePublished" datetime="2022-05-30T20:52:13+08:00">2022-05-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>全面介绍Python的基础语法知识，包括数据类型、变量定义、运算符、控制结构和函数使用，帮助初学者快速掌握Python编程基础。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/05/30/Python%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/">
                 阅读全文 &raquo;
               </a>
             </div>

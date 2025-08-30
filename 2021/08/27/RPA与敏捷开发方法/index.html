@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="探讨RPA与敏捷开发方法的结合，分析敏捷RPA的优势和实施策略">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPA与敏捷开发方法">
+<meta property="og:url" content="http://example.com/2021/08/27/RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="探讨RPA与敏捷开发方法的结合，分析敏捷RPA的优势和实施策略">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-08-27T03:09:01.000Z">
+<meta property="article:modified_time" content="2025-08-30T08:42:23.167Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RPA">
+<meta property="article:tag" content="敏捷开发">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="企业数字化">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2021/08/27/RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPA与敏捷开发方法 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/08/27/RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPA与敏捷开发方法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-08-27 11:09:01" itemprop="dateCreated datePublished" datetime="2021-08-27T11:09:01+08:00">2021-08-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+            <div class="post-description">探讨RPA与敏捷开发方法的结合，分析敏捷RPA的优势和实施策略</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPA与敏捷开发方法"><a href="#RPA与敏捷开发方法" class="headerlink" title="RPA与敏捷开发方法"></a>RPA与敏捷开发方法</h1><blockquote>
+<p>字数统计: 4k字 | 阅读时长≈ 13分钟</p>
+</blockquote>
+<p>与传统自动化相比，RPA（Robotic Process Automation）不仅易于使用且实施成本更低，成效明显。据数据显示，RPA可以将运营成本平均降低25-50%。随着RPA与AI、流程挖掘等技术的融合，应用场景不断增多，使得RPA成为企业追捧的自动化技术。</p>
+<p>然而，RPA存在脆弱性挑战业务流程稳定性的问题。为防止拓展RPA带来的挑战和失败，一些有想法的杰出人士采用敏捷方法来实施和推动自动化计划。实践证明，敏捷方法使RPA在业务中获得更好的治理、更灵活的扩展能力、效率和降低成本，减轻实施风险和返工。因此，敏捷方法实施的RPA成为一种更高效的RPA应用与实施方法结合架构。</p>
+<h2 id="从敏捷开发说起"><a href="#从敏捷开发说起" class="headerlink" title="从敏捷开发说起"></a>从敏捷开发说起</h2><p>在软件开发领域，传统的瀑布模型需要很长时间才能完成整个流程，而且风险高、难以应对变化。于是，2001年17位知名开发人员聚集在一起讨论替代瀑布模型的新方法，最终形成了敏捷宣言和敏捷联盟。</p>
+<p>敏捷开发是一种”轻量级”的迭代模型，强调协作和即时性，增加客户参与度，并将软件开发从面向过程转变为面向对象。它与瀑布模型有着明显的区别。</p>
+<p>敏捷开发以用户的需求进化为核心，采用迭代、循序渐进的方法进行软件开发。它将一个大项目分为多个相互联系的小项目（冲刺），并在整个项目生命周期中不断评估需求、计划和结果，使变更成为流程的有机组成部分。</p>
+<p>总之，敏捷开发旨在解决瀑布模型存在的问题，用一种轻量、敏捷的方法来改善或替代传统的重型软件开发方法。</p>
+<h3 id="敏捷开发的核心价值观"><a href="#敏捷开发的核心价值观" class="headerlink" title="敏捷开发的核心价值观"></a>敏捷开发的核心价值观</h3><p>敏捷开发的核心价值观强调：</p>
+<ul>
+<li>个体和互动优于流程和工具</li>
+<li>工作的软件高于详尽的文档</li>
+<li>客户合作高于合同谈判</li>
+<li>响应变化高于遵循计划</li>
+</ul>
+<p>这些价值观重视协作和即时性，增加客户参与度，并将软件开发从面向过程转变为面向对象。</p>
+<p>在敏捷开发中，软件项目被切分成多个子项目，每个子项目都经过测试，具备可视、可集成和可运行使用的特征。这意味着一个大项目被分为可独立运行的小项目，并且在整个项目生命周期中不断评估需求、计划和结果，使变更成为流程的有机组成部分。</p>
+<p>与传统的瀑布模型相比，敏捷开发更加灵活和适应变化。它侧重于快速交付有价值的软件，通过持续反馈和迭代改进来满足客户需求。敏捷开发能够更好地应对市场和技术的变化，提高项目的成功率和效率。</p>
+<h2 id="敏捷RPA与敏捷交付"><a href="#敏捷RPA与敏捷交付" class="headerlink" title="敏捷RPA与敏捷交付"></a>敏捷RPA与敏捷交付</h2><p>虽然很多RPA开发者没有编程基础，但他们也参与了软件开发过程，所以仍然需要遵守一定的开发逻辑。与传统软件开发不同，RPA和技术简化了程序开发过程，因此更加注重交付。由于对自动化和开发平台的理解不同，不同业务线开发的自动化程序在逻辑上会有一些差异，可能会降低稳定性并增加脆弱性。</p>
+<p>大量的业务人员并行开发会导致大量的自动化程序。这些程序能否高质量交付，或者如何保障高效交付，成为自动化程序交付的主要问题。现在敏捷开发已成为主流，受到主流RPA厂商的影响，RPA也在摒弃传统的瀑布式开发模式，向敏捷开发靠拢。这诞生了敏捷RPA（Agile RPA）。</p>
+<h3 id="什么是敏捷RPA？"><a href="#什么是敏捷RPA？" class="headerlink" title="什么是敏捷RPA？"></a>什么是敏捷RPA？</h3><p>敏捷RPA不是一个过程，而是一种价值观。它通过一些轻量级流程框架和操作技术的支持，帮助RPA团队将这种价值观付诸实践。执行敏捷开发和成为敏捷组织是有区别的：前者关注过程和技术，后者则由敏捷原则和价值观指导行为。</p>
+<h3 id="敏捷交付的特点"><a href="#敏捷交付的特点" class="headerlink" title="敏捷交付的特点"></a>敏捷交付的特点</h3><p>敏捷交付是迭代式和增量式交付的组合：</p>
+<ul>
+<li><strong>增量交付</strong>：一个接一个地自动化一些流程组件</li>
+<li><strong>迭代交付</strong>：以低保真度自动化所有流程组件，然后逐渐提高其自动化保真度</li>
+</ul>
+<p>在敏捷RPA交付中，关键是经常生产”工作机器人”，为利益相关者创造价值的最终自动化业务流程的子集。需要注意的是，在敏捷RPA交付中，没有什么是真正被认为是最终的，因为可以在功能、性能、可靠性、稳定性、安全性、可用性等方面不断拓展自动化。</p>
+<h2 id="为什么RPA需要敏捷方法？"><a href="#为什么RPA需要敏捷方法？" class="headerlink" title="为什么RPA需要敏捷方法？"></a>为什么RPA需要敏捷方法？</h2><p>根据调查数据，78%的实施了RPA的公司预计在未来3年内增加投资。但是只有很少的公司能够将RPA扩展到初始试点之外。维护工作是阻止公司扩展RPA的主要原因之一。</p>
+<h3 id="导致RPA中断的三大原因"><a href="#导致RPA中断的三大原因" class="headerlink" title="导致RPA中断的三大原因"></a>导致RPA中断的三大原因</h3><ol>
+<li><p><strong>自动化本身的问题</strong></p>
+<ul>
+<li>程序设计错误</li>
+<li>算法问题</li>
+<li>系统内部错误</li>
+</ul>
+</li>
+<li><p><strong>应用程序问题</strong></p>
+<ul>
+<li>应用程序稳定性</li>
+<li>兼容性问题</li>
+<li>交互接口设计不合理</li>
+</ul>
+</li>
+<li><p><strong>环境问题</strong></p>
+<ul>
+<li>硬件故障</li>
+<li>网络问题</li>
+<li>系统资源不足</li>
+</ul>
+</li>
+</ol>
+<h3 id="敏捷方法的优势"><a href="#敏捷方法的优势" class="headerlink" title="敏捷方法的优势"></a>敏捷方法的优势</h3><p>对于RPA项目而言，敏捷方法有很多好处：</p>
+<ol>
+<li><strong>跨职能团队协作</strong>：打破孤岛并促进业务&#x2F;IT协调</li>
+<li><strong>持续迭代改进</strong>：为实施后的持续更改和升级留出空间</li>
+<li><strong>扩展治理框架</strong>：提供在整个企业中扩展RPA所需的治理框架</li>
+<li><strong>用户共同参与</strong>：与最终用户共同实施，符合敏捷方法的合作理念</li>
+</ol>
+<h2 id="敏捷开发方法如何让RPA项目更成功？"><a href="#敏捷开发方法如何让RPA项目更成功？" class="headerlink" title="敏捷开发方法如何让RPA项目更成功？"></a>敏捷开发方法如何让RPA项目更成功？</h2><p>RPA与纯软件和产品开发有很大不同，但是可以借鉴和应用基本的敏捷原则来产生相同的结果：更快地交付价值，同时降低成本和风险。</p>
+<h3 id="敏捷RPA的核心实践"><a href="#敏捷RPA的核心实践" class="headerlink" title="敏捷RPA的核心实践"></a>敏捷RPA的核心实践</h3><h4 id="1-更懂协作的团队"><a href="#1-更懂协作的团队" class="headerlink" title="1. 更懂协作的团队"></a>1. 更懂协作的团队</h4><p>RPA的敏捷方法包含一个由不同利益相关者组成的专门团队，包括：</p>
+<ul>
+<li>开发人员</li>
+<li>测试人员</li>
+<li>业务角色</li>
+</ul>
+<p>这不仅增强了识别RPA机会的有效性，而且还促进了大规模治理。</p>
+<h4 id="2-更优质的设计和定义"><a href="#2-更优质的设计和定义" class="headerlink" title="2. 更优质的设计和定义"></a>2. 更优质的设计和定义</h4><p>在机器人流程自动化的敏捷方法中，业务流程在任何开发开始之前就被设计和优化。这使大型组织能够：</p>
+<ul>
+<li>完全标准化和优化端到端业务流程</li>
+<li>考虑流程与更大的业务目标的关联</li>
+<li>确保法规遵从性</li>
+</ul>
+<h4 id="3-更高效的积压维护"><a href="#3-更高效的积压维护" class="headerlink" title="3. 更高效的积压维护"></a>3. 更高效的积压维护</h4><p>积压工作能够让组织：</p>
+<ul>
+<li>将复杂流程分割成多个工作项</li>
+<li>独立确定优先级</li>
+<li>有效管理机器人维护</li>
+</ul>
+<h4 id="4-冲刺计划和回顾"><a href="#4-冲刺计划和回顾" class="headerlink" title="4. 冲刺计划和回顾"></a>4. 冲刺计划和回顾</h4><ul>
+<li><strong>Sprint计划</strong>：短暂的工作突增，能够重新确定工作优先级</li>
+<li><strong>Sprint回顾</strong>：吸取经验教训，避免重复错误</li>
+</ul>
+<h2 id="后记：因人而异择优而选"><a href="#后记：因人而异择优而选" class="headerlink" title="后记：因人而异择优而选"></a>后记：因人而异择优而选</h2><p>看到这里，大家应该对敏捷RPA有了一定的了解。其实想要实现敏捷RPA也很简单，就是建立RPA卓越中心，然后告诉RPA CoE管理者要引入敏捷方法，并坚定不移的支持其工作就可以了。</p>
+<p>但说起来容易做起来难，因为要改变大型组织固有的IT组织架构及开发逻辑，着实是一个难上加难的问题。</p>
+<p>这篇文章的用意，并不是告诉大家在RPA建设与应用上一定要严格遵守敏捷方法，而是说在RPA引入时可以适当参考敏捷方法，以避免在后面的RPA应用中出现太多问题而导致项目搁浅，同时也为基于自动化获得更高的ROI打下更好的基础。</p>
+<p>每个组织的信息化程度不同，IT建设情况不同，程序开发的理念也不同，这就决定了不是每个组织都适合采用敏捷方法进行各种项目开发。</p>
+<p><strong>重要提醒</strong>：</p>
+<ul>
+<li>敏捷RPA交付有许多好处，但也带有敏捷方法固有的某些风险</li>
+<li>敏捷方法并不适合每个组织，这取决于组织的情况</li>
+<li>不要将敏捷实践和原则强加给那些不愿采用敏捷的人</li>
+<li>只需要给人们正确的信息让他们说服自己</li>
+</ul>
+<p>剩下的，全部交给决策者。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2021/08/27/RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/" title="RPA与敏捷开发方法">http://example.com/2021/08/27/RPA与敏捷开发方法/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RPA/" rel="tag"># RPA</a>
+              <a href="/tags/%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91/" rel="tag"># 敏捷开发</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"># 自动化</a>
+              <a href="/tags/%E4%BC%81%E4%B8%9A%E6%95%B0%E5%AD%97%E5%8C%96/" rel="tag"># 企业数字化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/08/24/RPA%E6%B5%81%E7%A8%8B%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9--%E5%9B%9B%E4%B8%AA%E8%80%83%E8%99%91%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%82%B9/" rel="prev" title="RPA流程如何选择--四个考虑的基本点">
+      <i class="fa fa-chevron-left"></i> RPA流程如何选择--四个考虑的基本点
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/06/rpa-web-element-dynamic-loading-automation-failure-debugging-practice/" rel="next" title="RPA网页元素动态加载自动化失效调试实战：从随机失败到稳定识别的完整排查过程">
+      RPA网页元素动态加载自动化失效调试实战：从随机失败到稳定识别的完整排查过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">RPA与敏捷开发方法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E8%AF%B4%E8%B5%B7"><span class="nav-number">1.1.</span> <span class="nav-text">从敏捷开发说起</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BB%B7%E5%80%BC%E8%A7%82"><span class="nav-number">1.1.1.</span> <span class="nav-text">敏捷开发的核心价值观</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E4%BA%A4%E4%BB%98"><span class="nav-number">1.2.</span> <span class="nav-text">敏捷RPA与敏捷交付</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%95%8F%E6%8D%B7RPA%EF%BC%9F"><span class="nav-number">1.2.1.</span> <span class="nav-text">什么是敏捷RPA？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7%E4%BA%A4%E4%BB%98%E7%9A%84%E7%89%B9%E7%82%B9"><span class="nav-number">1.2.2.</span> <span class="nav-text">敏捷交付的特点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88RPA%E9%9C%80%E8%A6%81%E6%95%8F%E6%8D%B7%E6%96%B9%E6%B3%95%EF%BC%9F"><span class="nav-number">1.3.</span> <span class="nav-text">为什么RPA需要敏捷方法？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%BC%E8%87%B4RPA%E4%B8%AD%E6%96%AD%E7%9A%84%E4%B8%89%E5%A4%A7%E5%8E%9F%E5%9B%A0"><span class="nav-number">1.3.1.</span> <span class="nav-text">导致RPA中断的三大原因</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7%E6%96%B9%E6%B3%95%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">1.3.2.</span> <span class="nav-text">敏捷方法的优势</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95%E5%A6%82%E4%BD%95%E8%AE%A9RPA%E9%A1%B9%E7%9B%AE%E6%9B%B4%E6%88%90%E5%8A%9F%EF%BC%9F"><span class="nav-number">1.4.</span> <span class="nav-text">敏捷开发方法如何让RPA项目更成功？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%8F%E6%8D%B7RPA%E7%9A%84%E6%A0%B8%E5%BF%83%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.4.1.</span> <span class="nav-text">敏捷RPA的核心实践</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%9B%B4%E6%87%82%E5%8D%8F%E4%BD%9C%E7%9A%84%E5%9B%A2%E9%98%9F"><span class="nav-number">1.4.1.1.</span> <span class="nav-text">1. 更懂协作的团队</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E6%9B%B4%E4%BC%98%E8%B4%A8%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E5%AE%9A%E4%B9%89"><span class="nav-number">1.4.1.2.</span> <span class="nav-text">2. 更优质的设计和定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%9B%B4%E9%AB%98%E6%95%88%E7%9A%84%E7%A7%AF%E5%8E%8B%E7%BB%B4%E6%8A%A4"><span class="nav-number">1.4.1.3.</span> <span class="nav-text">3. 更高效的积压维护</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E5%86%B2%E5%88%BA%E8%AE%A1%E5%88%92%E5%92%8C%E5%9B%9E%E9%A1%BE"><span class="nav-number">1.4.1.4.</span> <span class="nav-text">4. 冲刺计划和回顾</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E8%AE%B0%EF%BC%9A%E5%9B%A0%E4%BA%BA%E8%80%8C%E5%BC%82%E6%8B%A9%E4%BC%98%E8%80%8C%E9%80%89"><span class="nav-number">1.5.</span> <span class="nav-text">后记：因人而异择优而选</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

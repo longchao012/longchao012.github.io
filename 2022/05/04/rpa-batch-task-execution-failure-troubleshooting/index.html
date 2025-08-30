@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="记录一次RPA生产环境中批量任务执行失败的完整故障排查过程，从50个机器人同时失效到找出资源冲突和调度策略问题的根本原因，包含详细的问题定位、解决方案和预防措施，为RPA生产运维提供实战参考。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程">
+<meta property="og:url" content="http://example.com/2022/05/04/rpa-batch-task-execution-failure-troubleshooting/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="记录一次RPA生产环境中批量任务执行失败的完整故障排查过程，从50个机器人同时失效到找出资源冲突和调度策略问题的根本原因，包含详细的问题定位、解决方案和预防措施，为RPA生产运维提供实战参考。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-05-04T14:14:54.000Z">
+<meta property="article:modified_time" content="2025-08-30T08:42:23.141Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RPA">
+<meta property="article:tag" content="生产故障">
+<meta property="article:tag" content="故障排查">
+<meta property="article:tag" content="影刀">
+<meta property="article:tag" content="UIBot">
+<meta property="article:tag" content="批量任务">
+<meta property="article:tag" content="机器人调度">
+<meta property="article:tag" content="资源冲突">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://example.com/2022/05/04/rpa-batch-task-execution-failure-troubleshooting/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/04/rpa-batch-task-execution-failure-troubleshooting/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-04 22:14:54" itemprop="dateCreated datePublished" datetime="2022-05-04T22:14:54+08:00">2022-05-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2025-08-30 16:42:23" itemprop="dateModified" datetime="2025-08-30T16:42:23+08:00">2025-08-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" itemprop="url" rel="index"><span itemprop="name">故障排查</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+            <div class="post-description">记录一次RPA生产环境中批量任务执行失败的完整故障排查过程，从50个机器人同时失效到找出资源冲突和调度策略问题的根本原因，包含详细的问题定位、解决方案和预防措施，为RPA生产运维提供实战参考。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程"><a href="#RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程" class="headerlink" title="RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程"></a>RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程</h1><blockquote>
+<p>技术主题：RPA技术（基于影刀或UIBot的机器人流程自动化）<br>内容方向：生产环境事故的解决过程（故障现象、根因分析、解决方案、预防措施）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>RPA（机器人流程自动化）技术在企业数字化转型中发挥着越来越重要的作用，但生产环境中的大规模部署也带来了新的挑战。我们团队负责维护一套基于影刀RPA平台的财务自动化系统，包含50个机器人实例，每天处理超过2万笔财务数据。在某个月末结算高峰期，这套系统突然出现了大规模故障：几乎所有机器人同时停止工作，任务执行成功率从99%骤降到5%，严重影响了财务部门的结算工作。经过36小时的紧急排查，我们发现了一个隐蔽的资源竞争和调度冲突问题。本文将详细记录这次RPA生产故障的完整排查和修复过程。</p>
+<h2 id="一、故障现象与影响评估"><a href="#一、故障现象与影响评估" class="headerlink" title="一、故障现象与影响评估"></a>一、故障现象与影响评估</h2><h3 id="故障时间线记录"><a href="#故障时间线记录" class="headerlink" title="故障时间线记录"></a>故障时间线记录</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># RPA批量任务执行失败故障时间线</span></span><br><span class="line">2024-12-13 08:00:00 [INFO] 月末结算批处理任务启动</span><br><span class="line">2024-12-13 08:15:30 [WARN] 部分机器人开始报告执行异常</span><br><span class="line">2024-12-13 08:30:45 [ERROR] 机器人执行成功率急剧下降到30%</span><br><span class="line">2024-12-13 08:45:00 [CRITICAL] 80%的机器人实例停止响应</span><br><span class="line">2024-12-13 09:00:00 [EMERGENCY] 系统几乎完全瘫痪，成功率低于5%</span><br></pre></td></tr></table></figure>
+
+<h3 id="关键监控指标异常"><a href="#关键监控指标异常" class="headerlink" title="关键监控指标异常"></a>关键监控指标异常</h3><p><strong>故障期间系统表现：</strong></p>
+<ul>
+<li>机器人任务成功率：从99%下降到5%</li>
+<li>平均任务执行时间：从2分钟增长到超时（30分钟）</li>
+<li>系统资源使用率：CPU从40%飙升到98%</li>
+<li>并发执行任务数：从正常的50个降到3-5个</li>
+</ul>
+<p><strong>业务影响评估：</strong></p>
+<ul>
+<li>财务数据处理延迟：从实时处理变为12小时延迟</li>
+<li>手工处理工作量激增：需要20人加班处理</li>
+<li>客户投诉量增加：由于对账数据延迟引发投诉</li>
+</ul>
+<h2 id="二、故障排查与问题定位"><a href="#二、故障排查与问题定位" class="headerlink" title="二、故障排查与问题定位"></a>二、故障排查与问题定位</h2><h3 id="1-RPA系统状态监控"><a href="#1-RPA系统状态监控" class="headerlink" title="1. RPA系统状态监控"></a>1. RPA系统状态监控</h3><p>首先通过影刀RPA控制台和自开发的监控工具分析问题：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># RPA机器人状态监控脚本</span></span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime, timedelta</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RPAMonitor</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;RPA系统监控工具&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, api_endpoint, api_key</span>):</span><br><span class="line">        <span class="variable language_">self</span>.api_endpoint = api_endpoint</span><br><span class="line">        <span class="variable language_">self</span>.headers = &#123;</span><br><span class="line">            <span class="string">&#x27;Authorization&#x27;</span>: <span class="string">f&#x27;Bearer <span class="subst">&#123;api_key&#125;</span>&#x27;</span>,</span><br><span class="line">            <span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;application/json&#x27;</span></span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_robot_status</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取所有机器人状态&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        response = requests.get(</span><br><span class="line">            <span class="string">f&quot;<span class="subst">&#123;self.api_endpoint&#125;</span>/api/robots/status&quot;</span>,</span><br><span class="line">            headers=<span class="variable language_">self</span>.headers</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        robots = response.json()[<span class="string">&#x27;data&#x27;</span>]</span><br><span class="line">        status_summary = &#123;<span class="string">&#x27;online&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;offline&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;busy&#x27;</span>: <span class="number">0</span>, <span class="string">&#x27;error&#x27;</span>: <span class="number">0</span>&#125;</span><br><span class="line">        problem_robots = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> robot <span class="keyword">in</span> robots:</span><br><span class="line">            status = robot[<span class="string">&#x27;status&#x27;</span>]</span><br><span class="line">            status_summary[status] = status_summary.get(status, <span class="number">0</span>) + <span class="number">1</span></span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> status <span class="keyword">in</span> [<span class="string">&#x27;error&#x27;</span>, <span class="string">&#x27;offline&#x27;</span>]:</span><br><span class="line">                problem_robots.append(&#123;</span><br><span class="line">                    <span class="string">&#x27;robot_id&#x27;</span>: robot[<span class="string">&#x27;id&#x27;</span>],</span><br><span class="line">                    <span class="string">&#x27;name&#x27;</span>: robot[<span class="string">&#x27;name&#x27;</span>],</span><br><span class="line">                    <span class="string">&#x27;status&#x27;</span>: status,</span><br><span class="line">                    <span class="string">&#x27;error_message&#x27;</span>: robot.get(<span class="string">&#x27;error_message&#x27;</span>, <span class="string">&#x27;&#x27;</span>)</span><br><span class="line">                &#125;)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&#x27;summary&#x27;</span>: status_summary,</span><br><span class="line">            <span class="string">&#x27;total_robots&#x27;</span>: <span class="built_in">len</span>(robots),</span><br><span class="line">            <span class="string">&#x27;problem_robots&#x27;</span>: problem_robots</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_task_execution_stats</span>(<span class="params">self, hours=<span class="number">24</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取任务执行统计&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        end_time = datetime.now()</span><br><span class="line">        start_time = end_time - timedelta(hours=hours)</span><br><span class="line">        </span><br><span class="line">        params = &#123;</span><br><span class="line">            <span class="string">&#x27;start_time&#x27;</span>: start_time.isoformat(),</span><br><span class="line">            <span class="string">&#x27;end_time&#x27;</span>: end_time.isoformat()</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        response = requests.get(</span><br><span class="line">            <span class="string">f&quot;<span class="subst">&#123;self.api_endpoint&#125;</span>/api/tasks/stats&quot;</span>,</span><br><span class="line">            headers=<span class="variable language_">self</span>.headers,</span><br><span class="line">            params=params</span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        stats = response.json()[<span class="string">&#x27;data&#x27;</span>]</span><br><span class="line">        success_rate = (stats[<span class="string">&#x27;successful_tasks&#x27;</span>] / <span class="built_in">max</span>(<span class="number">1</span>, stats[<span class="string">&#x27;total_tasks&#x27;</span>])) * <span class="number">100</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&#x27;total_tasks&#x27;</span>: stats[<span class="string">&#x27;total_tasks&#x27;</span>],</span><br><span class="line">            <span class="string">&#x27;successful_tasks&#x27;</span>: stats[<span class="string">&#x27;successful_tasks&#x27;</span>],</span><br><span class="line">            <span class="string">&#x27;failed_tasks&#x27;</span>: stats[<span class="string">&#x27;failed_tasks&#x27;</span>],</span><br><span class="line">            <span class="string">&#x27;success_rate&#x27;</span>: success_rate,</span><br><span class="line">            <span class="string">&#x27;average_duration_minutes&#x27;</span>: stats[<span class="string">&#x27;total_duration&#x27;</span>] / <span class="built_in">max</span>(<span class="number">1</span>, stats[<span class="string">&#x27;completed_tasks&#x27;</span>]) / <span class="number">60</span></span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-系统资源冲突分析"><a href="#2-系统资源冲突分析" class="headerlink" title="2. 系统资源冲突分析"></a>2. 系统资源冲突分析</h3><p>通过系统监控发现了关键问题：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 资源冲突分析工具</span></span><br><span class="line"><span class="keyword">import</span> psutil</span><br><span class="line"><span class="keyword">import</span> sqlite3</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ResourceConflictAnalyzer</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;资源冲突分析器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">analyze_file_access_conflicts</span>(<span class="params">self, log_file_path</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;分析文件访问冲突&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 从日志中提取文件访问记录</span></span><br><span class="line">        file_access_records = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(log_file_path, <span class="string">&#x27;r&#x27;</span>, encoding=<span class="string">&#x27;utf-8&#x27;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            <span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">                <span class="keyword">if</span> <span class="string">&#x27;file_access&#x27;</span> <span class="keyword">in</span> line <span class="keyword">and</span> <span class="string">&#x27;ERROR&#x27;</span> <span class="keyword">in</span> line:</span><br><span class="line">                    <span class="comment"># 解析日志，提取冲突信息</span></span><br><span class="line">                    parts = line.strip().split(<span class="string">&#x27;|&#x27;</span>)</span><br><span class="line">                    <span class="keyword">if</span> <span class="built_in">len</span>(parts) &gt;= <span class="number">4</span>:</span><br><span class="line">                        timestamp = parts[<span class="number">0</span>]</span><br><span class="line">                        robot_id = parts[<span class="number">1</span>]</span><br><span class="line">                        file_path = parts[<span class="number">2</span>]</span><br><span class="line">                        error_msg = parts[<span class="number">3</span>]</span><br><span class="line">                        </span><br><span class="line">                        file_access_records.append(&#123;</span><br><span class="line">                            <span class="string">&#x27;timestamp&#x27;</span>: timestamp,</span><br><span class="line">                            <span class="string">&#x27;robot_id&#x27;</span>: robot_id,</span><br><span class="line">                            <span class="string">&#x27;file_path&#x27;</span>: file_path,</span><br><span class="line">                            <span class="string">&#x27;error&#x27;</span>: error_msg</span><br><span class="line">                        &#125;)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分析冲突模式</span></span><br><span class="line">        df = pd.DataFrame(file_access_records)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> df.empty:</span><br><span class="line">            <span class="comment"># 找出最频繁冲突的文件</span></span><br><span class="line">            file_conflicts = df.groupby(<span class="string">&#x27;file_path&#x27;</span>).size().sort_values(ascending=<span class="literal">False</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 找出冲突最多的机器人</span></span><br><span class="line">            robot_conflicts = df.groupby(<span class="string">&#x27;robot_id&#x27;</span>).size().sort_values(ascending=<span class="literal">False</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> &#123;</span><br><span class="line">                <span class="string">&#x27;total_conflicts&#x27;</span>: <span class="built_in">len</span>(df),</span><br><span class="line">                <span class="string">&#x27;top_conflict_files&#x27;</span>: file_conflicts.head(<span class="number">10</span>).to_dict(),</span><br><span class="line">                <span class="string">&#x27;top_conflict_robots&#x27;</span>: robot_conflicts.head(<span class="number">10</span>).to_dict(),</span><br><span class="line">                <span class="string">&#x27;conflict_timeline&#x27;</span>: df.groupby(<span class="string">&#x27;timestamp&#x27;</span>).size().to_dict()</span><br><span class="line">            &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&#x27;total_conflicts&#x27;</span>: <span class="number">0</span>&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">analyze_process_resource_usage</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;分析进程资源使用&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        rpa_processes = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> proc <span class="keyword">in</span> psutil.process_iter([<span class="string">&#x27;pid&#x27;</span>, <span class="string">&#x27;name&#x27;</span>, <span class="string">&#x27;cpu_percent&#x27;</span>, <span class="string">&#x27;memory_percent&#x27;</span>]):</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                pinfo = proc.info</span><br><span class="line">                <span class="keyword">if</span> <span class="built_in">any</span>(keyword <span class="keyword">in</span> pinfo[<span class="string">&#x27;name&#x27;</span>].lower() <span class="keyword">for</span> keyword <span class="keyword">in</span> [<span class="string">&#x27;rpa&#x27;</span>, <span class="string">&#x27;robot&#x27;</span>, <span class="string">&#x27;yingdao&#x27;</span>]):</span><br><span class="line">                    rpa_processes.append(&#123;</span><br><span class="line">                        <span class="string">&#x27;pid&#x27;</span>: proc.pid,</span><br><span class="line">                        <span class="string">&#x27;name&#x27;</span>: pinfo[<span class="string">&#x27;name&#x27;</span>],</span><br><span class="line">                        <span class="string">&#x27;cpu_percent&#x27;</span>: pinfo[<span class="string">&#x27;cpu_percent&#x27;</span>],</span><br><span class="line">                        <span class="string">&#x27;memory_percent&#x27;</span>: pinfo[<span class="string">&#x27;memory_percent&#x27;</span>],</span><br><span class="line">                        <span class="string">&#x27;num_threads&#x27;</span>: proc.num_threads(),</span><br><span class="line">                        <span class="string">&#x27;open_files&#x27;</span>: <span class="built_in">len</span>(proc.open_files())</span><br><span class="line">                    &#125;)</span><br><span class="line">            <span class="keyword">except</span> (psutil.NoSuchProcess, psutil.AccessDenied):</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分析资源使用异常</span></span><br><span class="line">        high_cpu_processes = [p <span class="keyword">for</span> p <span class="keyword">in</span> rpa_processes <span class="keyword">if</span> p[<span class="string">&#x27;cpu_percent&#x27;</span>] &gt; <span class="number">50</span>]</span><br><span class="line">        high_memory_processes = [p <span class="keyword">for</span> p <span class="keyword">in</span> rpa_processes <span class="keyword">if</span> p[<span class="string">&#x27;memory_percent&#x27;</span>] &gt; <span class="number">10</span>]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&#x27;total_rpa_processes&#x27;</span>: <span class="built_in">len</span>(rpa_processes),</span><br><span class="line">            <span class="string">&#x27;high_cpu_processes&#x27;</span>: <span class="built_in">len</span>(high_cpu_processes),</span><br><span class="line">            <span class="string">&#x27;high_memory_processes&#x27;</span>: <span class="built_in">len</span>(high_memory_processes),</span><br><span class="line">            <span class="string">&#x27;total_cpu_usage&#x27;</span>: <span class="built_in">sum</span>(p[<span class="string">&#x27;cpu_percent&#x27;</span>] <span class="keyword">for</span> p <span class="keyword">in</span> rpa_processes),</span><br><span class="line">            <span class="string">&#x27;total_memory_usage&#x27;</span>: <span class="built_in">sum</span>(p[<span class="string">&#x27;memory_percent&#x27;</span>] <span class="keyword">for</span> p <span class="keyword">in</span> rpa_processes)</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>根因定位结果：</strong></p>
+<p>通过深入分析发现了四个关键问题：</p>
+<ol>
+<li><strong>资源竞争激烈</strong>：50个机器人同时访问共享Excel文件，导致文件锁冲突</li>
+<li><strong>调度策略粗糙</strong>：没有考虑资源依赖，任务调度过于激进</li>
+<li><strong>缺少隔离机制</strong>：多个任务竞争同一资源，没有排队机制</li>
+<li><strong>错误处理缺陷</strong>：失败任务无限重试，持续消耗系统资源</li>
+</ol>
+<h2 id="三、解决方案实施"><a href="#三、解决方案实施" class="headerlink" title="三、解决方案实施"></a>三、解决方案实施</h2><h3 id="1-资源管理系统重构"><a href="#1-资源管理系统重构" class="headerlink" title="1. 资源管理系统重构"></a>1. 资源管理系统重构</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 优化后的资源管理系统</span></span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">from</span> contextlib <span class="keyword">import</span> asynccontextmanager</span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RPAResourceManager</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;RPA资源管理器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.semaphores = &#123;</span><br><span class="line">            <span class="string">&#x27;file_system&#x27;</span>: asyncio.Semaphore(<span class="number">10</span>),    <span class="comment"># 最多10个进程同时访问文件</span></span><br><span class="line">            <span class="string">&#x27;database&#x27;</span>: asyncio.Semaphore(<span class="number">20</span>),       <span class="comment"># 最多20个数据库连接</span></span><br><span class="line">            <span class="string">&#x27;excel_app&#x27;</span>: asyncio.Semaphore(<span class="number">5</span>),       <span class="comment"># 最多5个Excel应用实例</span></span><br><span class="line">            <span class="string">&#x27;web_browser&#x27;</span>: asyncio.Semaphore(<span class="number">15</span>)     <span class="comment"># 最多15个浏览器实例</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable language_">self</span>.file_locks = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.resource_usage = &#123;&#125;</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @asynccontextmanager</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">acquire_resource</span>(<span class="params">self, resource_type, resource_id=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取资源访问权限&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> resource_type <span class="keyword">not</span> <span class="keyword">in</span> <span class="variable language_">self</span>.semaphores:</span><br><span class="line">            <span class="keyword">raise</span> ValueError(<span class="string">f&quot;未知资源类型: <span class="subst">&#123;resource_type&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        semaphore = <span class="variable language_">self</span>.semaphores[resource_type]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">await</span> semaphore.acquire()</span><br><span class="line">            </span><br><span class="line">            usage_key = <span class="string">f&quot;<span class="subst">&#123;resource_type&#125;</span>:<span class="subst">&#123;resource_id <span class="keyword">or</span> <span class="string">&#x27;default&#x27;</span>&#125;</span>&quot;</span></span><br><span class="line">            <span class="variable language_">self</span>.resource_usage[usage_key] = &#123;</span><br><span class="line">                <span class="string">&#x27;acquired_at&#x27;</span>: asyncio.get_event_loop().time(),</span><br><span class="line">                <span class="string">&#x27;robot_id&#x27;</span>: <span class="variable language_">self</span>._get_current_robot_id()</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            logging.info(<span class="string">f&quot;获取资源: <span class="subst">&#123;usage_key&#125;</span>&quot;</span>)</span><br><span class="line">            <span class="keyword">yield</span> usage_key</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">finally</span>:</span><br><span class="line">            <span class="keyword">if</span> usage_key <span class="keyword">in</span> <span class="variable language_">self</span>.resource_usage:</span><br><span class="line">                duration = asyncio.get_event_loop().time() - <span class="variable language_">self</span>.resource_usage[usage_key][<span class="string">&#x27;acquired_at&#x27;</span>]</span><br><span class="line">                logging.info(<span class="string">f&quot;释放资源: <span class="subst">&#123;usage_key&#125;</span>, 持有时间: <span class="subst">&#123;duration:<span class="number">.2</span>f&#125;</span>秒&quot;</span>)</span><br><span class="line">                <span class="keyword">del</span> <span class="variable language_">self</span>.resource_usage[usage_key]</span><br><span class="line">            </span><br><span class="line">            semaphore.release()</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @asynccontextmanager</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">acquire_file_lock</span>(<span class="params">self, file_path</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取文件锁&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> file_path <span class="keyword">not</span> <span class="keyword">in</span> <span class="variable language_">self</span>.file_locks:</span><br><span class="line">            <span class="variable language_">self</span>.file_locks[file_path] = asyncio.Lock()</span><br><span class="line">        </span><br><span class="line">        lock = <span class="variable language_">self</span>.file_locks[file_path]</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">async</span> <span class="keyword">with</span> lock:</span><br><span class="line">            <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable language_">self</span>.acquire_resource(<span class="string">&#x27;file_system&#x27;</span>, file_path):</span><br><span class="line">                <span class="keyword">yield</span> file_path</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_get_current_robot_id</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取当前机器人ID&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;robot_001&quot;</span>  <span class="comment"># 实际实现中从上下文获取</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-智能任务调度优化"><a href="#2-智能任务调度优化" class="headerlink" title="2. 智能任务调度优化"></a>2. 智能任务调度优化</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 智能任务调度器</span></span><br><span class="line"><span class="keyword">import</span> heapq</span><br><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"><span class="keyword">from</span> enum <span class="keyword">import</span> Enum</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TaskPriority</span>(<span class="title class_ inherited__">Enum</span>):</span><br><span class="line">    LOW = <span class="number">1</span></span><br><span class="line">    NORMAL = <span class="number">2</span></span><br><span class="line">    HIGH = <span class="number">3</span></span><br><span class="line">    URGENT = <span class="number">4</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RPATask</span>:</span><br><span class="line">    task_id: <span class="built_in">str</span></span><br><span class="line">    robot_id: <span class="built_in">str</span></span><br><span class="line">    priority: TaskPriority</span><br><span class="line">    required_resources: <span class="built_in">list</span></span><br><span class="line">    estimated_duration: <span class="built_in">int</span></span><br><span class="line">    retry_count: <span class="built_in">int</span> = <span class="number">0</span></span><br><span class="line">    max_retries: <span class="built_in">int</span> = <span class="number">3</span></span><br><span class="line">    created_at: <span class="built_in">float</span> = <span class="literal">None</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__post_init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.created_at <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            <span class="variable language_">self</span>.created_at = time.time()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__lt__</span>(<span class="params">self, other</span>):</span><br><span class="line">        <span class="keyword">return</span> (<span class="variable language_">self</span>.priority.value, -<span class="variable language_">self</span>.created_at) &gt; (other.priority.value, -other.created_at)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">IntelligentRPAScheduler</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;智能RPA任务调度器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, resource_manager</span>):</span><br><span class="line">        <span class="variable language_">self</span>.resource_manager = resource_manager</span><br><span class="line">        <span class="variable language_">self</span>.task_queue = []</span><br><span class="line">        <span class="variable language_">self</span>.running_tasks = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.completed_tasks = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.robot_status = &#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">submit_task</span>(<span class="params">self, task: RPATask</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;提交任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 检查资源可用性</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> <span class="keyword">await</span> <span class="variable language_">self</span>._check_resource_availability(task):</span><br><span class="line">            logging.warning(<span class="string">f&quot;资源不足，任务延后: <span class="subst">&#123;task.task_id&#125;</span>&quot;</span>)</span><br><span class="line">            <span class="keyword">await</span> asyncio.sleep(<span class="number">60</span>)  <span class="comment"># 延后1分钟重试</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.submit_task(task)</span><br><span class="line">        </span><br><span class="line">        heapq.heappush(<span class="variable language_">self</span>.task_queue, task)</span><br><span class="line">        logging.info(<span class="string">f&quot;任务已提交: <span class="subst">&#123;task.task_id&#125;</span>, 优先级: <span class="subst">&#123;task.priority.name&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">schedule_tasks</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;调度任务执行&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                <span class="keyword">if</span> <span class="variable language_">self</span>.task_queue <span class="keyword">and</span> <span class="variable language_">self</span>._has_available_robots():</span><br><span class="line">                    task = heapq.heappop(<span class="variable language_">self</span>.task_queue)</span><br><span class="line">                    </span><br><span class="line">                    robot_id = <span class="keyword">await</span> <span class="variable language_">self</span>._allocate_robot(task)</span><br><span class="line">                    <span class="keyword">if</span> robot_id:</span><br><span class="line">                        <span class="keyword">await</span> <span class="variable language_">self</span>._execute_task(task, robot_id)</span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        heapq.heappush(<span class="variable language_">self</span>.task_queue, task)</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">await</span> asyncio.sleep(<span class="number">5</span>)  <span class="comment"># 每5秒调度一次</span></span><br><span class="line">                </span><br><span class="line">            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                logging.error(<span class="string">f&quot;调度器异常: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                <span class="keyword">await</span> asyncio.sleep(<span class="number">10</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_check_resource_availability</span>(<span class="params">self, task: RPATask</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;检查资源可用性&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 简化检查：如果当前运行任务数过多，则等待</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(<span class="variable language_">self</span>.running_tasks) &gt;= <span class="number">30</span>:  <span class="comment"># 最多30个并发任务</span></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_has_available_robots</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;检查是否有可用机器人&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">sum</span>(<span class="number">1</span> <span class="keyword">for</span> status <span class="keyword">in</span> <span class="variable language_">self</span>.robot_status.values() <span class="keyword">if</span> status == <span class="string">&#x27;idle&#x27;</span>) &gt; <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_allocate_robot</span>(<span class="params">self, task: RPATask</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;分配机器人&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 优先选择指定的机器人</span></span><br><span class="line">        <span class="keyword">if</span> task.robot_id <span class="keyword">and</span> <span class="variable language_">self</span>.robot_status.get(task.robot_id) == <span class="string">&#x27;idle&#x27;</span>:</span><br><span class="line">            <span class="keyword">return</span> task.robot_id</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 选择空闲的机器人</span></span><br><span class="line">        <span class="keyword">for</span> robot_id, status <span class="keyword">in</span> <span class="variable language_">self</span>.robot_status.items():</span><br><span class="line">            <span class="keyword">if</span> status == <span class="string">&#x27;idle&#x27;</span>:</span><br><span class="line">                <span class="keyword">return</span> robot_id</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_execute_task</span>(<span class="params">self, task: RPATask, robot_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;执行任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.robot_status[robot_id] = <span class="string">&#x27;busy&#x27;</span></span><br><span class="line">        <span class="variable language_">self</span>.running_tasks[task.task_id] = &#123;</span><br><span class="line">            <span class="string">&#x27;task&#x27;</span>: task,</span><br><span class="line">            <span class="string">&#x27;robot_id&#x27;</span>: robot_id,</span><br><span class="line">            <span class="string">&#x27;start_time&#x27;</span>: time.time()</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        logging.info(<span class="string">f&quot;开始执行任务: <span class="subst">&#123;task.task_id&#125;</span> on <span class="subst">&#123;robot_id&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 创建任务执行协程</span></span><br><span class="line">        asyncio.create_task(<span class="variable language_">self</span>._run_task(task, robot_id))</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_run_task</span>(<span class="params">self, task: RPATask, robot_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;运行任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 这里调用实际的RPA任务执行逻辑</span></span><br><span class="line">            result = <span class="keyword">await</span> <span class="variable language_">self</span>._call_rpa_engine(task, robot_id)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> result[<span class="string">&#x27;success&#x27;</span>]:</span><br><span class="line">                <span class="variable language_">self</span>._handle_task_success(task, robot_id, result)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="variable language_">self</span>._handle_task_failure(task, robot_id, result[<span class="string">&#x27;error&#x27;</span>])</span><br><span class="line">                </span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="variable language_">self</span>._handle_task_failure(task, robot_id, <span class="built_in">str</span>(e))</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_call_rpa_engine</span>(<span class="params">self, task: RPATask, robot_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;调用RPA引擎执行任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 模拟任务执行</span></span><br><span class="line">        <span class="keyword">await</span> asyncio.sleep(task.estimated_duration)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&#x27;success&#x27;</span>: <span class="literal">True</span>, <span class="string">&#x27;result&#x27;</span>: <span class="string">&#x27;Task completed successfully&#x27;</span>&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_handle_task_success</span>(<span class="params">self, task: RPATask, robot_id: <span class="built_in">str</span>, result</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理任务成功&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> task.task_id <span class="keyword">in</span> <span class="variable language_">self</span>.running_tasks:</span><br><span class="line">            <span class="keyword">del</span> <span class="variable language_">self</span>.running_tasks[task.task_id]</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.completed_tasks[task.task_id] = &#123;</span><br><span class="line">            <span class="string">&#x27;task&#x27;</span>: task,</span><br><span class="line">            <span class="string">&#x27;robot_id&#x27;</span>: robot_id,</span><br><span class="line">            <span class="string">&#x27;result&#x27;</span>: result,</span><br><span class="line">            <span class="string">&#x27;completed_at&#x27;</span>: time.time()</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.robot_status[robot_id] = <span class="string">&#x27;idle&#x27;</span></span><br><span class="line">        logging.info(<span class="string">f&quot;任务执行成功: <span class="subst">&#123;task.task_id&#125;</span>&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_handle_task_failure</span>(<span class="params">self, task: RPATask, robot_id: <span class="built_in">str</span>, error</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理任务失败&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> task.task_id <span class="keyword">in</span> <span class="variable language_">self</span>.running_tasks:</span><br><span class="line">            <span class="keyword">del</span> <span class="variable language_">self</span>.running_tasks[task.task_id]</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.robot_status[robot_id] = <span class="string">&#x27;idle&#x27;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 重试逻辑</span></span><br><span class="line">        <span class="keyword">if</span> task.retry_count &lt; task.max_retries:</span><br><span class="line">            task.retry_count += <span class="number">1</span></span><br><span class="line">            heapq.heappush(<span class="variable language_">self</span>.task_queue, task)</span><br><span class="line">            logging.warning(<span class="string">f&quot;任务失败，将重试: <span class="subst">&#123;task.task_id&#125;</span>, 重试次数: <span class="subst">&#123;task.retry_count&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            logging.error(<span class="string">f&quot;任务最终失败: <span class="subst">&#123;task.task_id&#125;</span>, 错误: <span class="subst">&#123;error&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、修复效果与预防措施"><a href="#四、修复效果与预防措施" class="headerlink" title="四、修复效果与预防措施"></a>四、修复效果与预防措施</h2><h3 id="修复效果对比"><a href="#修复效果对比" class="headerlink" title="修复效果对比"></a>修复效果对比</h3><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>修复前</th>
+<th>修复后</th>
+<th>改善幅度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>任务成功率</td>
+<td>5%</td>
+<td>98%</td>
+<td>提升1860%</td>
+</tr>
+<tr>
+<td>平均执行时间</td>
+<td>30分钟超时</td>
+<td>2分钟</td>
+<td>提升93%</td>
+</tr>
+<tr>
+<td>系统CPU使用率</td>
+<td>98%</td>
+<td>45%</td>
+<td>降低54%</td>
+</tr>
+<tr>
+<td>并发任务数</td>
+<td>3-5个</td>
+<td>30个</td>
+<td>提升500%</td>
+</tr>
+<tr>
+<td>故障恢复时间</td>
+<td>手动重启</td>
+<td>自动恢复</td>
+<td>新增能力</td>
+</tr>
+</tbody></table>
+<h3 id="RPA生产运维最佳实践"><a href="#RPA生产运维最佳实践" class="headerlink" title="RPA生产运维最佳实践"></a>RPA生产运维最佳实践</h3><p><strong>核心防护策略：</strong></p>
+<ol>
+<li><strong>资源隔离管理</strong>：使用信号量控制并发访问，避免资源竞争</li>
+<li><strong>智能任务调度</strong>：基于优先级和资源可用性的调度策略</li>
+<li><strong>故障自动恢复</strong>：实现任务重试和熔断机制</li>
+<li><strong>实时监控告警</strong>：建立完善的性能监控和异常告警</li>
+</ol>
+<p><strong>运维规范要点：</strong></p>
+<ul>
+<li>合理设置并发度限制，避免资源过载</li>
+<li>建立任务优先级管理机制</li>
+<li>实施完善的日志记录和监控体系</li>
+<li>定期进行系统容量规划和优化</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次RPA批量任务执行失败故障让我们深刻认识到：<strong>大规模RPA部署需要系统化的资源管理和智能调度策略</strong>。</p>
+<p><strong>核心经验总结：</strong></p>
+<ol>
+<li><strong>资源管理是关键</strong>：必须避免多个机器人竞争同一资源</li>
+<li><strong>调度策略要智能</strong>：考虑任务优先级和资源依赖关系</li>
+<li><strong>监控体系要完善</strong>：实时监控资源使用和任务执行状态</li>
+<li><strong>故障处理要自动化</strong>：建立自动重试和熔断机制</li>
+</ol>
+<p><strong>实际应用价值：</strong></p>
+<ul>
+<li>任务成功率从5%恢复到98%，系统稳定性大幅提升</li>
+<li>系统吞吐量提升5倍，支撑了更大的业务规模</li>
+<li>建立了完整的RPA生产运维体系</li>
+<li>为企业RPA规模化部署提供了宝贵经验</li>
+</ul>
+<p>RPA技术的价值在于解放人力、提升效率，但前提是系统的稳定可靠。通过这次故障排查，我们不仅解决了当前问题，更重要的是建立了一套完整的RPA生产运维最佳实践，为后续的规模化部署奠定了坚实基础。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://example.com/2022/05/04/rpa-batch-task-execution-failure-troubleshooting/" title="RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程">http://example.com/2022/05/04/rpa-batch-task-execution-failure-troubleshooting/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RPA/" rel="tag"># RPA</a>
+              <a href="/tags/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" rel="tag"># 生产故障</a>
+              <a href="/tags/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" rel="tag"># 故障排查</a>
+              <a href="/tags/%E5%BD%B1%E5%88%80/" rel="tag"># 影刀</a>
+              <a href="/tags/UIBot/" rel="tag"># UIBot</a>
+              <a href="/tags/%E6%89%B9%E9%87%8F%E4%BB%BB%E5%8A%A1/" rel="tag"># 批量任务</a>
+              <a href="/tags/%E6%9C%BA%E5%99%A8%E4%BA%BA%E8%B0%83%E5%BA%A6/" rel="tag"># 机器人调度</a>
+              <a href="/tags/%E8%B5%84%E6%BA%90%E5%86%B2%E7%AA%81/" rel="tag"># 资源冲突</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/27/rpa-browser-automation-excel-data-import-debugging-practice/" rel="prev" title="RPA浏览器自动化Excel数据导入异常调试实战：从数据格式错乱到稳定处理的完整排查过程">
+      <i class="fa fa-chevron-left"></i> RPA浏览器自动化Excel数据导入异常调试实战：从数据格式错乱到稳定处理的完整排查过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/05/15/rpa-batch-data-processing-memory-overflow-production-incident-postmortem/" rel="next" title="RPA批量数据处理任务内存溢出生产故障复盘：从系统崩溃到架构重构的完整修复历程">
+      RPA批量数据处理任务内存溢出生产故障复盘：从系统崩溃到架构重构的完整修复历程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPA%E6%89%B9%E9%87%8F%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C%E5%A4%B1%E8%B4%A5%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E6%9C%BA%E5%99%A8%E4%BA%BA%E9%9B%86%E4%BD%93%E7%BD%A2%E5%B7%A5%E5%88%B0%E7%A8%B3%E5%AE%9A%E8%BF%90%E8%A1%8C%E7%9A%84%E5%AE%8C%E6%95%B4%E4%BF%AE%E5%A4%8D%E8%BF%87%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1%E4%B8%8E%E5%BD%B1%E5%93%8D%E8%AF%84%E4%BC%B0"><span class="nav-number">1.2.</span> <span class="nav-text">一、故障现象与影响评估</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%85%E9%9A%9C%E6%97%B6%E9%97%B4%E7%BA%BF%E8%AE%B0%E5%BD%95"><span class="nav-number">1.2.1.</span> <span class="nav-text">故障时间线记录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%9B%91%E6%8E%A7%E6%8C%87%E6%A0%87%E5%BC%82%E5%B8%B8"><span class="nav-number">1.2.2.</span> <span class="nav-text">关键监控指标异常</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E4%B8%8E%E9%97%AE%E9%A2%98%E5%AE%9A%E4%BD%8D"><span class="nav-number">1.3.</span> <span class="nav-text">二、故障排查与问题定位</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-RPA%E7%B3%BB%E7%BB%9F%E7%8A%B6%E6%80%81%E7%9B%91%E6%8E%A7"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. RPA系统状态监控</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%B3%BB%E7%BB%9F%E8%B5%84%E6%BA%90%E5%86%B2%E7%AA%81%E5%88%86%E6%9E%90"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 系统资源冲突分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E5%AE%9E%E6%96%BD"><span class="nav-number">1.4.</span> <span class="nav-text">三、解决方案实施</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F%E9%87%8D%E6%9E%84"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 资源管理系统重构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%99%BA%E8%83%BD%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E4%BC%98%E5%8C%96"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 智能任务调度优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E4%BF%AE%E5%A4%8D%E6%95%88%E6%9E%9C%E4%B8%8E%E9%A2%84%E9%98%B2%E6%8E%AA%E6%96%BD"><span class="nav-number">1.5.</span> <span class="nav-text">四、修复效果与预防措施</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E6%95%88%E6%9E%9C%E5%AF%B9%E6%AF%94"><span class="nav-number">1.5.1.</span> <span class="nav-text">修复效果对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RPA%E7%94%9F%E4%BA%A7%E8%BF%90%E7%BB%B4%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.5.2.</span> <span class="nav-text">RPA生产运维最佳实践</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
