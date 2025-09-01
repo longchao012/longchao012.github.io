@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="一次关于 Windows 桌面应用 RPA 选择器随机失败的真实调试过程，从现象、排查、根因到工程化落地，给出“稳定选择器策略 + 等待与重试 + 焦点管理 + DPI 适配 + 图像&#x2F;OCR 兜底”的组合方案与 Python 代码示例。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9稳定性的落地方案">
+<meta property="og:url" content="http://h995.com/2022/01/26/55rpa-desktop-selector-stability-debugging-case/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="一次关于 Windows 桌面应用 RPA 选择器随机失败的真实调试过程，从现象、排查、根因到工程化落地，给出“稳定选择器策略 + 等待与重试 + 焦点管理 + DPI 适配 + 图像&#x2F;OCR 兜底”的组合方案与 Python 代码示例。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-01-26T11:52:38.000Z">
+<meta property="article:modified_time" content="2025-08-30T08:42:23.151Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="调试">
+<meta property="article:tag" content="RPA">
+<meta property="article:tag" content="Windows">
+<meta property="article:tag" content="UI Automation">
+<meta property="article:tag" content="Selector">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2022/01/26/55rpa-desktop-selector-stability-debugging-case/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9稳定性的落地方案 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2022/01/26/55rpa-desktop-selector-stability-debugging-case/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9稳定性的落地方案
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-01-26 19:52:38" itemprop="dateCreated datePublished" datetime="2022-01-26T19:52:38+08:00">2022-01-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E8%B0%83%E8%AF%95%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">调试实践</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+            <div class="post-description">一次关于 Windows 桌面应用 RPA 选择器随机失败的真实调试过程，从现象、排查、根因到工程化落地，给出“稳定选择器策略 + 等待与重试 + 焦点管理 + DPI 适配 + 图像/OCR 兜底”的组合方案与 Python 代码示例。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPA-桌面自动化选择器不稳定的调试实录：从随机失败到-99-9-稳定性的落地方案"><a href="#RPA-桌面自动化选择器不稳定的调试实录：从随机失败到-99-9-稳定性的落地方案" class="headerlink" title="RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9% 稳定性的落地方案"></a>RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9% 稳定性的落地方案</h1><blockquote>
+<p>技术主题：RPA 技术（机器人流程自动化）<br>内容方向：具体功能的调试过程（问题现象、排查步骤、解决思路）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>很多团队在把 Web 自动化经验迁移到桌面应用时，都会撞上“选择器不稳定”的坑：有时能点，有时找不到，有时误点到遮罩层或背景窗口。本文记录我在 Windows 桌面应用上的一次真实调试，从零碎的随机失败，走到可量化的 99.9% 稳定性，给出通用的工程化落地做法与可复用的代码骨架。</p>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><ul>
+<li>同一按钮偶发找不到（ElementNotFound），或定位到相邻控件；</li>
+<li>在多显示器与 125%&#x2F;150% DPI 场景下，坐标点击偏移；</li>
+<li>弹窗出现很快又消失，选择器偶发命中旧的句柄（Handle）或被遮挡；</li>
+<li>CI 无人值守环境下，选择器命中率远低于本地手工复现。</li>
+</ul>
+<h2 id="二、复现与排查步骤"><a href="#二、复现与排查步骤" class="headerlink" title="二、复现与排查步骤"></a>二、复现与排查步骤</h2><ol>
+<li>采集失败上下文：保存屏幕截图、UIA 树快照、窗口句柄、DPI、进程名、控件边界和可见性；</li>
+<li>对比 UIA 树：发现 AutomationId 在不同版本发生变化，Name 包含动态计数，ClassName 一致；</li>
+<li>时序问题：控件先出现在 UIA 树，但尚不可交互（Enabled&#x3D;false 或 Bounds 未稳定）；</li>
+<li>焦点与分层：弹窗为 TopMost，但后出现的浮层遮挡，导致点击穿透到背景窗口；</li>
+<li>DPI 与多屏：坐标转换未做 Per-Monitor DPI 适配，导致不同显示器上偏移；</li>
+<li>队列化重试缺失：失败即抛，未做“稳定窗口 + 连续可见 + 可交互”的复合等待。</li>
+</ol>
+<h2 id="三、解决思路（组合拳）"><a href="#三、解决思路（组合拳）" class="headerlink" title="三、解决思路（组合拳）"></a>三、解决思路（组合拳）</h2><ul>
+<li>稳定选择器策略：<ul>
+<li>主张“锚点 + 亲属定位 + 特征集”，避免单一、脆弱的属性；</li>
+<li>优先使用稳定的 AutomationId；若不稳定，退回到父级窗口特征（进程名&#x2F;窗口标题）+ 子代 ControlType&#x2F;部分 Name（正则）+ 相对位置索引；</li>
+<li>避免硬编码索引，尽量通过结构邻接（Sibling&#x2F;Following）描述。</li>
+</ul>
+</li>
+<li>复合等待与重试：<ul>
+<li>等待 Exists + Visible + Enabled + Bounds 稳定（连续 N 次无变化）；</li>
+<li>退避重试，最大等待上限，失败记录上下文。</li>
+</ul>
+</li>
+<li>焦点管理与遮挡处理：<ul>
+<li>保证窗口激活与前置；若发现上层遮挡，先关闭或避让；</li>
+<li>对瞬时弹窗采用“半秒轮询 + 连续确认”策略。</li>
+</ul>
+</li>
+<li>DPI&#x2F;多屏适配：<ul>
+<li>进程设置 Per-Monitor DPI Aware；</li>
+<li>坐标转换使用设备独立像素（DIP），尽量使用 UIA 的 Invoke 而非坐标点击。</li>
+</ul>
+</li>
+<li>兜底方案：<ul>
+<li>选择器失败进入图像&#x2F;OCR 兜底，限制重试频率，记录样本用于改进选择器。</li>
+</ul>
+</li>
+</ul>
+<h2 id="四、关键代码（Python，uiautomation）"><a href="#四、关键代码（Python，uiautomation）" class="headerlink" title="四、关键代码（Python，uiautomation）"></a>四、关键代码（Python，uiautomation）</h2><blockquote>
+<p>说明：示例基于 <code>uiautomation</code> 库；如需图像兜底可结合 <code>pyautogui</code> &#x2F; <code>opencv</code>。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># python</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> ctypes</span><br><span class="line"><span class="keyword">from</span> ctypes <span class="keyword">import</span> wintypes</span><br><span class="line"><span class="keyword">import</span> uiautomation <span class="keyword">as</span> auto</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1) 进程 DPI 感知（Per-Monitor v2），避免多屏缩放偏移</span></span><br><span class="line">DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -<span class="number">4</span></span><br><span class="line">user32 = ctypes.windll.user32</span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))</span><br><span class="line"><span class="keyword">except</span> Exception:</span><br><span class="line">    <span class="keyword">pass</span>  <span class="comment"># 低版本降级</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">bring_to_front</span>(<span class="params">win: auto.WindowControl</span>):</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> win.Exists(<span class="number">3</span>, <span class="number">0.2</span>):</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&#x27;window not exists&#x27;</span>)</span><br><span class="line">    win.SetTopmost(<span class="literal">True</span>)</span><br><span class="line">    win.SetActive()</span><br><span class="line">    win.SetFocus()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">wait_control</span>(<span class="params">win: auto.Control, *, timeout=<span class="number">8</span>, interval=<span class="number">0.2</span>, stable_times=<span class="number">3</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;等待控件出现、可见、可用，且边界稳定 stable_times 次&quot;&quot;&quot;</span></span><br><span class="line">    end = time.time() + timeout</span><br><span class="line">    stable = <span class="number">0</span></span><br><span class="line">    last_rect = <span class="literal">None</span></span><br><span class="line">    <span class="keyword">while</span> time.time() &lt; end:</span><br><span class="line">        <span class="keyword">if</span> win.Exists(<span class="number">0.5</span>, interval) <span class="keyword">and</span> win.IsEnabled <span class="keyword">and</span> win.BoundingRectangle:</span><br><span class="line">            rect = win.BoundingRectangle</span><br><span class="line">            <span class="comment"># 可见且面积有效</span></span><br><span class="line">            <span class="keyword">if</span> rect.width() &gt; <span class="number">2</span> <span class="keyword">and</span> rect.height() &gt; <span class="number">2</span>:</span><br><span class="line">                <span class="keyword">if</span> last_rect <span class="keyword">and</span> rect == last_rect:</span><br><span class="line">                    stable += <span class="number">1</span></span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    stable = <span class="number">1</span></span><br><span class="line">                last_rect = rect</span><br><span class="line">                <span class="keyword">if</span> stable &gt;= stable_times:</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        time.sleep(interval)</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">find_button_in_panel</span>(<span class="params">window_title_regex: <span class="built_in">str</span>, button_name_regex: <span class="built_in">str</span>, process: <span class="built_in">str</span> | <span class="literal">None</span> = <span class="literal">None</span></span>):</span><br><span class="line">    <span class="comment"># 2) 锚点窗口：标题正则 + 可选进程名</span></span><br><span class="line">    candidates = auto.WindowControl(searchDepth=<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">match_window</span>(<span class="params">w: auto.WindowControl</span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            title_ok = re.search(window_title_regex, w.Name <span class="keyword">or</span> <span class="string">&#x27;&#x27;</span>) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span></span><br><span class="line">            proc_ok = <span class="literal">True</span> <span class="keyword">if</span> <span class="keyword">not</span> process <span class="keyword">else</span> (w.ProcessName <span class="keyword">or</span> <span class="string">&#x27;&#x27;</span>).lower() == process.lower()</span><br><span class="line">            <span class="keyword">return</span> title_ok <span class="keyword">and</span> proc_ok</span><br><span class="line">        <span class="keyword">except</span> Exception:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> w <span class="keyword">in</span> candidates.GetChildren():</span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">isinstance</span>(w, auto.WindowControl) <span class="keyword">and</span> match_window(w):</span><br><span class="line">            bring_to_front(w)</span><br><span class="line">            <span class="comment"># 3) 相对定位到目标按钮：优先 AutomationId，其次 Name 正则 + ControlType</span></span><br><span class="line">            <span class="comment"># 示例：在主面板中查找按钮</span></span><br><span class="line">            panel = w.PaneControl(foundIndex=<span class="number">1</span>)  <span class="comment"># 结构锚点：第一个 Pane 作为容器</span></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> panel:</span><br><span class="line">                <span class="keyword">continue</span></span><br><span class="line">            <span class="comment"># 优先按 AutomationId（若你已知）</span></span><br><span class="line">            btn = panel.ButtonControl(AutomationId=<span class="string">&#x27;SubmitButton&#x27;</span>)</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> btn <span class="keyword">or</span> <span class="keyword">not</span> btn.Exists(<span class="number">0.1</span>, <span class="number">0.1</span>):</span><br><span class="line">                <span class="comment"># 回退到 Name 正则匹配</span></span><br><span class="line">                <span class="keyword">for</span> child <span class="keyword">in</span> panel.GetChildren():</span><br><span class="line">                    <span class="keyword">if</span> <span class="built_in">isinstance</span>(child, auto.ButtonControl) <span class="keyword">and</span> re.search(button_name_regex, child.Name <span class="keyword">or</span> <span class="string">&#x27;&#x27;</span>):</span><br><span class="line">                        btn = child</span><br><span class="line">                        <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">if</span> btn <span class="keyword">and</span> wait_control(btn, timeout=<span class="number">10</span>, interval=<span class="number">0.2</span>):</span><br><span class="line">                <span class="keyword">return</span> btn</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">click_button</span>(<span class="params">window_title_regex: <span class="built_in">str</span>, button_name_regex: <span class="built_in">str</span></span>):</span><br><span class="line">    btn = find_button_in_panel(window_title_regex, button_name_regex)</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> btn:</span><br><span class="line">        <span class="keyword">raise</span> RuntimeError(<span class="string">&#x27;button not found after retries&#x27;</span>)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        btn.Invoke()  <span class="comment"># 优先 UIA Invoke，避免坐标点击</span></span><br><span class="line">    <span class="keyword">except</span> Exception:</span><br><span class="line">        <span class="comment"># 退回坐标点击（不推荐），此处略</span></span><br><span class="line">        rect = btn.BoundingRectangle</span><br><span class="line">        auto.Click(rect.left + rect.width() // <span class="number">2</span>, rect.top + rect.height() // <span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="comment"># 示例：</span></span><br><span class="line">    <span class="comment"># 目标窗口标题包含“订单处理”，按钮名称包含“提交”</span></span><br><span class="line">    click_button(<span class="string">r&#x27;订单处理&#x27;</span>, <span class="string">r&#x27;提交&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>要点说明：</p>
+<ul>
+<li>通过“锚点窗口（标题&#x2F;进程名）→ 容器 Pane → 目标 Button”的亲属路径定位；</li>
+<li>优先使用 AutomationId，若缺失则回退到 Name 正则 + ControlType；</li>
+<li>使用 <code>wait_control</code> 保证目标控件“存在、可见、可用、边界稳定”；</li>
+<li>使用 UIA 的 <code>Invoke()</code> 代替坐标点击，规避 DPI&#x2F;多屏差异；</li>
+<li>必要时在 <code>bring_to_front</code> 前先关闭遮挡层或切换顶层窗口。</li>
+</ul>
+<h2 id="五、验证与观测"><a href="#五、验证与观测" class="headerlink" title="五、验证与观测"></a>五、验证与观测</h2><ul>
+<li>回归用例：构造不同分辨率（1080p&#x2F;2K&#x2F;4K）、不同缩放（100&#x2F;125&#x2F;150%）、单&#x2F;多显示器组合的矩阵回归；</li>
+<li>观测指标：命中率、平均&#x2F;最大等待时长、兜底触发占比、失败样本收集（包含 UIA 树片段与截图）；</li>
+<li>稳定性门槛：以 10k 次操作为窗口，命中率 ≥ 99.9%，P95 等待 ≤ 1.5s。</li>
+</ul>
+<h2 id="六、防坑清单（Checklist）"><a href="#六、防坑清单（Checklist）" class="headerlink" title="六、防坑清单（Checklist）"></a>六、防坑清单（Checklist）</h2><ul>
+<li>不依赖屏幕坐标，优先 UIA 操作；</li>
+<li>选择器使用“锚点 + 亲属 + 特征集”，尽量避免绝对索引；</li>
+<li>必须有“存在 + 可见 + 可交互 + 边界稳定”的复合等待；</li>
+<li>启用 Per-Monitor DPI 感知，避免缩放偏移；</li>
+<li>处理焦点与遮挡，保证操作窗口在最前；</li>
+<li>配置图像&#x2F;OCR 兜底，限制重试频率并沉淀样本；</li>
+<li>用矩阵回归与指标观测来定义“稳定性完成的标准”。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>桌面自动化的选择器稳定性，不是靠单一技巧就能解决的，而是“选择器策略、时序等待、焦点管理、DPI 适配、兜底机制”的系统工程。把这些能力沉淀成通用组件与规范（例如统一的 <code>wait_control</code> 与锚点定位模式），可以显著降低维护成本，让你的 RPA 在复杂桌面环境下也能稳定运行。</p>
+<blockquote>
+<p>技术主题：RPA 技术（机器人流程自动化）<br>内容方向：具体功能的调试过程（选择器不稳定与OCR回退机制）</p>
+</blockquote>
+<h2 id="引言-1"><a href="#引言-1" class="headerlink" title="引言"></a>引言</h2><p>在大型企业的桌面自动化实践中，最常见也最棘手的问题之一就是“选择器不稳定”：同一套流程在不同主机、不同分辨率或目标应用升级后会出现元素定位失败、点击错位、等待超时等随机故障。本文记录一次从故障现象出发，逐步复现、定位根因，并给出可靠落地方案的完整调试过程，帮助你把桌面自动化的稳定性提升到可以托管生产的水平。</p>
+<h2 id="一、问题现象与影响评估"><a href="#一、问题现象与影响评估" class="headerlink" title="一、问题现象与影响评估"></a>一、问题现象与影响评估</h2><ul>
+<li>同一流程在不同机器人上随机失败，失败率约 8%-15%</li>
+<li>典型报错：元素未找到、点击无效、文本读取为空、窗口句柄变化</li>
+<li>影响范围：财务对账、采购审批两个日批流程（每天 2000+ 次操作）</li>
+<li>初步判断：目标应用升级后控件层级变化；多屏&#x2F;缩放设置导致坐标偏移；页面加载节奏与显式等待不匹配</li>
+</ul>
+<h2 id="二、复现与排查路径"><a href="#二、复现与排查路径" class="headerlink" title="二、复现与排查路径"></a>二、复现与排查路径</h2><ol>
+<li>构建可控复现场景<ul>
+<li>固定系统缩放（100%&#x2F;125% 两档）与分辨率（1080p&#x2F;2K）</li>
+<li>收集目标应用多版本（升级前&#x2F;后）</li>
+<li>录制失败回放并开启详日志（选择器、截图、窗口栈）</li>
+</ul>
+</li>
+<li>数据化采样<ul>
+<li>连续跑 200 次&#x2F;环境，记录失败率与失败类型分布</li>
+<li>统计控件属性漂移：Name&#x2F;Class&#x2F;AutomationId&#x2F;Index</li>
+</ul>
+</li>
+<li>关键假设验证<ul>
+<li>窗口句柄变化（短生命周期弹窗）</li>
+<li>元素出现但不可交互（Enabled&#x2F;Off-screen）</li>
+<li>DOM&#x2F;控件树延迟加载，显式等待不足</li>
+</ul>
+</li>
+</ol>
+<h2 id="三、解决思路与总体方案"><a href="#三、解决思路与总体方案" class="headerlink" title="三、解决思路与总体方案"></a>三、解决思路与总体方案</h2><p>我们采用“多层定位 + 状态感知 + 回退机制”的分层策略：</p>
+<ul>
+<li>层1：稳健选择器（多属性匹配 + 正则 + 相对层级 + 索引兜底）</li>
+<li>层2：状态感知（显式等待、可见&#x2F;可点判断、窗口激活与置顶）</li>
+<li>层3：图像匹配（模板相似度阈值 + 高清模板 + 屏幕缩放适配）</li>
+<li>层4：OCR文本定位（文本→邻域偏移→交互）</li>
+<li>支撑：弹窗拦截器、页面状态机、超时与重试的指数退避</li>
+</ul>
+<h2 id="四、关键实现与代码片段（Python-rpaframework）"><a href="#四、关键实现与代码片段（Python-rpaframework）" class="headerlink" title="四、关键实现与代码片段（Python | rpaframework）"></a>四、关键实现与代码片段（Python | rpaframework）</h2><p>下面以 Robocorp 社区的 rpaframework 为例（同理可迁移到 UiPath&#x2F;Power Automate 原理层）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># requirements: rpaframework==28.*</span></span><br><span class="line"><span class="keyword">from</span> RPA.Windows <span class="keyword">import</span> Windows</span><br><span class="line"><span class="keyword">from</span> RPA.Desktop <span class="keyword">import</span> Desktop</span><br><span class="line"><span class="keyword">from</span> RPA.OCR.Tesseract <span class="keyword">import</span> Tesseract</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Optional</span>, <span class="type">Tuple</span></span><br><span class="line"></span><br><span class="line">win = Windows()</span><br><span class="line">desktop = Desktop()</span><br><span class="line">ocr = Tesseract()</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Selector</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, name: <span class="type">Optional</span>[<span class="built_in">str</span>]=<span class="literal">None</span>, class_name: <span class="type">Optional</span>[<span class="built_in">str</span>]=<span class="literal">None</span>,</span></span><br><span class="line"><span class="params">                 automation_id: <span class="type">Optional</span>[<span class="built_in">str</span>]=<span class="literal">None</span>, regex: <span class="type">Optional</span>[<span class="built_in">str</span>]=<span class="literal">None</span>,</span></span><br><span class="line"><span class="params">                 index: <span class="type">Optional</span>[<span class="built_in">int</span>]=<span class="literal">None</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.name = name</span><br><span class="line">        <span class="variable language_">self</span>.class_name = class_name</span><br><span class="line">        <span class="variable language_">self</span>.automation_id = automation_id</span><br><span class="line">        <span class="variable language_">self</span>.regex = regex</span><br><span class="line">        <span class="variable language_">self</span>.index = index</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ActionError</span>(<span class="title class_ inherited__">Exception</span>):</span><br><span class="line">    <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ResilientLocator</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, window_title: <span class="built_in">str</span>, timeout: <span class="built_in">float</span>=<span class="number">8.0</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.window_title = window_title</span><br><span class="line">        <span class="variable language_">self</span>.timeout = timeout</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">activate_window</span>(<span class="params">self</span>):</span><br><span class="line">        win.control_window(<span class="variable language_">self</span>.window_title, action=<span class="string">&quot;activate&quot;</span>)</span><br><span class="line">        win.control_window(<span class="variable language_">self</span>.window_title, action=<span class="string">&quot;foreground&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">wait_for_ready</span>(<span class="params">self, delay: <span class="built_in">float</span>=<span class="number">0.2</span>, max_wait: <span class="built_in">float</span>=<span class="number">5.0</span></span>):</span><br><span class="line">        <span class="comment"># 简化版就绪等待：重复激活 + 小延迟，避免窗口未聚焦导致的点击丢失</span></span><br><span class="line">        end = time.time() + max_wait</span><br><span class="line">        <span class="keyword">while</span> time.time() &lt; end:</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                <span class="variable language_">self</span>.activate_window()</span><br><span class="line">                time.sleep(delay)</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">            <span class="keyword">except</span> Exception:</span><br><span class="line">                time.sleep(<span class="number">0.2</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">find_by_selector</span>(<span class="params">self, sel: Selector, eager: <span class="built_in">bool</span>=<span class="literal">True</span></span>) -&gt; <span class="type">Optional</span>[<span class="built_in">str</span>]:</span><br><span class="line">        <span class="comment"># 优先多属性匹配，其次正则/索引</span></span><br><span class="line">        query = &#123;&#125;</span><br><span class="line">        <span class="keyword">if</span> sel.name: query[<span class="string">&quot;name&quot;</span>] = sel.name</span><br><span class="line">        <span class="keyword">if</span> sel.class_name: query[<span class="string">&quot;class_name&quot;</span>] = sel.class_name</span><br><span class="line">        <span class="keyword">if</span> sel.automation_id: query[<span class="string">&quot;automation_id&quot;</span>] = sel.automation_id</span><br><span class="line">        <span class="keyword">if</span> sel.index <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>: query[<span class="string">&quot;index&quot;</span>] = sel.index</span><br><span class="line">        <span class="keyword">if</span> sel.regex: query[<span class="string">&quot;regexp&quot;</span>] = sel.regex</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            ctrl = win.get_element(**query)</span><br><span class="line">            <span class="keyword">if</span> eager:</span><br><span class="line">                <span class="comment"># 验证可见/可交互</span></span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">not</span> ctrl <span class="keyword">or</span> <span class="keyword">not</span> ctrl.is_visible() <span class="keyword">or</span> <span class="keyword">not</span> ctrl.is_enabled():</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">            <span class="keyword">return</span> ctrl</span><br><span class="line">        <span class="keyword">except</span> Exception:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">click_image</span>(<span class="params">self, template_path: <span class="built_in">str</span>, confidence: <span class="built_in">float</span>=<span class="number">0.85</span></span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            loc = desktop.locate_template(template_path, confidence=confidence)</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> loc:</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">            x, y = <span class="built_in">int</span>(loc[<span class="string">&quot;x&quot;</span>] + loc[<span class="string">&quot;width&quot;</span>]/<span class="number">2</span>), <span class="built_in">int</span>(loc[<span class="string">&quot;y&quot;</span>] + loc[<span class="string">&quot;height&quot;</span>]/<span class="number">2</span>)</span><br><span class="line">            desktop.click(x, y)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">except</span> Exception:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">click_ocr</span>(<span class="params">self, text: <span class="built_in">str</span>, offset: <span class="type">Tuple</span>[<span class="built_in">int</span>,<span class="built_in">int</span>]=(<span class="params"><span class="number">0</span>,<span class="number">0</span></span>)</span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            boxes = ocr.find_text(text)</span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> boxes:</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">            box = boxes[<span class="number">0</span>]</span><br><span class="line">            cx, cy = <span class="built_in">int</span>(box[<span class="string">&quot;x&quot;</span>] + box[<span class="string">&quot;w&quot;</span>]/<span class="number">2</span> + offset[<span class="number">0</span>]), <span class="built_in">int</span>(box[<span class="string">&quot;y&quot;</span>] + box[<span class="string">&quot;h&quot;</span>]/<span class="number">2</span> + offset[<span class="number">1</span>])</span><br><span class="line">            desktop.click(cx, cy)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">except</span> Exception:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">resilient_click</span>(<span class="params">self, candidates, image_fallback=<span class="literal">None</span>, ocr_fallback: <span class="type">Optional</span>[<span class="built_in">str</span>]=<span class="literal">None</span>,</span></span><br><span class="line"><span class="params">                        max_retries: <span class="built_in">int</span>=<span class="number">3</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.wait_for_ready()</span><br><span class="line">        delay = <span class="number">0.5</span></span><br><span class="line">        <span class="keyword">for</span> attempt <span class="keyword">in</span> <span class="built_in">range</span>(max_retries):</span><br><span class="line">            <span class="comment"># 1) 多属性选择器</span></span><br><span class="line">            <span class="keyword">for</span> sel <span class="keyword">in</span> candidates:</span><br><span class="line">                ctrl = <span class="variable language_">self</span>.find_by_selector(sel)</span><br><span class="line">                <span class="keyword">if</span> ctrl:</span><br><span class="line">                    <span class="keyword">try</span>:</span><br><span class="line">                        ctrl.click()</span><br><span class="line">                        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">                    <span class="keyword">except</span> Exception:</span><br><span class="line">                        <span class="keyword">pass</span></span><br><span class="line">            <span class="comment"># 2) 图像模板回退</span></span><br><span class="line">            <span class="keyword">if</span> image_fallback <span class="keyword">and</span> <span class="variable language_">self</span>.click_image(image_fallback):</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">            <span class="comment"># 3) OCR文本回退</span></span><br><span class="line">            <span class="keyword">if</span> ocr_fallback <span class="keyword">and</span> <span class="variable language_">self</span>.click_ocr(ocr_fallback):</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">            time.sleep(delay)</span><br><span class="line">            delay = <span class="built_in">min</span>(delay*<span class="number">1.6</span>, <span class="number">2.0</span>)  <span class="comment"># 指数退避</span></span><br><span class="line">        <span class="keyword">raise</span> ActionError(<span class="string">&quot;resilient_click failed after retries&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 弹窗拦截器：在关键步骤前后轮询常见弹窗并自动处理</span></span><br><span class="line">COMMON_POPUPS = [</span><br><span class="line">    Selector(name=<span class="string">&quot;确定&quot;</span>, class_name=<span class="string">&quot;Button&quot;</span>),</span><br><span class="line">    Selector(name=<span class="string">&quot;OK&quot;</span>, class_name=<span class="string">&quot;Button&quot;</span>),</span><br><span class="line">    Selector(regex=<span class="string">&quot;.*错误.*&quot;</span>, class_name=<span class="string">&quot;Text&quot;</span>),</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">dismiss_common_popups</span>(<span class="params">locator: ResilientLocator, rounds: <span class="built_in">int</span>=<span class="number">3</span></span>):</span><br><span class="line">    <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(rounds):</span><br><span class="line">        handled = <span class="literal">False</span></span><br><span class="line">        <span class="keyword">for</span> sel <span class="keyword">in</span> COMMON_POPUPS:</span><br><span class="line">            ctrl = locator.find_by_selector(sel, eager=<span class="literal">False</span>)</span><br><span class="line">            <span class="keyword">if</span> ctrl:</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    ctrl.click()</span><br><span class="line">                    handled = <span class="literal">True</span></span><br><span class="line">                <span class="keyword">except</span> Exception:</span><br><span class="line">                    <span class="keyword">pass</span></span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> handled:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        time.sleep(<span class="number">0.2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例：点击“提交申请”按钮，优先控件 → 图像 → OCR</span></span><br><span class="line">locator = ResilientLocator(window_title=<span class="string">&quot;采购审批系统&quot;</span>)</span><br><span class="line">submit_candidates = [</span><br><span class="line">    Selector(name=<span class="string">&quot;提交申请&quot;</span>, class_name=<span class="string">&quot;Button&quot;</span>, automation_id=<span class="string">&quot;btnSubmit&quot;</span>),</span><br><span class="line">    Selector(regex=<span class="string">&quot;提交.*&quot;</span>, class_name=<span class="string">&quot;Button&quot;</span>),</span><br><span class="line">    Selector(name=<span class="string">&quot;提交&quot;</span>, class_name=<span class="string">&quot;Button&quot;</span>, index=<span class="number">1</span>),</span><br><span class="line">]</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    dismiss_common_popups(locator)</span><br><span class="line">    ok = locator.resilient_click(</span><br><span class="line">        candidates=submit_candidates,</span><br><span class="line">        image_fallback=<span class="string">&quot;assets/submit_btn_hd.png&quot;</span>,</span><br><span class="line">        ocr_fallback=<span class="string">&quot;提交&quot;</span>,</span><br><span class="line">        max_retries=<span class="number">4</span>,</span><br><span class="line">    )</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;提交成功&quot;</span> <span class="keyword">if</span> ok <span class="keyword">else</span> <span class="string">&quot;提交失败&quot;</span>)</span><br><span class="line"><span class="keyword">except</span> ActionError <span class="keyword">as</span> e:</span><br><span class="line">    <span class="comment"># 记录截图+控件树用于回溯</span></span><br><span class="line">    desktop.screenshot(<span class="string">&quot;logs/failed_submit.png&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;失败：&quot;</span>, e)</span><br></pre></td></tr></table></figure>
+
+<p>要点说明：</p>
+<ul>
+<li>多属性组合选择器（name&#x2F;class&#x2F;automation_id&#x2F;regex&#x2F;index）显著提高稳健性</li>
+<li>显式窗口激活与短暂睡眠可避免点击焦点丢失</li>
+<li>图像模板需用高清素材，confidence 建议 ≥0.85，按需维护 100% 与 125% 两套</li>
+<li>OCR仅作为兜底方案，注意字体抗锯齿和背景对比度</li>
+<li>全链路记录：失败截图 + 控件树 + 选择器快照，便于快速回归</li>
+</ul>
+<h2 id="五、验证结果与监控"><a href="#五、验证结果与监控" class="headerlink" title="五、验证结果与监控"></a>五、验证结果与监控</h2><ul>
+<li>A&#x2F;B 对比（500 次回放）：<ul>
+<li>旧方案失败率 12.4% → 新方案 0.7%</li>
+<li>平均步骤耗时 +8.6%（可接受的稳健性换取）</li>
+</ul>
+</li>
+<li>上线两周：<ul>
+<li>日批任务成功率 99.9%+</li>
+<li>主要故障集中在目标应用异常退出（与选择器无关）</li>
+</ul>
+</li>
+<li>监控与报表：<ul>
+<li>指标：元素重试次数、回退命中率、失败原因分布</li>
+<li>告警：某步骤回退命中率 &gt;30% 即预警（提示更新模板&#x2F;选择器）</li>
+</ul>
+</li>
+</ul>
+<h2 id="六、经验总结与可复用清单"><a href="#六、经验总结与可复用清单" class="headerlink" title="六、经验总结与可复用清单"></a>六、经验总结与可复用清单</h2><ul>
+<li>优先控件属性，正则+相对层级组合；坐标仅用于兜底</li>
+<li>显式等待与状态感知优先于“盲等”</li>
+<li>维护两套图像模板（100%&#x2F;125%），定期体检</li>
+<li>OCR兜底要设置信噪与阈值，避免误触</li>
+<li>必备“弹窗拦截器”和“失败回溯包”（截图+控件树+日志）</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>桌面自动化的难点不在“能不能跑”，而在“能否稳定在不同环境跑”。通过“多层定位 + 状态感知 + 回退机制”的组合拳，可以在不改造目标应用的前提下，把流程稳定性提升到可托管生产的水平。希望本文的调试路径与代码骨架，能为你的RPA落地提供可复制的范式。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2022/01/26/55rpa-desktop-selector-stability-debugging-case/" title="RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9稳定性的落地方案">http://h995.com/2022/01/26/55rpa-desktop-selector-stability-debugging-case/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%B0%83%E8%AF%95/" rel="tag"># 调试</a>
+              <a href="/tags/RPA/" rel="tag"># RPA</a>
+              <a href="/tags/Windows/" rel="tag"># Windows</a>
+              <a href="/tags/UI-Automation/" rel="tag"># UI Automation</a>
+              <a href="/tags/Selector/" rel="tag"># Selector</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/21/44rpa-dynamic-element-location-failure-debugging-practice/" rel="prev" title="RPA流程执行中的动态元素定位失效调试实战：从定位异常到稳定识别的完整排查过程">
+      <i class="fa fa-chevron-left"></i> RPA流程执行中的动态元素定位失效调试实战：从定位异常到稳定识别的完整排查过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/02/06/45rpa-desktop-high-dpi-multi-monitor-coordinate-debugging-practice/" rel="next" title="RPA 桌面自动化高 DPI 与多屏坐标偏移调试实战：从“点偏了”到像素级对齐">
+      RPA 桌面自动化高 DPI 与多屏坐标偏移调试实战：从“点偏了”到像素级对齐 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPA-%E6%A1%8C%E9%9D%A2%E8%87%AA%E5%8A%A8%E5%8C%96%E9%80%89%E6%8B%A9%E5%99%A8%E4%B8%8D%E7%A8%B3%E5%AE%9A%E7%9A%84%E8%B0%83%E8%AF%95%E5%AE%9E%E5%BD%95%EF%BC%9A%E4%BB%8E%E9%9A%8F%E6%9C%BA%E5%A4%B1%E8%B4%A5%E5%88%B0-99-9-%E7%A8%B3%E5%AE%9A%E6%80%A7%E7%9A%84%E8%90%BD%E5%9C%B0%E6%96%B9%E6%A1%88"><span class="nav-number">1.</span> <span class="nav-text">RPA 桌面自动化选择器不稳定的调试实录：从随机失败到 99.9% 稳定性的落地方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.2.</span> <span class="nav-text">一、问题现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A4%8D%E7%8E%B0%E4%B8%8E%E6%8E%92%E6%9F%A5%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.3.</span> <span class="nav-text">二、复现与排查步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF%EF%BC%88%E7%BB%84%E5%90%88%E6%8B%B3%EF%BC%89"><span class="nav-number">1.4.</span> <span class="nav-text">三、解决思路（组合拳）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%85%B3%E9%94%AE%E4%BB%A3%E7%A0%81%EF%BC%88Python%EF%BC%8Cuiautomation%EF%BC%89"><span class="nav-number">1.5.</span> <span class="nav-text">四、关键代码（Python，uiautomation）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E9%AA%8C%E8%AF%81%E4%B8%8E%E8%A7%82%E6%B5%8B"><span class="nav-number">1.6.</span> <span class="nav-text">五、验证与观测</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E9%98%B2%E5%9D%91%E6%B8%85%E5%8D%95%EF%BC%88Checklist%EF%BC%89"><span class="nav-number">1.7.</span> <span class="nav-text">六、防坑清单（Checklist）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80-1"><span class="nav-number">1.9.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1%E4%B8%8E%E5%BD%B1%E5%93%8D%E8%AF%84%E4%BC%B0"><span class="nav-number">1.10.</span> <span class="nav-text">一、问题现象与影响评估</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A4%8D%E7%8E%B0%E4%B8%8E%E6%8E%92%E6%9F%A5%E8%B7%AF%E5%BE%84"><span class="nav-number">1.11.</span> <span class="nav-text">二、复现与排查路径</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF%E4%B8%8E%E6%80%BB%E4%BD%93%E6%96%B9%E6%A1%88"><span class="nav-number">1.12.</span> <span class="nav-text">三、解决思路与总体方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%85%B3%E9%94%AE%E5%AE%9E%E7%8E%B0%E4%B8%8E%E4%BB%A3%E7%A0%81%E7%89%87%E6%AE%B5%EF%BC%88Python-rpaframework%EF%BC%89"><span class="nav-number">1.13.</span> <span class="nav-text">四、关键实现与代码片段（Python | rpaframework）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E9%AA%8C%E8%AF%81%E7%BB%93%E6%9E%9C%E4%B8%8E%E7%9B%91%E6%8E%A7"><span class="nav-number">1.14.</span> <span class="nav-text">五、验证结果与监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93%E4%B8%8E%E5%8F%AF%E5%A4%8D%E7%94%A8%E6%B8%85%E5%8D%95"><span class="nav-number">1.15.</span> <span class="nav-text">六、经验总结与可复用清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AF%AD"><span class="nav-number">1.16.</span> <span class="nav-text">结语</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

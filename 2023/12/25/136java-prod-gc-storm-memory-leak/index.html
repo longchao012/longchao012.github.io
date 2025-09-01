@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从一次真实的Java生产环境GC风暴故障出发，完整记录故障现象、排查步骤、根因分析与修复方案，并给出可直接复用的预防清单。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治">
+<meta property="og:url" content="http://h995.com/2023/12/25/136java-prod-gc-storm-memory-leak/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="从一次真实的Java生产环境GC风暴故障出发，完整记录故障现象、排查步骤、根因分析与修复方案，并给出可直接复用的预防清单。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-12-25T04:52:43.000Z">
+<meta property="article:modified_time" content="2025-08-30T08:42:23.081Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="生产故障">
+<meta property="article:tag" content="内存泄漏">
+<meta property="article:tag" content="性能调优">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="JVM">
+<meta property="article:tag" content="GC调优">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2023/12/25/136java-prod-gc-storm-memory-leak/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2023/12/25/136java-prod-gc-storm-memory-leak/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-12-25 12:52:43" itemprop="dateCreated datePublished" datetime="2023-12-25T12:52:43+08:00">2023-12-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+            <div class="post-description">从一次真实的Java生产环境GC风暴故障出发，完整记录故障现象、排查步骤、根因分析与修复方案，并给出可直接复用的预防清单。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="一次-Java-生产内存泄漏引发的-GC-风暴：从定位到根治"><a href="#一次-Java-生产内存泄漏引发的-GC-风暴：从定位到根治" class="headerlink" title="一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治"></a>一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>生产环境的 Java 应用一旦出现 GC 风暴（频繁 Full GC 与长暂停），响应时间会瞬间拉长，甚至被容器 OOM 杀死。本文选择“Java 编程语言”为主题，从一次真实的生产事故出发，完整记录故障现象、排查步骤、根因分析与修复方案，并给出可直接复用的代码与预防清单。</p>
+<h2 id="故障现象"><a href="#故障现象" class="headerlink" title="故障现象"></a>故障现象</h2><ul>
+<li>峰值时段接口 P99 延时从 200ms 升至 8s+，大量超时与失败。</li>
+<li>应用节点 CPU&#x2F;内存双高：CPU 接近 100%，容器内存逼近限额，出现 OOMKilled。</li>
+<li>监控显示 Young GC 次数激增，随后频繁 Full GC，暂停时长 1s~4s 不等。</li>
+<li>应用重启后短暂恢复，随后重复上述过程。</li>
+</ul>
+<h2 id="紧急处置（止血）"><a href="#紧急处置（止血）" class="headerlink" title="紧急处置（止血）"></a>紧急处置（止血）</h2><ol>
+<li>临时降流（限流&#x2F;网关降级），减小进入实例的并发。</li>
+<li>扩容副本数，缓解单实例压力。</li>
+<li>提升容器内存与堆上限（Xmx），为排查争取时间。</li>
+<li>开启&#x2F;强化 GC 日志与内存采样，准备取证。</li>
+</ol>
+<h2 id="排查步骤"><a href="#排查步骤" class="headerlink" title="排查步骤"></a>排查步骤</h2><h3 id="1-观察与取证"><a href="#1-观察与取证" class="headerlink" title="1. 观察与取证"></a>1. 观察与取证</h3><ul>
+<li>查看 GC 概览（现场命令示意）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 连续观察 GC 统计</span></span><br><span class="line">jstat -gc &lt;pid&gt; 1000 20</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导出堆直方图，关注大对象与实例数</span></span><br><span class="line">jmap -histo:live &lt;pid&gt; | <span class="built_in">head</span> -n 50</span><br><span class="line"></span><br><span class="line"><span class="comment"># 导出堆转储供离线分析（注意磁盘空间）</span></span><br><span class="line">jmap -dump:live,file=/tmp/heap.hprof &lt;pid&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 线程快照定位是否有异常线程/死锁</span></span><br><span class="line">jstack -l &lt;pid&gt; &gt; /tmp/jstack.txt</span><br></pre></td></tr></table></figure>
+<ul>
+<li>现象：直方图显示一个静态缓存类的条目占比激增，条目数和占用持续上升。</li>
+</ul>
+<h3 id="2-结合业务日志与代码热点"><a href="#2-结合业务日志与代码热点" class="headerlink" title="2. 结合业务日志与代码热点"></a>2. 结合业务日志与代码热点</h3><ul>
+<li>通过调用链与日志，定位到一个“请求级结果缓存”模块最近上线，命中率不高，但键空间随着参数维度暴涨。</li>
+<li>代码审查发现：使用 <code>ConcurrentHashMap</code> 做了一个“临时缓存”，却没有容量与过期策略。</li>
+</ul>
+<h3 id="3-复现与验证"><a href="#3-复现与验证" class="headerlink" title="3. 复现与验证"></a>3. 复现与验证</h3><ul>
+<li>在预发使用压测重放真实流量，堆占用随 QPS 线性上升，GC 次数与暂停时间同步放大，符合“无界缓存”特征。</li>
+</ul>
+<h2 id="根因分析"><a href="#根因分析" class="headerlink" title="根因分析"></a>根因分析</h2><ul>
+<li>“临时缓存”设计缺陷：<ul>
+<li>无上限容量（unbounded map）、无过期策略、键为多维参数拼接导致高基数。</li>
+<li>业务读多写少，缓存命中率低，实为“缓存雪崩制造机”。</li>
+</ul>
+</li>
+<li>加剧因素：<ul>
+<li>某些 value 为较大的字节数组，单条目内存足以触发老年代快速膨胀。</li>
+<li>线上未开启足够细粒度的 GC 日志，问题暴露后取证时间变长。</li>
+</ul>
+</li>
+</ul>
+<h2 id="修复方案"><a href="#修复方案" class="headerlink" title="修复方案"></a>修复方案</h2><h3 id="1-有问题的代码（示例）"><a href="#1-有问题的代码（示例）" class="headerlink" title="1) 有问题的代码（示例）"></a>1) 有问题的代码（示例）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// language: java</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TempCache</span> &#123;</span><br><span class="line">    <span class="comment">// 问题：无界缓存 + 无过期策略</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Map&lt;String, <span class="type">byte</span>[]&gt; CACHE = <span class="keyword">new</span> <span class="title class_">ConcurrentHashMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">byte</span>[] get(String key, Supplier&lt;<span class="type">byte</span>[]&gt; loader) &#123;</span><br><span class="line">        <span class="keyword">return</span> CACHE.computeIfAbsent(key, k -&gt; loader.get());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-正确的做法：使用有界缓存（Caffeine-示例）"><a href="#2-正确的做法：使用有界缓存（Caffeine-示例）" class="headerlink" title="2) 正确的做法：使用有界缓存（Caffeine 示例）"></a>2) 正确的做法：使用有界缓存（Caffeine 示例）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// language: java</span></span><br><span class="line"><span class="keyword">import</span> com.github.benmanes.caffeine.cache.Cache;</span><br><span class="line"><span class="keyword">import</span> com.github.benmanes.caffeine.cache.Caffeine;</span><br><span class="line"><span class="keyword">import</span> java.time.Duration;</span><br><span class="line"><span class="keyword">import</span> java.util.concurrent.TimeUnit;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">BoundedCache</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Cache&lt;String, <span class="type">byte</span>[]&gt; CACHE = Caffeine.newBuilder()</span><br><span class="line">            .maximumSize(<span class="number">10_000</span>)                                 <span class="comment">// 限制条目数</span></span><br><span class="line">            .expireAfterWrite(Duration.ofMinutes(<span class="number">10</span>))            <span class="comment">// 写入后过期</span></span><br><span class="line">            .recordStats()                                       <span class="comment">// 监控命中率</span></span><br><span class="line">            .build();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">byte</span>[] get(String key, Supplier&lt;<span class="type">byte</span>[]&gt; loader) &#123;</span><br><span class="line">        <span class="keyword">return</span> CACHE.get(key, k -&gt; loader.get());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>要点：</p>
+<ul>
+<li>有界 + 过期是最低配；如 value 大小差异大，可用 <code>weigher</code> 基于字节大小做 <code>maximumWeight</code>；</li>
+<li>结合业务设置合理 TTL 与尺寸；实际值应通过压测与线上观测校准。</li>
+</ul>
+<h3 id="3-辅助修复：资源释放与-try-with-resources"><a href="#3-辅助修复：资源释放与-try-with-resources" class="headerlink" title="3) 辅助修复：资源释放与 try-with-resources"></a>3) 辅助修复：资源释放与 try-with-resources</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// language: java</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">byte</span>[] fetchAndSerialize(InputStream in) <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    <span class="keyword">try</span> (<span class="type">InputStream</span> <span class="variable">input</span> <span class="operator">=</span> in; <span class="type">ByteArrayOutputStream</span> <span class="variable">bos</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ByteArrayOutputStream</span>()) &#123;</span><br><span class="line">        input.transferTo(bos);</span><br><span class="line">        <span class="keyword">return</span> bos.toByteArray();</span><br><span class="line">    &#125; <span class="comment">// 自动关闭 input 与 bos，避免隐藏性泄漏</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-JVM-与运行参数"><a href="#4-JVM-与运行参数" class="headerlink" title="4) JVM 与运行参数"></a>4) JVM 与运行参数</h3><ul>
+<li>开启 GC 日志与 OOM 堆转储，便于快速回溯：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># language: bash</span></span><br><span class="line">JAVA_TOOL_OPTIONS=<span class="string">&quot;\</span></span><br><span class="line"><span class="string"> -XX:+UseG1GC \</span></span><br><span class="line"><span class="string"> -Xms2g -Xmx2g \</span></span><br><span class="line"><span class="string"> -XX:+HeapDumpOnOutOfMemoryError \</span></span><br><span class="line"><span class="string"> -XX:HeapDumpPath=/tmp/heap.hprof \</span></span><br><span class="line"><span class="string"> -Xlog:gc*,safepoint:file=/var/log/app/gc.log:time,uptime,level,tags&quot;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>容器化环境关注：堆外（Direct&#x2F;Metaspace）与容器内存限额的比例，避免未计入的内存触发 OOM。</li>
+</ul>
+<h2 id="验证与回归"><a href="#验证与回归" class="headerlink" title="验证与回归"></a>验证与回归</h2><ul>
+<li>预发与灰度：用真实流量重放与压测校准缓存参数；观察 GC 指标（Young&#x2F;Old 触发频率、暂停时间、晋升失败）。</li>
+<li>结果：<ul>
+<li>Full GC 几乎消失，P99 延时恢复到 300ms 内；</li>
+<li>堆占用曲线形成“锯齿”但稳定在目标区间；</li>
+<li>缓存命中率达到 70%+，对下游服务的调用量明显下降。</li>
+</ul>
+</li>
+</ul>
+<h2 id="预防措施（Checklist）"><a href="#预防措施（Checklist）" class="headerlink" title="预防措施（Checklist）"></a>预防措施（Checklist）</h2><ol>
+<li>设计层面<ul>
+<li>一律禁止无界缓存；必须同时具备容量上限与过期策略（TTL&#x2F;TTI&#x2F;Weight）。</li>
+<li>对高基数 Key 做限维与规范化；必要时落持久化 KV 并加限流。</li>
+</ul>
+</li>
+<li>工程与运维<ul>
+<li>默认开启 GC 日志、OOM 堆转储、指标上报（Micrometer&#x2F;Prometheus）。</li>
+<li>对关键模块建立内存回归压测（长稳跑 1h+），检验“稳态”而非瞬时表现。</li>
+<li>容器内存配额与堆上限比值遵循经验（如 65%~75% 给堆，保留足够堆外空间）。</li>
+</ul>
+</li>
+<li>监控与告警<ul>
+<li>建立 GC 暂停、堆使用率、对象晋升失败、Young&#x2F;Old 触发频率等多维告警阈值。</li>
+<li>对缓存命中率、条目数&#x2F;总权重、逐出率等做可视化与阈值预警。</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次事故的根因并不复杂：一个“看似无害”的临时缓存变成了无界内存黑洞。处理思路遵循“止血—取证—定位—根治—回归—预防”的闭环：</p>
+<ul>
+<li>止血与取证为排查赢得空间；</li>
+<li>借助直方图&#x2F;堆转储&#x2F;GC 日志快速归因；</li>
+<li>用有界缓存与合理资源释放修复根因；</li>
+<li>以灰度回归和预防清单把经验固化为“系统能力”。<br>希望这份记录能成为你处理类似 Java 生产内存问题的参考模板。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2023/12/25/136java-prod-gc-storm-memory-leak/" title="一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治">http://h995.com/2023/12/25/136java-prod-gc-storm-memory-leak/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" rel="tag"># 生产故障</a>
+              <a href="/tags/%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" rel="tag"># 内存泄漏</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98/" rel="tag"># 性能调优</a>
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/JVM/" rel="tag"># JVM</a>
+              <a href="/tags/GC%E8%B0%83%E4%BC%98/" rel="tag"># GC调优</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/12/17/131java-scheduler-duplicate-missed-trigger-incident-postmortem/" rel="prev" title="Java 分布式定时任务重复触发与漏触发生产事故复盘：从 Cron 漂移到“锁+幂等+错过补偿”">
+      <i class="fa fa-chevron-left"></i> Java 分布式定时任务重复触发与漏触发生产事故复盘：从 Cron 漂移到“锁+幂等+错过补偿”
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/12/29/156java-performance-tuning-debugging-process/" rel="next" title="Java 应用性能调优实战：从响应缓慢到毫秒级响应的完整调试过程">
+      Java 应用性能调优实战：从响应缓慢到毫秒级响应的完整调试过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E6%AC%A1-Java-%E7%94%9F%E4%BA%A7%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E5%BC%95%E5%8F%91%E7%9A%84-GC-%E9%A3%8E%E6%9A%B4%EF%BC%9A%E4%BB%8E%E5%AE%9A%E4%BD%8D%E5%88%B0%E6%A0%B9%E6%B2%BB"><span class="nav-number">1.</span> <span class="nav-text">一次 Java 生产内存泄漏引发的 GC 风暴：从定位到根治</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.2.</span> <span class="nav-text">故障现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A7%E6%80%A5%E5%A4%84%E7%BD%AE%EF%BC%88%E6%AD%A2%E8%A1%80%EF%BC%89"><span class="nav-number">1.3.</span> <span class="nav-text">紧急处置（止血）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%92%E6%9F%A5%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.4.</span> <span class="nav-text">排查步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%A7%82%E5%AF%9F%E4%B8%8E%E5%8F%96%E8%AF%81"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 观察与取证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%BB%93%E5%90%88%E4%B8%9A%E5%8A%A1%E6%97%A5%E5%BF%97%E4%B8%8E%E4%BB%A3%E7%A0%81%E7%83%AD%E7%82%B9"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 结合业务日志与代码热点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%A4%8D%E7%8E%B0%E4%B8%8E%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.3.</span> <span class="nav-text">3. 复现与验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90"><span class="nav-number">1.5.</span> <span class="nav-text">根因分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E5%A4%8D%E6%96%B9%E6%A1%88"><span class="nav-number">1.6.</span> <span class="nav-text">修复方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%9C%89%E9%97%AE%E9%A2%98%E7%9A%84%E4%BB%A3%E7%A0%81%EF%BC%88%E7%A4%BA%E4%BE%8B%EF%BC%89"><span class="nav-number">1.6.1.</span> <span class="nav-text">1) 有问题的代码（示例）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%81%9A%E6%B3%95%EF%BC%9A%E4%BD%BF%E7%94%A8%E6%9C%89%E7%95%8C%E7%BC%93%E5%AD%98%EF%BC%88Caffeine-%E7%A4%BA%E4%BE%8B%EF%BC%89"><span class="nav-number">1.6.2.</span> <span class="nav-text">2) 正确的做法：使用有界缓存（Caffeine 示例）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%BE%85%E5%8A%A9%E4%BF%AE%E5%A4%8D%EF%BC%9A%E8%B5%84%E6%BA%90%E9%87%8A%E6%94%BE%E4%B8%8E-try-with-resources"><span class="nav-number">1.6.3.</span> <span class="nav-text">3) 辅助修复：资源释放与 try-with-resources</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-JVM-%E4%B8%8E%E8%BF%90%E8%A1%8C%E5%8F%82%E6%95%B0"><span class="nav-number">1.6.4.</span> <span class="nav-text">4) JVM 与运行参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81%E4%B8%8E%E5%9B%9E%E5%BD%92"><span class="nav-number">1.7.</span> <span class="nav-text">验证与回归</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%84%E9%98%B2%E6%8E%AA%E6%96%BD%EF%BC%88Checklist%EF%BC%89"><span class="nav-number">1.8.</span> <span class="nav-text">预防措施（Checklist）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.9.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

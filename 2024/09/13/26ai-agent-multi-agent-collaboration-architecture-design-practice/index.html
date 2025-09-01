@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="分享在构建企业级多Agent协作系统过程中的完整架构设计经验，从单体Agent到分布式协作的演进过程，包含任务分解、Agent通信、负载均衡等核心技术实现和踩坑心得。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验">
+<meta property="og:url" content="http://h995.com/2024/09/13/26ai-agent-multi-agent-collaboration-architecture-design-practice/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="分享在构建企业级多Agent协作系统过程中的完整架构设计经验，从单体Agent到分布式协作的演进过程，包含任务分解、Agent通信、负载均衡等核心技术实现和踩坑心得。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-09-13T15:05:26.000Z">
+<meta property="article:modified_time" content="2025-08-30T08:42:23.055Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="架构设计">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="分布式系统">
+<meta property="article:tag" content="任务调度">
+<meta property="article:tag" content="多Agent系统">
+<meta property="article:tag" content="协作机制">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2024/09/13/26ai-agent-multi-agent-collaboration-architecture-design-practice/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2024/09/13/26ai-agent-multi-agent-collaboration-architecture-design-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-09-13 23:05:26" itemprop="dateCreated datePublished" datetime="2024-09-13T23:05:26+08:00">2024-09-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>17k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+            <div class="post-description">分享在构建企业级多Agent协作系统过程中的完整架构设计经验，从单体Agent到分布式协作的演进过程，包含任务分解、Agent通信、负载均衡等核心技术实现和踩坑心得。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="AI-Agent-多Agent协作系统架构设计实战：从单体到分布式的完整演进经验"><a href="#AI-Agent-多Agent协作系统架构设计实战：从单体到分布式的完整演进经验" class="headerlink" title="AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验"></a>AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验</h1><blockquote>
+<p>技术主题：AI Agent（人工智能&#x2F;工作流）<br>内容方向：实际使用经验分享（架构设计、项目落地心得）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>随着AI Agent技术的快速发展，单一Agent已经难以满足复杂业务场景的需求。我们团队在构建企业级智能助手系统时，经历了从单体Agent到多Agent协作系统的完整演进过程。这个过程中遇到了任务分解、Agent间通信、负载均衡、故障恢复等诸多挑战。经过半年的迭代优化，我们成功构建了一套支持数百个Agent并发协作的分布式系统，处理效率提升了300%。本文将分享这套多Agent协作架构的设计思路和落地经验。</p>
+<h2 id="一、从单体到多Agent的演进历程"><a href="#一、从单体到多Agent的演进历程" class="headerlink" title="一、从单体到多Agent的演进历程"></a>一、从单体到多Agent的演进历程</h2><h3 id="1-单体Agent的局限性"><a href="#1-单体Agent的局限性" class="headerlink" title="1. 单体Agent的局限性"></a>1. 单体Agent的局限性</h3><p>最初，我们设计了一个”全能型”的单体Agent：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 早期的单体Agent设计</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MonolithicAgent</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;单体Agent - 早期设计&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.tools = &#123;</span><br><span class="line">            <span class="string">&#x27;database&#x27;</span>: DatabaseTool(),</span><br><span class="line">            <span class="string">&#x27;email&#x27;</span>: EmailTool(), </span><br><span class="line">            <span class="string">&#x27;calendar&#x27;</span>: CalendarTool(),</span><br><span class="line">            <span class="string">&#x27;file&#x27;</span>: FileTool(),</span><br><span class="line">            <span class="string">&#x27;api&#x27;</span>: APITool()</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable language_">self</span>.knowledge_base = KnowledgeBase()</span><br><span class="line">        <span class="variable language_">self</span>.conversation_history = []</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">process_request</span>(<span class="params">self, user_request: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理用户请求 - 单体方式&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题1: 所有逻辑都在一个Agent中</span></span><br><span class="line">        <span class="keyword">if</span> <span class="string">&quot;查询数据库&quot;</span> <span class="keyword">in</span> user_request:</span><br><span class="line">            <span class="keyword">return</span> <span class="variable language_">self</span>.handle_database_query(user_request)</span><br><span class="line">        <span class="keyword">elif</span> <span class="string">&quot;发送邮件&quot;</span> <span class="keyword">in</span> user_request:</span><br><span class="line">            <span class="keyword">return</span> <span class="variable language_">self</span>.handle_email_sending(user_request)</span><br><span class="line">        <span class="keyword">elif</span> <span class="string">&quot;安排会议&quot;</span> <span class="keyword">in</span> user_request:</span><br><span class="line">            <span class="keyword">return</span> <span class="variable language_">self</span>.handle_meeting_scheduling(user_request)</span><br><span class="line">        <span class="comment"># ... 更多if-else逻辑</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;抱歉，我无法理解您的请求&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">handle_complex_task</span>(<span class="params">self, task: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理复杂任务 - 问题版本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 问题2: 复杂任务串行处理，效率低下</span></span><br><span class="line">        result1 = <span class="variable language_">self</span>.tools[<span class="string">&#x27;database&#x27;</span>].query(<span class="string">&quot;SELECT * FROM users&quot;</span>)</span><br><span class="line">        result2 = <span class="variable language_">self</span>.tools[<span class="string">&#x27;api&#x27;</span>].call_external_service(result1)</span><br><span class="line">        result3 = <span class="variable language_">self</span>.tools[<span class="string">&#x27;email&#x27;</span>].send_notification(result2)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;任务完成: <span class="subst">&#123;result3&#125;</span>&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>单体Agent的主要问题：</strong></p>
+<ul>
+<li>功能耦合严重，难以维护和扩展</li>
+<li>单点故障风险，一个功能异常影响整个系统</li>
+<li>资源利用不均，某些功能闲置时其他功能无法扩容</li>
+<li>复杂任务串行处理，响应时间长</li>
+</ul>
+<h3 id="2-多Agent架构设计理念"><a href="#2-多Agent架构设计理念" class="headerlink" title="2. 多Agent架构设计理念"></a>2. 多Agent架构设计理念</h3><p>基于这些问题，我们重新设计了多Agent协作架构：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> abc <span class="keyword">import</span> ABC, abstractmethod</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Dict</span>, <span class="type">List</span>, <span class="type">Any</span></span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"><span class="keyword">from</span> enum <span class="keyword">import</span> Enum</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AgentType</span>(<span class="title class_ inherited__">Enum</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Agent类型枚举&quot;&quot;&quot;</span></span><br><span class="line">    COORDINATOR = <span class="string">&quot;coordinator&quot;</span>        <span class="comment"># 协调器Agent</span></span><br><span class="line">    SPECIALIST = <span class="string">&quot;specialist&quot;</span>          <span class="comment"># 专业Agent</span></span><br><span class="line">    MONITOR = <span class="string">&quot;monitor&quot;</span>               <span class="comment"># 监控Agent</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Task</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;任务定义&quot;&quot;&quot;</span></span><br><span class="line">    task_id: <span class="built_in">str</span></span><br><span class="line">    task_type: <span class="built_in">str</span></span><br><span class="line">    input_data: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span><br><span class="line">    dependencies: <span class="type">List</span>[<span class="built_in">str</span>]</span><br><span class="line">    priority: <span class="built_in">int</span></span><br><span class="line">    timeout: <span class="built_in">int</span></span><br><span class="line">    callback_agent: <span class="built_in">str</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BaseAgent</span>(<span class="title class_ inherited__">ABC</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Agent基类&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, agent_id: <span class="built_in">str</span>, agent_type: AgentType</span>):</span><br><span class="line">        <span class="variable language_">self</span>.agent_id = agent_id</span><br><span class="line">        <span class="variable language_">self</span>.agent_type = agent_type</span><br><span class="line">        <span class="variable language_">self</span>.status = <span class="string">&quot;idle&quot;</span></span><br><span class="line">        <span class="variable language_">self</span>.capabilities = <span class="built_in">set</span>()</span><br><span class="line">        <span class="variable language_">self</span>.message_queue = asyncio.Queue()</span><br><span class="line">        <span class="variable language_">self</span>.task_history = []</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @abstractmethod</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">process_task</span>(<span class="params">self, task: Task</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理任务的抽象方法&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">pass</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">send_message</span>(<span class="params">self, target_agent: <span class="built_in">str</span>, message: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;发送消息给其他Agent&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">await</span> MessageBroker.send_message(<span class="variable language_">self</span>.agent_id, target_agent, message)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">receive_message</span>(<span class="params">self</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;接收消息&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.message_queue.get()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 消息代理</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MessageBroker</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Agent间消息代理&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    _agents = &#123;&#125;</span><br><span class="line">    _message_routes = &#123;&#125;</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">register_agent</span>(<span class="params">cls, agent: BaseAgent</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;注册Agent&quot;&quot;&quot;</span></span><br><span class="line">        cls._agents[agent.agent_id] = agent</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Agent注册成功: <span class="subst">&#123;agent.agent_id&#125;</span> (<span class="subst">&#123;agent.agent_type.value&#125;</span>)&quot;</span>)</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @classmethod</span></span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">send_message</span>(<span class="params">cls, from_agent: <span class="built_in">str</span>, to_agent: <span class="built_in">str</span>, message: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;发送消息&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">if</span> to_agent <span class="keyword">in</span> cls._agents:</span><br><span class="line">            <span class="keyword">await</span> cls._agents[to_agent].message_queue.put(&#123;</span><br><span class="line">                <span class="string">&quot;from&quot;</span>: from_agent,</span><br><span class="line">                <span class="string">&quot;timestamp&quot;</span>: asyncio.get_event_loop().time(),</span><br><span class="line">                <span class="string">&quot;content&quot;</span>: message</span><br><span class="line">            &#125;)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;目标Agent不存在: <span class="subst">&#123;to_agent&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="二、核心组件设计与实现"><a href="#二、核心组件设计与实现" class="headerlink" title="二、核心组件设计与实现"></a>二、核心组件设计与实现</h2><h3 id="1-协调器Agent-任务分解与调度"><a href="#1-协调器Agent-任务分解与调度" class="headerlink" title="1. 协调器Agent - 任务分解与调度"></a>1. 协调器Agent - 任务分解与调度</h3><p>协调器Agent负责任务分解和调度：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CoordinatorAgent</span>(<span class="title class_ inherited__">BaseAgent</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;协调器Agent - 负责任务分解和调度&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, agent_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__(agent_id, AgentType.COORDINATOR)</span><br><span class="line">        <span class="variable language_">self</span>.capabilities = &#123;<span class="string">&quot;task_decomposition&quot;</span>, <span class="string">&quot;scheduling&quot;</span>, <span class="string">&quot;monitoring&quot;</span>&#125;</span><br><span class="line">        <span class="variable language_">self</span>.specialist_agents = &#123;&#125;</span><br><span class="line">        <span class="variable language_">self</span>.active_tasks = &#123;&#125;</span><br><span class="line">        </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">process_task</span>(<span class="params">self, task: Task</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理复杂任务 - 分解和协调&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;协调器接收任务: <span class="subst">&#123;task.task_id&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 1. 任务分解</span></span><br><span class="line">        subtasks = <span class="keyword">await</span> <span class="variable language_">self</span>.decompose_task(task)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 构建任务依赖图</span></span><br><span class="line">        task_graph = <span class="variable language_">self</span>.build_task_graph(subtasks)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 调度执行</span></span><br><span class="line">        results = <span class="keyword">await</span> <span class="variable language_">self</span>.schedule_and_execute(task_graph)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 4. 结果聚合</span></span><br><span class="line">        final_result = <span class="keyword">await</span> <span class="variable language_">self</span>.aggregate_results(results)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&quot;status&quot;</span>: <span class="string">&quot;success&quot;</span>,</span><br><span class="line">            <span class="string">&quot;result&quot;</span>: final_result,</span><br><span class="line">            <span class="string">&quot;execution_time&quot;</span>: asyncio.get_event_loop().time() - task.input_data.get(<span class="string">&quot;start_time&quot;</span>, <span class="number">0</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">decompose_task</span>(<span class="params">self, task: Task</span>) -&gt; <span class="type">List</span>[Task]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;智能任务分解&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        task_type = task.task_type</span><br><span class="line">        subtasks = []</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> task_type == <span class="string">&quot;customer_service_inquiry&quot;</span>:</span><br><span class="line">            <span class="comment"># 示例：客服查询任务分解</span></span><br><span class="line">            subtasks = [</span><br><span class="line">                Task(</span><br><span class="line">                    task_id=<span class="string">f&quot;<span class="subst">&#123;task.task_id&#125;</span>_user_auth&quot;</span>,</span><br><span class="line">                    task_type=<span class="string">&quot;user_authentication&quot;</span>, </span><br><span class="line">                    input_data=&#123;<span class="string">&quot;user_id&quot;</span>: task.input_data.get(<span class="string">&quot;user_id&quot;</span>)&#125;,</span><br><span class="line">                    dependencies=[],</span><br><span class="line">                    priority=<span class="number">1</span>,</span><br><span class="line">                    timeout=<span class="number">30</span>,</span><br><span class="line">                    callback_agent=<span class="variable language_">self</span>.agent_id</span><br><span class="line">                ),</span><br><span class="line">                Task(</span><br><span class="line">                    task_id=<span class="string">f&quot;<span class="subst">&#123;task.task_id&#125;</span>_order_query&quot;</span>,</span><br><span class="line">                    task_type=<span class="string">&quot;database_query&quot;</span>,</span><br><span class="line">                    input_data=&#123;<span class="string">&quot;query_type&quot;</span>: <span class="string">&quot;order_history&quot;</span>&#125;,</span><br><span class="line">                    dependencies=[<span class="string">f&quot;<span class="subst">&#123;task.task_id&#125;</span>_user_auth&quot;</span>],</span><br><span class="line">                    priority=<span class="number">2</span>,</span><br><span class="line">                    timeout=<span class="number">60</span>,</span><br><span class="line">                    callback_agent=<span class="variable language_">self</span>.agent_id</span><br><span class="line">                ),</span><br><span class="line">                Task(</span><br><span class="line">                    task_id=<span class="string">f&quot;<span class="subst">&#123;task.task_id&#125;</span>_response_gen&quot;</span>,</span><br><span class="line">                    task_type=<span class="string">&quot;response_generation&quot;</span>,</span><br><span class="line">                    input_data=&#123;<span class="string">&quot;template&quot;</span>: <span class="string">&quot;customer_service&quot;</span>&#125;,</span><br><span class="line">                    dependencies=[<span class="string">f&quot;<span class="subst">&#123;task.task_id&#125;</span>_order_query&quot;</span>],</span><br><span class="line">                    priority=<span class="number">3</span>,</span><br><span class="line">                    timeout=<span class="number">45</span>,</span><br><span class="line">                    callback_agent=<span class="variable language_">self</span>.agent_id</span><br><span class="line">                )</span><br><span class="line">            ]</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;任务分解完成: <span class="subst">&#123;<span class="built_in">len</span>(subtasks)&#125;</span> 个子任务&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> subtasks</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">build_task_graph</span>(<span class="params">self, subtasks: <span class="type">List</span>[Task]</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">List</span>[<span class="built_in">str</span>]]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;构建任务依赖图&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        graph = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> task <span class="keyword">in</span> subtasks:</span><br><span class="line">            graph[task.task_id] = task.dependencies</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> graph</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">schedule_and_execute</span>(<span class="params">self, task_graph: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">List</span>[<span class="built_in">str</span>]]</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;调度并执行任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        results = &#123;&#125;</span><br><span class="line">        completed_tasks = <span class="built_in">set</span>()</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> <span class="built_in">len</span>(completed_tasks) &lt; <span class="built_in">len</span>(task_graph):</span><br><span class="line">            <span class="comment"># 找到可以执行的任务（依赖已满足）</span></span><br><span class="line">            ready_tasks = [</span><br><span class="line">                task_id <span class="keyword">for</span> task_id, deps <span class="keyword">in</span> task_graph.items()</span><br><span class="line">                <span class="keyword">if</span> task_id <span class="keyword">not</span> <span class="keyword">in</span> completed_tasks <span class="keyword">and</span> <span class="built_in">all</span>(dep <span class="keyword">in</span> completed_tasks <span class="keyword">for</span> dep <span class="keyword">in</span> deps)</span><br><span class="line">            ]</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> ready_tasks:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">&quot;检测到任务依赖死锁&quot;</span>)</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 并行执行就绪任务</span></span><br><span class="line">            tasks = []</span><br><span class="line">            <span class="keyword">for</span> task_id <span class="keyword">in</span> ready_tasks:</span><br><span class="line">                specialist = <span class="variable language_">self</span>.find_suitable_specialist(task_id)</span><br><span class="line">                <span class="keyword">if</span> specialist:</span><br><span class="line">                    tasks.append(<span class="variable language_">self</span>.delegate_task(specialist, task_id))</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 等待任务完成</span></span><br><span class="line">            task_results = <span class="keyword">await</span> asyncio.gather(*tasks, return_exceptions=<span class="literal">True</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> i, result <span class="keyword">in</span> <span class="built_in">enumerate</span>(task_results):</span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">not</span> <span class="built_in">isinstance</span>(result, Exception):</span><br><span class="line">                    task_id = ready_tasks[i]</span><br><span class="line">                    results[task_id] = result</span><br><span class="line">                    completed_tasks.add(task_id)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> results</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">find_suitable_specialist</span>(<span class="params">self, task_id: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;找到合适的专业Agent&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 简化的Agent选择逻辑</span></span><br><span class="line">        <span class="keyword">if</span> <span class="string">&quot;auth&quot;</span> <span class="keyword">in</span> task_id:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;auth_agent&quot;</span></span><br><span class="line">        <span class="keyword">elif</span> <span class="string">&quot;query&quot;</span> <span class="keyword">in</span> task_id:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;database_agent&quot;</span></span><br><span class="line">        <span class="keyword">elif</span> <span class="string">&quot;response&quot;</span> <span class="keyword">in</span> task_id:</span><br><span class="line">            <span class="keyword">return</span> <span class="string">&quot;nlp_agent&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;general_agent&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">delegate_task</span>(<span class="params">self, specialist_id: <span class="built_in">str</span>, task_id: <span class="built_in">str</span></span>) -&gt; <span class="type">Any</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;委派任务给专业Agent&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        message = &#123;</span><br><span class="line">            <span class="string">&quot;type&quot;</span>: <span class="string">&quot;task_assignment&quot;</span>,</span><br><span class="line">            <span class="string">&quot;task_id&quot;</span>: task_id,</span><br><span class="line">            <span class="string">&quot;timeout&quot;</span>: <span class="number">60</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">await</span> <span class="variable language_">self</span>.send_message(specialist_id, message)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 等待结果</span></span><br><span class="line">        response = <span class="keyword">await</span> <span class="variable language_">self</span>.receive_message()</span><br><span class="line">        <span class="keyword">return</span> response[<span class="string">&quot;content&quot;</span>][<span class="string">&quot;result&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-专业Agent-特定领域处理"><a href="#2-专业Agent-特定领域处理" class="headerlink" title="2. 专业Agent - 特定领域处理"></a>2. 专业Agent - 特定领域处理</h3><p>每个专业Agent专注于特定领域：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">DatabaseAgent</span>(<span class="title class_ inherited__">BaseAgent</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;数据库专业Agent&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, agent_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__(agent_id, AgentType.SPECIALIST)</span><br><span class="line">        <span class="variable language_">self</span>.capabilities = &#123;<span class="string">&quot;database_query&quot;</span>, <span class="string">&quot;data_analysis&quot;</span>&#125;</span><br><span class="line">        <span class="variable language_">self</span>.connection_pool = <span class="variable language_">self</span>.init_connection_pool()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">process_task</span>(<span class="params">self, task: Task</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理数据库相关任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        query_type = task.input_data.get(<span class="string">&quot;query_type&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> query_type == <span class="string">&quot;order_history&quot;</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.query_order_history(task.input_data)</span><br><span class="line">        <span class="keyword">elif</span> query_type == <span class="string">&quot;user_profile&quot;</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.query_user_profile(task.input_data)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;不支持的查询类型&quot;</span>&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">query_order_history</span>(<span class="params">self, data: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;查询订单历史&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 模拟数据库查询</span></span><br><span class="line">        <span class="keyword">await</span> asyncio.sleep(<span class="number">0.5</span>)  <span class="comment"># 模拟查询延迟</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&quot;orders&quot;</span>: [</span><br><span class="line">                &#123;<span class="string">&quot;order_id&quot;</span>: <span class="string">&quot;ORDER001&quot;</span>, <span class="string">&quot;status&quot;</span>: <span class="string">&quot;completed&quot;</span>, <span class="string">&quot;amount&quot;</span>: <span class="number">299.99</span>&#125;,</span><br><span class="line">                &#123;<span class="string">&quot;order_id&quot;</span>: <span class="string">&quot;ORDER002&quot;</span>, <span class="string">&quot;status&quot;</span>: <span class="string">&quot;shipped&quot;</span>, <span class="string">&quot;amount&quot;</span>: <span class="number">159.99</span>&#125;</span><br><span class="line">            ],</span><br><span class="line">            <span class="string">&quot;total_count&quot;</span>: <span class="number">2</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">NLPAgent</span>(<span class="title class_ inherited__">BaseAgent</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;自然语言处理专业Agent&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, agent_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="built_in">super</span>().__init__(agent_id, AgentType.SPECIALIST)</span><br><span class="line">        <span class="variable language_">self</span>.capabilities = &#123;<span class="string">&quot;text_generation&quot;</span>, <span class="string">&quot;sentiment_analysis&quot;</span>, <span class="string">&quot;intent_recognition&quot;</span>&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">process_task</span>(<span class="params">self, task: Task</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理NLP相关任务&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        task_type = task.task_type</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> task_type == <span class="string">&quot;response_generation&quot;</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.generate_response(task.input_data)</span><br><span class="line">        <span class="keyword">elif</span> task_type == <span class="string">&quot;intent_recognition&quot;</span>:</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">await</span> <span class="variable language_">self</span>.recognize_intent(task.input_data)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;不支持的NLP任务&quot;</span>&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">generate_response</span>(<span class="params">self, data: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;生成响应文本&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        template = data.get(<span class="string">&quot;template&quot;</span>, <span class="string">&quot;default&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 模拟文本生成</span></span><br><span class="line">        <span class="keyword">await</span> asyncio.sleep(<span class="number">0.3</span>)</span><br><span class="line">        </span><br><span class="line">        responses = &#123;</span><br><span class="line">            <span class="string">&quot;customer_service&quot;</span>: <span class="string">&quot;您好！根据查询结果，您的订单状态如下...&quot;</span>,</span><br><span class="line">            <span class="string">&quot;default&quot;</span>: <span class="string">&quot;感谢您的咨询，我已为您处理完成。&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="string">&quot;generated_text&quot;</span>: responses.get(template, responses[<span class="string">&quot;default&quot;</span>]),</span><br><span class="line">            <span class="string">&quot;confidence&quot;</span>: <span class="number">0.95</span></span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-负载均衡与故障恢复"><a href="#3-负载均衡与故障恢复" class="headerlink" title="3. 负载均衡与故障恢复"></a>3. 负载均衡与故障恢复</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LoadBalancer</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;负载均衡器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.agent_pool = defaultdict(<span class="built_in">list</span>)  <span class="comment"># agent_type -&gt; [agent_ids]</span></span><br><span class="line">        <span class="variable language_">self</span>.agent_loads = defaultdict(<span class="built_in">int</span>)   <span class="comment"># agent_id -&gt; current_load</span></span><br><span class="line">        <span class="variable language_">self</span>.health_status = defaultdict(<span class="built_in">bool</span>) <span class="comment"># agent_id -&gt; is_healthy</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">register_agent</span>(<span class="params">self, agent_id: <span class="built_in">str</span>, agent_type: <span class="built_in">str</span>, capabilities: <span class="built_in">set</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;注册Agent到负载均衡器&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.agent_pool[agent_type].append(agent_id)</span><br><span class="line">        <span class="variable language_">self</span>.agent_loads[agent_id] = <span class="number">0</span></span><br><span class="line">        <span class="variable language_">self</span>.health_status[agent_id] = <span class="literal">True</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;Agent已注册到负载均衡器: <span class="subst">&#123;agent_id&#125;</span> (<span class="subst">&#123;agent_type&#125;</span>)&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">select_agent</span>(<span class="params">self, required_capability: <span class="built_in">str</span></span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;选择最优Agent&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 1. 找到具备所需能力的Agent</span></span><br><span class="line">        candidate_agents = []</span><br><span class="line">        <span class="keyword">for</span> agent_type, agents <span class="keyword">in</span> <span class="variable language_">self</span>.agent_pool.items():</span><br><span class="line">            <span class="keyword">for</span> agent_id <span class="keyword">in</span> agents:</span><br><span class="line">                <span class="keyword">if</span> (<span class="variable language_">self</span>.health_status[agent_id] <span class="keyword">and</span> </span><br><span class="line">                    <span class="variable language_">self</span>.agent_has_capability(agent_id, required_capability)):</span><br><span class="line">                    candidate_agents.append(agent_id)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> candidate_agents:</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 基于负载选择最优Agent</span></span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">min</span>(candidate_agents, key=<span class="keyword">lambda</span> x: <span class="variable language_">self</span>.agent_loads[x])</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">agent_has_capability</span>(<span class="params">self, agent_id: <span class="built_in">str</span>, capability: <span class="built_in">str</span></span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;检查Agent是否具备特定能力&quot;&quot;&quot;</span></span><br><span class="line">        <span class="comment"># 简化实现，实际应该查询Agent注册信息</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">update_agent_load</span>(<span class="params">self, agent_id: <span class="built_in">str</span>, load_delta: <span class="built_in">int</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;更新Agent负载&quot;&quot;&quot;</span></span><br><span class="line">        <span class="variable language_">self</span>.agent_loads[agent_id] += load_delta</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> <span class="variable language_">self</span>.agent_loads[agent_id] &lt; <span class="number">0</span>:</span><br><span class="line">            <span class="variable language_">self</span>.agent_loads[agent_id] = <span class="number">0</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HealthMonitor</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;健康监控&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, load_balancer: LoadBalancer</span>):</span><br><span class="line">        <span class="variable language_">self</span>.load_balancer = load_balancer</span><br><span class="line">        <span class="variable language_">self</span>.check_interval = <span class="number">30</span>  <span class="comment"># 30秒检查一次</span></span><br><span class="line">        </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">start_monitoring</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;开始健康监控&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">            <span class="keyword">await</span> <span class="variable language_">self</span>.perform_health_check()</span><br><span class="line">            <span class="keyword">await</span> asyncio.sleep(<span class="variable language_">self</span>.check_interval)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">perform_health_check</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;执行健康检查&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> agent_id <span class="keyword">in</span> <span class="built_in">list</span>(<span class="variable language_">self</span>.load_balancer.health_status.keys()):</span><br><span class="line">            <span class="keyword">try</span>:</span><br><span class="line">                <span class="comment"># 发送心跳消息</span></span><br><span class="line">                is_healthy = <span class="keyword">await</span> <span class="variable language_">self</span>.ping_agent(agent_id)</span><br><span class="line">                <span class="variable language_">self</span>.load_balancer.health_status[agent_id] = is_healthy</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">not</span> is_healthy:</span><br><span class="line">                    <span class="built_in">print</span>(<span class="string">f&quot;Agent健康检查失败: <span class="subst">&#123;agent_id&#125;</span>&quot;</span>)</span><br><span class="line">                    <span class="keyword">await</span> <span class="variable language_">self</span>.handle_agent_failure(agent_id)</span><br><span class="line">                    </span><br><span class="line">            <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">f&quot;健康检查异常: <span class="subst">&#123;agent_id&#125;</span>, 错误: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                <span class="variable language_">self</span>.load_balancer.health_status[agent_id] = <span class="literal">False</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">ping_agent</span>(<span class="params">self, agent_id: <span class="built_in">str</span></span>) -&gt; <span class="built_in">bool</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;ping Agent检查健康状态&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 模拟健康检查</span></span><br><span class="line">        <span class="keyword">await</span> asyncio.sleep(<span class="number">0.1</span>)</span><br><span class="line">        <span class="keyword">return</span> random.random() &gt; <span class="number">0.05</span>  <span class="comment"># 95%的健康率</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">handle_agent_failure</span>(<span class="params">self, agent_id: <span class="built_in">str</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理Agent故障&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">f&quot;处理Agent故障: <span class="subst">&#123;agent_id&#125;</span>&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 1. 将负载转移到其他健康的Agent</span></span><br><span class="line">        <span class="comment"># 2. 尝试重启故障Agent</span></span><br><span class="line">        <span class="comment"># 3. 记录故障日志</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 简化实现：标记为不健康，等待自恢复</span></span><br><span class="line">        <span class="variable language_">self</span>.load_balancer.health_status[agent_id] = <span class="literal">False</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="三、系统集成与性能优化"><a href="#三、系统集成与性能优化" class="headerlink" title="三、系统集成与性能优化"></a>三、系统集成与性能优化</h2><h3 id="1-完整的多Agent系统"><a href="#1-完整的多Agent系统" class="headerlink" title="1. 完整的多Agent系统"></a>1. 完整的多Agent系统</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MultiAgentSystem</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;多Agent协作系统&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.load_balancer = LoadBalancer()</span><br><span class="line">        <span class="variable language_">self</span>.health_monitor = HealthMonitor(<span class="variable language_">self</span>.load_balancer)</span><br><span class="line">        <span class="variable language_">self</span>.agents = &#123;&#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 初始化系统</span></span><br><span class="line">        asyncio.create_task(<span class="variable language_">self</span>.initialize_system())</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">initialize_system</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;初始化多Agent系统&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 1. 创建协调器Agent</span></span><br><span class="line">        coordinator = CoordinatorAgent(<span class="string">&quot;coordinator_001&quot;</span>)</span><br><span class="line">        <span class="keyword">await</span> <span class="variable language_">self</span>.register_agent(coordinator)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 2. 创建专业Agent</span></span><br><span class="line">        db_agent = DatabaseAgent(<span class="string">&quot;database_001&quot;</span>)</span><br><span class="line">        nlp_agent = NLPAgent(<span class="string">&quot;nlp_001&quot;</span>)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">await</span> <span class="variable language_">self</span>.register_agent(db_agent)</span><br><span class="line">        <span class="keyword">await</span> <span class="variable language_">self</span>.register_agent(nlp_agent)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 3. 启动健康监控</span></span><br><span class="line">        asyncio.create_task(<span class="variable language_">self</span>.health_monitor.start_monitoring())</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;多Agent系统初始化完成&quot;</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">register_agent</span>(<span class="params">self, agent: BaseAgent</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;注册Agent&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.agents[agent.agent_id] = agent</span><br><span class="line">        <span class="keyword">await</span> MessageBroker.register_agent(agent)</span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.load_balancer.register_agent(</span><br><span class="line">            agent.agent_id, </span><br><span class="line">            agent.agent_type.value,</span><br><span class="line">            agent.capabilities</span><br><span class="line">        )</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">process_user_request</span>(<span class="params">self, request: <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;处理用户请求&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 创建任务</span></span><br><span class="line">        task = Task(</span><br><span class="line">            task_id=<span class="string">f&quot;task_<span class="subst">&#123;<span class="built_in">int</span>(asyncio.get_event_loop().time() * <span class="number">1000</span>)&#125;</span>&quot;</span>,</span><br><span class="line">            task_type=request.get(<span class="string">&quot;type&quot;</span>, <span class="string">&quot;general&quot;</span>),</span><br><span class="line">            input_data=request,</span><br><span class="line">            dependencies=[],</span><br><span class="line">            priority=<span class="number">1</span>,</span><br><span class="line">            timeout=<span class="number">300</span>,</span><br><span class="line">            callback_agent=<span class="string">&quot;coordinator_001&quot;</span></span><br><span class="line">        )</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 选择协调器Agent</span></span><br><span class="line">        coordinator_id = <span class="variable language_">self</span>.load_balancer.select_agent(<span class="string">&quot;task_decomposition&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> coordinator_id:</span><br><span class="line">            <span class="keyword">return</span> &#123;<span class="string">&quot;error&quot;</span>: <span class="string">&quot;没有可用的协调器Agent&quot;</span>&#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 处理任务</span></span><br><span class="line">        coordinator = <span class="variable language_">self</span>.agents[coordinator_id]</span><br><span class="line">        result = <span class="keyword">await</span> coordinator.process_task(task)</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">main</span>():</span><br><span class="line">    <span class="string">&quot;&quot;&quot;主函数 - 系统使用示例&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 初始化多Agent系统</span></span><br><span class="line">    system = MultiAgentSystem()</span><br><span class="line">    <span class="keyword">await</span> asyncio.sleep(<span class="number">1</span>)  <span class="comment"># 等待系统初始化</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 处理用户请求</span></span><br><span class="line">    user_request = &#123;</span><br><span class="line">        <span class="string">&quot;type&quot;</span>: <span class="string">&quot;customer_service_inquiry&quot;</span>,</span><br><span class="line">        <span class="string">&quot;user_id&quot;</span>: <span class="string">&quot;user123&quot;</span>,</span><br><span class="line">        <span class="string">&quot;query&quot;</span>: <span class="string">&quot;我想查询我的订单状态&quot;</span>,</span><br><span class="line">        <span class="string">&quot;start_time&quot;</span>: asyncio.get_event_loop().time()</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;开始处理用户请求...&quot;</span>)</span><br><span class="line">    result = <span class="keyword">await</span> system.process_user_request(user_request)</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;处理结果: <span class="subst">&#123;result&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 运行系统</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    asyncio.run(main())</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-性能监控与优化"><a href="#2-性能监控与优化" class="headerlink" title="2. 性能监控与优化"></a>2. 性能监控与优化</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> deque</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">PerformanceMonitor</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;性能监控器&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.metrics = &#123;</span><br><span class="line">            <span class="string">&quot;task_count&quot;</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">&quot;success_count&quot;</span>: <span class="number">0</span>, </span><br><span class="line">            <span class="string">&quot;error_count&quot;</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">&quot;avg_response_time&quot;</span>: <span class="number">0</span>,</span><br><span class="line">            <span class="string">&quot;throughput&quot;</span>: <span class="number">0</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable language_">self</span>.response_times = deque(maxlen=<span class="number">1000</span>)</span><br><span class="line">        <span class="variable language_">self</span>.start_time = time.time()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">record_task_completion</span>(<span class="params">self, response_time: <span class="built_in">float</span>, success: <span class="built_in">bool</span></span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;记录任务完成情况&quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.metrics[<span class="string">&quot;task_count&quot;</span>] += <span class="number">1</span></span><br><span class="line">        <span class="keyword">if</span> success:</span><br><span class="line">            <span class="variable language_">self</span>.metrics[<span class="string">&quot;success_count&quot;</span>] += <span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="variable language_">self</span>.metrics[<span class="string">&quot;error_count&quot;</span>] += <span class="number">1</span></span><br><span class="line">        </span><br><span class="line">        <span class="variable language_">self</span>.response_times.append(response_time)</span><br><span class="line">        <span class="variable language_">self</span>.metrics[<span class="string">&quot;avg_response_time&quot;</span>] = <span class="built_in">sum</span>(<span class="variable language_">self</span>.response_times) / <span class="built_in">len</span>(<span class="variable language_">self</span>.response_times)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 计算吞吐量（任务/秒）</span></span><br><span class="line">        elapsed_time = time.time() - <span class="variable language_">self</span>.start_time</span><br><span class="line">        <span class="variable language_">self</span>.metrics[<span class="string">&quot;throughput&quot;</span>] = <span class="variable language_">self</span>.metrics[<span class="string">&quot;task_count&quot;</span>] / elapsed_time <span class="keyword">if</span> elapsed_time &gt; <span class="number">0</span> <span class="keyword">else</span> <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_metrics</span>(<span class="params">self</span>) -&gt; <span class="type">Dict</span>[<span class="built_in">str</span>, <span class="built_in">float</span>]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;获取性能指标&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.metrics.copy()</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">print_metrics</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;打印性能指标&quot;&quot;&quot;</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;=== 多Agent系统性能指标 ===&quot;</span>)</span><br><span class="line">        <span class="keyword">for</span> key, value <span class="keyword">in</span> <span class="variable language_">self</span>.metrics.items():</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;key&#125;</span>: <span class="subst">&#123;value:<span class="number">.2</span>f&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、生产环境部署经验"><a href="#四、生产环境部署经验" class="headerlink" title="四、生产环境部署经验"></a>四、生产环境部署经验</h2><h3 id="关键部署要点"><a href="#关键部署要点" class="headerlink" title="关键部署要点"></a>关键部署要点</h3><ol>
+<li><p><strong>容器化部署</strong>：</p>
+<ul>
+<li>每个Agent类型独立容器化</li>
+<li>使用Kubernetes进行编排和扩缩容</li>
+<li>配置资源限制和健康检查</li>
+</ul>
+</li>
+<li><p><strong>消息队列优化</strong>：</p>
+<ul>
+<li>使用Redis或RabbitMQ作为消息代理</li>
+<li>实现消息持久化和重试机制</li>
+<li>设置合理的队列大小和超时</li>
+</ul>
+</li>
+<li><p><strong>监控告警</strong>：</p>
+<ul>
+<li>集成Prometheus+Grafana监控</li>
+<li>设置关键指标的告警阈值</li>
+<li>建立故障自愈机制</li>
+</ul>
+</li>
+<li><p><strong>性能调优</strong>：</p>
+<ul>
+<li>根据业务特点调整Agent数量配比</li>
+<li>优化任务分解粒度</li>
+<li>实现智能负载预测</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>构建多Agent协作系统是一个复杂但有价值的技术实践。通过这次项目，我们总结出以下核心经验：</p>
+<p><strong>架构设计要点：</strong></p>
+<ul>
+<li>职责清晰：每个Agent专注于特定领域</li>
+<li>松耦合：通过消息传递而非直接调用</li>
+<li>可扩展：支持动态添加和移除Agent</li>
+<li>容错性：具备故障检测和恢复能力</li>
+</ul>
+<p><strong>技术实施关键：</strong></p>
+<ul>
+<li>任务分解算法是系统性能的核心</li>
+<li>负载均衡策略直接影响系统稳定性</li>
+<li>健康监控是保证高可用的基础</li>
+<li>性能监控指导系统优化方向</li>
+</ul>
+<p><strong>实际应用价值：</strong></p>
+<ul>
+<li>处理效率提升300%，复杂任务响应时间从45秒降低到12秒</li>
+<li>系统可用性达到99.9%，故障恢复时间缩短80%</li>
+<li>支持弹性扩缩容，资源利用率提升40%</li>
+<li>为业务快速发展提供了强有力的技术支撑</li>
+</ul>
+<p>多Agent协作系统代表了AI应用架构的发展方向，虽然实现复杂度较高，但在处理复杂业务场景时展现出了巨大的优势。希望我们的经验能为其他团队在类似项目中提供参考和借鉴。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2024/09/13/26ai-agent-multi-agent-collaboration-architecture-design-practice/" title="AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验">http://h995.com/2024/09/13/26ai-agent-multi-agent-collaboration-architecture-design-practice/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1/" rel="tag"># 架构设计</a>
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="tag"># 分布式系统</a>
+              <a href="/tags/%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6/" rel="tag"># 任务调度</a>
+              <a href="/tags/%E5%A4%9AAgent%E7%B3%BB%E7%BB%9F/" rel="tag"># 多Agent系统</a>
+              <a href="/tags/%E5%8D%8F%E4%BD%9C%E6%9C%BA%E5%88%B6/" rel="tag"># 协作机制</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/09/10/34ai-agent-multi-agent-collaboration-enterprise-practice/" rel="prev" title="AI Agent多智能体协作系统企业落地实践：从概念验证到生产部署的完整经验分享">
+      <i class="fa fa-chevron-left"></i> AI Agent多智能体协作系统企业落地实践：从概念验证到生产部署的完整经验分享
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/09/23/25ai-agent-memory-system-design-practice/" rel="next" title="AI Agent 记忆系统设计实战：从短期记忆到长期知识管理的完整方案">
+      AI Agent 记忆系统设计实战：从短期记忆到长期知识管理的完整方案 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#AI-Agent-%E5%A4%9AAgent%E5%8D%8F%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%8D%95%E4%BD%93%E5%88%B0%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E5%AE%8C%E6%95%B4%E6%BC%94%E8%BF%9B%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.</span> <span class="nav-text">AI Agent 多Agent协作系统架构设计实战：从单体到分布式的完整演进经验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%BB%8E%E5%8D%95%E4%BD%93%E5%88%B0%E5%A4%9AAgent%E7%9A%84%E6%BC%94%E8%BF%9B%E5%8E%86%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">一、从单体到多Agent的演进历程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8D%95%E4%BD%93Agent%E7%9A%84%E5%B1%80%E9%99%90%E6%80%A7"><span class="nav-number">1.2.1.</span> <span class="nav-text">1. 单体Agent的局限性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%A4%9AAgent%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E7%90%86%E5%BF%B5"><span class="nav-number">1.2.2.</span> <span class="nav-text">2. 多Agent架构设计理念</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.</span> <span class="nav-text">二、核心组件设计与实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8D%8F%E8%B0%83%E5%99%A8Agent-%E4%BB%BB%E5%8A%A1%E5%88%86%E8%A7%A3%E4%B8%8E%E8%B0%83%E5%BA%A6"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 协调器Agent - 任务分解与调度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%B8%93%E4%B8%9AAgent-%E7%89%B9%E5%AE%9A%E9%A2%86%E5%9F%9F%E5%A4%84%E7%90%86"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 专业Agent - 特定领域处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E4%B8%8E%E6%95%85%E9%9A%9C%E6%81%A2%E5%A4%8D"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. 负载均衡与故障恢复</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%B3%BB%E7%BB%9F%E9%9B%86%E6%88%90%E4%B8%8E%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">1.4.</span> <span class="nav-text">三、系统集成与性能优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%AE%8C%E6%95%B4%E7%9A%84%E5%A4%9AAgent%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 完整的多Agent系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E4%B8%8E%E4%BC%98%E5%8C%96"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 性能监控与优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E9%83%A8%E7%BD%B2%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.5.</span> <span class="nav-text">四、生产环境部署经验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E9%83%A8%E7%BD%B2%E8%A6%81%E7%82%B9"><span class="nav-number">1.5.1.</span> <span class="nav-text">关键部署要点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.6.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
