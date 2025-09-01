@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="分享在Spring Boot微服务项目中实现分布式锁的完整经验，从最初的Redis SETNX到最终选择Redisson的技术选型过程，包含具体的代码实现、踩坑经验和性能优化建议。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验">
+<meta property="og:url" content="http://h995.com/2021/07/08/164java-springboot-distributed-lock-selection-practice/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="分享在Spring Boot微服务项目中实现分布式锁的完整经验，从最初的Redis SETNX到最终选择Redisson的技术选型过程，包含具体的代码实现、踩坑经验和性能优化建议。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-08T13:56:30.000Z">
+<meta property="article:modified_time" content="2025-09-01T08:49:28.727Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Spring Boot">
+<meta property="article:tag" content="微服务">
+<meta property="article:tag" content="高并发">
+<meta property="article:tag" content="Redis">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="分布式锁">
+<meta property="article:tag" content="Redisson">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2021/07/08/164java-springboot-distributed-lock-selection-practice/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2021/07/08/164java-springboot-distributed-lock-selection-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-07-08 21:56:30" itemprop="dateCreated datePublished" datetime="2021-07-08T21:56:30+08:00">2021-07-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">项目实践</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>11k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">分享在Spring Boot微服务项目中实现分布式锁的完整经验，从最初的Redis SETNX到最终选择Redisson的技术选型过程，包含具体的代码实现、踩坑经验和性能优化建议。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Spring-Boot-微服务分布式锁实战：从-Redis-到-Redisson-的选型与落地经验"><a href="#Spring-Boot-微服务分布式锁实战：从-Redis-到-Redisson-的选型与落地经验" class="headerlink" title="Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验"></a>Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验</h1><blockquote>
+<p>技术主题：Java 编程语言<br>内容方向：实际使用经验分享（工具&#x2F;框架选型、项目落地心得）</p>
+</blockquote>
+<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在微服务架构下，分布式锁是解决并发安全问题的关键技术。我们团队在构建电商系统时，面临典型的库存超卖问题：多个服务实例同时处理订单，导致库存扣减不准确。经过半年的实践，我们从最初的 Redis SETNX 手动实现，到最终选择 Redisson 作为生产方案，积累了不少经验教训。本文将分享这个完整的技术选型和落地过程。</p>
+<h2 id="一、业务背景与技术挑战"><a href="#一、业务背景与技术挑战" class="headerlink" title="一、业务背景与技术挑战"></a>一、业务背景与技术挑战</h2><h3 id="业务场景"><a href="#业务场景" class="headerlink" title="业务场景"></a>业务场景</h3><p>我们的电商系统采用微服务架构：</p>
+<ul>
+<li><strong>订单服务</strong>：处理用户下单逻辑</li>
+<li><strong>库存服务</strong>：管理商品库存</li>
+<li><strong>支付服务</strong>：处理支付流程</li>
+</ul>
+<p>在促销活动中，经常出现以下问题：</p>
+<ul>
+<li>同一商品被多个用户同时购买</li>
+<li>库存为1，但成功创建了3个订单</li>
+<li>数据库层面的行锁无法解决跨服务的并发问题</li>
+</ul>
+<h3 id="技术要求"><a href="#技术要求" class="headerlink" title="技术要求"></a>技术要求</h3><p>基于业务需求，我们对分布式锁提出了以下要求：</p>
+<ol>
+<li><strong>互斥性</strong>：同一时刻只有一个服务实例能获取锁</li>
+<li><strong>防死锁</strong>：锁必须有过期时间，避免服务宕机导致死锁</li>
+<li><strong>可重入</strong>：同一线程可以多次获取同一把锁</li>
+<li><strong>高性能</strong>：锁的获取和释放要足够快，不能成为性能瓶颈</li>
+<li><strong>高可用</strong>：锁服务本身要稳定可靠</li>
+</ol>
+<h2 id="二、技术选型历程"><a href="#二、技术选型历程" class="headerlink" title="二、技术选型历程"></a>二、技术选型历程</h2><h3 id="第一阶段：原生-Redis-实现"><a href="#第一阶段：原生-Redis-实现" class="headerlink" title="第一阶段：原生 Redis 实现"></a>第一阶段：原生 Redis 实现</h3><p>最初我们使用 Redis 的 <code>SETNX</code> 命令手动实现分布式锁：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedisDistributedLock</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> StringRedisTemplate redisTemplate;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">LOCK_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;distributed_lock:&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">DEFAULT_EXPIRE_TIME</span> <span class="operator">=</span> <span class="number">30</span>; <span class="comment">// 30秒过期</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 获取分布式锁 - 第一版实现</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">tryLock</span><span class="params">(String key, String requestId, <span class="type">int</span> expireTime)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> LOCK_PREFIX + key;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 使用 SET 命令的 NX 和 EX 参数实现原子操作</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> redisTemplate.opsForValue().setIfAbsent(</span><br><span class="line">            lockKey, requestId, Duration.ofSeconds(expireTime)</span><br><span class="line">        ) ? <span class="string">&quot;OK&quot;</span> : <span class="literal">null</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;OK&quot;</span>.equals(result);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 释放分布式锁 - 第一版实现</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">releaseLock</span><span class="params">(String key, String requestId)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> LOCK_PREFIX + key;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// Lua脚本保证原子性：先判断是否是自己的锁，再删除</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">luaScript</span> <span class="operator">=</span> </span><br><span class="line">            <span class="string">&quot;if redis.call(&#x27;get&#x27;, KEYS[1]) == ARGV[1] then &quot;</span> +</span><br><span class="line">            <span class="string">&quot;    return redis.call(&#x27;del&#x27;, KEYS[1]) &quot;</span> +</span><br><span class="line">            <span class="string">&quot;else &quot;</span> +</span><br><span class="line">            <span class="string">&quot;    return 0 &quot;</span> +</span><br><span class="line">            <span class="string">&quot;end&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="type">Long</span> <span class="variable">result</span> <span class="operator">=</span> redisTemplate.execute(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">DefaultRedisScript</span>&lt;&gt;(luaScript, Long.class),</span><br><span class="line">            Collections.singletonList(lockKey),</span><br><span class="line">            requestId</span><br><span class="line">        );</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> result != <span class="literal">null</span> &amp;&amp; result == <span class="number">1L</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用示例和问题发现"><a href="#使用示例和问题发现" class="headerlink" title="使用示例和问题发现"></a>使用示例和问题发现</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InventoryService</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedisDistributedLock distributedLock;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">reduceInventory</span><span class="params">(Long productId, <span class="type">int</span> quantity)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> <span class="string">&quot;inventory:&quot;</span> + productId;</span><br><span class="line">        <span class="type">String</span> <span class="variable">requestId</span> <span class="operator">=</span> UUID.randomUUID().toString();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 尝试获取锁</span></span><br><span class="line">        <span class="type">boolean</span> <span class="variable">locked</span> <span class="operator">=</span> distributedLock.tryLock(lockKey, requestId, <span class="number">30</span>);</span><br><span class="line">        <span class="keyword">if</span> (!locked) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 获取锁失败</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 业务逻辑：检查库存并扣减</span></span><br><span class="line">            <span class="type">Integer</span> <span class="variable">currentStock</span> <span class="operator">=</span> getCurrentStock(productId);</span><br><span class="line">            <span class="keyword">if</span> (currentStock &gt;= quantity) &#123;</span><br><span class="line">                updateStock(productId, currentStock - quantity);</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="comment">// 释放锁</span></span><br><span class="line">            distributedLock.releaseLock(lockKey, requestId);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ... 其他方法</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>第一阶段遇到的问题：</strong></p>
+<ol>
+<li><strong>锁续期困难</strong>：业务执行时间超过锁过期时间时，锁被自动释放</li>
+<li><strong>不支持可重入</strong>：同一线程无法多次获取同一把锁</li>
+<li><strong>代码复杂</strong>：每次使用都要手动管理 requestId 和异常处理</li>
+<li><strong>监控困难</strong>：缺乏锁状态的可观测性</li>
+</ol>
+<h3 id="第二阶段：改进版-Redis-实现"><a href="#第二阶段：改进版-Redis-实现" class="headerlink" title="第二阶段：改进版 Redis 实现"></a>第二阶段：改进版 Redis 实现</h3><p>针对第一阶段的问题，我们进行了改进：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ImprovedRedisLock</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> StringRedisTemplate redisTemplate;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ThreadLocal&lt;Map&lt;String, LockInfo&gt;&gt; LOCK_MAP = </span><br><span class="line">        ThreadLocal.withInitial(HashMap::<span class="keyword">new</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 锁信息</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Data</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">LockInfo</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> String requestId;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> reentrantCount;</span><br><span class="line">        <span class="keyword">private</span> ScheduledFuture&lt;?&gt; renewTask;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">tryLock</span><span class="params">(String key, <span class="type">int</span> expireTime)</span> &#123;</span><br><span class="line">        Map&lt;String, LockInfo&gt; lockMap = LOCK_MAP.get();</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> <span class="string">&quot;lock:&quot;</span> + key;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 检查可重入</span></span><br><span class="line">        <span class="type">LockInfo</span> <span class="variable">existingLock</span> <span class="operator">=</span> lockMap.get(lockKey);</span><br><span class="line">        <span class="keyword">if</span> (existingLock != <span class="literal">null</span>) &#123;</span><br><span class="line">            existingLock.setReentrantCount(existingLock.getReentrantCount() + <span class="number">1</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 尝试获取新锁</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">requestId</span> <span class="operator">=</span> Thread.currentThread().getId() + <span class="string">&quot;:&quot;</span> + UUID.randomUUID();</span><br><span class="line">        <span class="type">Boolean</span> <span class="variable">success</span> <span class="operator">=</span> redisTemplate.opsForValue().setIfAbsent(</span><br><span class="line">            lockKey, requestId, Duration.ofSeconds(expireTime)</span><br><span class="line">        );</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (Boolean.TRUE.equals(success)) &#123;</span><br><span class="line">            <span class="type">LockInfo</span> <span class="variable">lockInfo</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LockInfo</span>();</span><br><span class="line">            lockInfo.setRequestId(requestId);</span><br><span class="line">            lockInfo.setReentrantCount(<span class="number">1</span>);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 启动锁续期任务</span></span><br><span class="line">            lockInfo.setRenewTask(startRenewTask(lockKey, requestId, expireTime));</span><br><span class="line">            </span><br><span class="line">            lockMap.put(lockKey, lockInfo);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">releaseLock</span><span class="params">(String key)</span> &#123;</span><br><span class="line">        Map&lt;String, LockInfo&gt; lockMap = LOCK_MAP.get();</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> <span class="string">&quot;lock:&quot;</span> + key;</span><br><span class="line">        </span><br><span class="line">        <span class="type">LockInfo</span> <span class="variable">lockInfo</span> <span class="operator">=</span> lockMap.get(lockKey);</span><br><span class="line">        <span class="keyword">if</span> (lockInfo == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 处理可重入</span></span><br><span class="line">        lockInfo.setReentrantCount(lockInfo.getReentrantCount() - <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (lockInfo.getReentrantCount() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 释放锁</span></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 停止续期任务</span></span><br><span class="line">            <span class="keyword">if</span> (lockInfo.getRenewTask() != <span class="literal">null</span>) &#123;</span><br><span class="line">                lockInfo.getRenewTask().cancel(<span class="literal">true</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 删除 Redis 中的锁</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">luaScript</span> <span class="operator">=</span> </span><br><span class="line">                <span class="string">&quot;if redis.call(&#x27;get&#x27;, KEYS[1]) == ARGV[1] then &quot;</span> +</span><br><span class="line">                <span class="string">&quot;    return redis.call(&#x27;del&#x27;, KEYS[1]) &quot;</span> +</span><br><span class="line">                <span class="string">&quot;else return 0 end&quot;</span>;</span><br><span class="line">            </span><br><span class="line">            redisTemplate.execute(</span><br><span class="line">                <span class="keyword">new</span> <span class="title class_">DefaultRedisScript</span>&lt;&gt;(luaScript, Long.class),</span><br><span class="line">                Collections.singletonList(lockKey),</span><br><span class="line">                lockInfo.getRequestId()</span><br><span class="line">            );</span><br><span class="line">            </span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            lockMap.remove(lockKey);</span><br><span class="line">            <span class="keyword">if</span> (lockMap.isEmpty()) &#123;</span><br><span class="line">                LOCK_MAP.remove();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 启动锁续期任务</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> ScheduledFuture&lt;?&gt; startRenewTask(String lockKey, String requestId, <span class="type">int</span> expireTime) &#123;</span><br><span class="line">        <span class="keyword">return</span> Executors.newScheduledThreadPool(<span class="number">1</span>).scheduleAtFixedRate(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="type">String</span> <span class="variable">luaScript</span> <span class="operator">=</span> </span><br><span class="line">                    <span class="string">&quot;if redis.call(&#x27;get&#x27;, KEYS[1]) == ARGV[1] then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;    return redis.call(&#x27;expire&#x27;, KEYS[1], ARGV[2]) &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;else return 0 end&quot;</span>;</span><br><span class="line">                </span><br><span class="line">                redisTemplate.execute(</span><br><span class="line">                    <span class="keyword">new</span> <span class="title class_">DefaultRedisScript</span>&lt;&gt;(luaScript, Long.class),</span><br><span class="line">                    Collections.singletonList(lockKey),</span><br><span class="line">                    requestId, String.valueOf(expireTime)</span><br><span class="line">                );</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                log.error(<span class="string">&quot;锁续期失败: &#123;&#125;&quot;</span>, lockKey, e);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, expireTime / <span class="number">3</span>, expireTime / <span class="number">3</span>, TimeUnit.SECONDS);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>第二阶段的问题：</strong></p>
+<p>虽然解决了可重入和续期问题，但代码变得非常复杂，维护成本高，而且仍然存在一些边界情况的 bug。</p>
+<h3 id="第三阶段：Redisson-最终方案"><a href="#第三阶段：Redisson-最终方案" class="headerlink" title="第三阶段：Redisson 最终方案"></a>第三阶段：Redisson 最终方案</h3><p>经过调研，我们决定使用 Redisson，它是一个成熟的 Redis Java 客户端，内置了完善的分布式锁实现。</p>
+<h4 id="1-添加依赖和配置"><a href="#1-添加依赖和配置" class="headerlink" title="1. 添加依赖和配置"></a>1. 添加依赖和配置</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- pom.xml --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.redisson<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>redisson-spring-boot-starter<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.24.3<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># application.yml</span></span><br><span class="line"><span class="attr">spring:</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">redisson:</span></span><br><span class="line">      <span class="attr">config:</span> <span class="string">|</span></span><br><span class="line"><span class="string">        singleServerConfig:</span></span><br><span class="line"><span class="string">          address: &quot;redis://localhost:6379&quot;</span></span><br><span class="line"><span class="string">          password: null</span></span><br><span class="line"><span class="string">          database: 0</span></span><br><span class="line"><span class="string">          connectionPoolSize: 64</span></span><br><span class="line"><span class="string">          connectionMinimumIdleSize: 10</span></span><br><span class="line"><span class="string">          subscriptionConnectionPoolSize: 50</span></span><br><span class="line"><span class="string">          subscriptionConnectionMinimumIdleSize: 1</span></span><br><span class="line"><span class="string">          connectTimeout: 10000</span></span><br><span class="line"><span class="string">          timeout: 3000</span></span><br><span class="line"><span class="string">          retryAttempts: 3</span></span><br><span class="line"><span class="string">          retryInterval: 1500</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-封装-Redisson-分布式锁工具类"><a href="#2-封装-Redisson-分布式锁工具类" class="headerlink" title="2. 封装 Redisson 分布式锁工具类"></a>2. 封装 Redisson 分布式锁工具类</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedissonDistributedLock</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedissonClient redissonClient;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">LOCK_PREFIX</span> <span class="operator">=</span> <span class="string">&quot;redisson:lock:&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 尝试获取锁</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">tryLock</span><span class="params">(String key, <span class="type">long</span> waitTime, <span class="type">long</span> leaseTime, TimeUnit unit)</span> &#123;</span><br><span class="line">        <span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redissonClient.getLock(LOCK_PREFIX + key);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> lock.tryLock(waitTime, leaseTime, unit);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            Thread.currentThread().interrupt();</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 获取锁（阻塞）</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lock</span><span class="params">(String key, <span class="type">long</span> leaseTime, TimeUnit unit)</span> &#123;</span><br><span class="line">        <span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redissonClient.getLock(LOCK_PREFIX + key);</span><br><span class="line">        lock.lock(leaseTime, unit);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 释放锁</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">unlock</span><span class="params">(String key)</span> &#123;</span><br><span class="line">        <span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redissonClient.getLock(LOCK_PREFIX + key);</span><br><span class="line">        <span class="keyword">if</span> (lock.isHeldByCurrentThread()) &#123;</span><br><span class="line">            lock.unlock();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 使用锁执行业务逻辑</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; T <span class="title function_">executeWithLock</span><span class="params">(String key, <span class="type">long</span> waitTime, <span class="type">long</span> leaseTime, </span></span><br><span class="line"><span class="params">                                TimeUnit unit, Supplier&lt;T&gt; supplier)</span> &#123;</span><br><span class="line">        <span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redissonClient.getLock(LOCK_PREFIX + key);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">boolean</span> <span class="variable">acquired</span> <span class="operator">=</span> lock.tryLock(waitTime, leaseTime, unit);</span><br><span class="line">            <span class="keyword">if</span> (!acquired) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;获取锁失败: &quot;</span> + key);</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> supplier.get();</span><br><span class="line">            </span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            Thread.currentThread().interrupt();</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;获取锁被中断: &quot;</span> + key, e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (lock.isHeldByCurrentThread()) &#123;</span><br><span class="line">                lock.unlock();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-业务代码使用"><a href="#3-业务代码使用" class="headerlink" title="3. 业务代码使用"></a>3. 业务代码使用</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">OptimizedInventoryService</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedissonDistributedLock distributedLock;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 扣减库存 - 使用 Redisson</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">reduceInventory</span><span class="params">(Long productId, <span class="type">int</span> quantity)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">lockKey</span> <span class="operator">=</span> <span class="string">&quot;inventory:&quot;</span> + productId;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> distributedLock.executeWithLock(</span><br><span class="line">            lockKey,</span><br><span class="line">            <span class="number">100</span>,  <span class="comment">// 等待100毫秒</span></span><br><span class="line">            <span class="number">30</span>,   <span class="comment">// 锁30秒后自动释放</span></span><br><span class="line">            TimeUnit.MILLISECONDS,</span><br><span class="line">            () -&gt; &#123;</span><br><span class="line">                <span class="comment">// 业务逻辑</span></span><br><span class="line">                <span class="type">Integer</span> <span class="variable">currentStock</span> <span class="operator">=</span> getCurrentStock(productId);</span><br><span class="line">                <span class="keyword">if</span> (currentStock &gt;= quantity) &#123;</span><br><span class="line">                    updateStock(productId, currentStock - quantity);</span><br><span class="line">                    log.info(<span class="string">&quot;库存扣减成功: 商品=&#123;&#125;, 扣减=&#123;&#125;, 剩余=&#123;&#125;&quot;</span>, </span><br><span class="line">                            productId, quantity, currentStock - quantity);</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                log.warn(<span class="string">&quot;库存不足: 商品=&#123;&#125;, 需要=&#123;&#125;, 当前=&#123;&#125;&quot;</span>, </span><br><span class="line">                        productId, quantity, currentStock);</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 批量操作示例 - 可重入锁</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Transactional</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">batchReduceInventory</span><span class="params">(List&lt;OrderItem&gt; items)</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (OrderItem item : items) &#123;</span><br><span class="line">            reduceInventory(item.getProductId(), item.getQuantity());</span><br><span class="line">            <span class="comment">// 由于 Redisson 支持可重入，这里可以安全调用</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、生产实践经验"><a href="#三、生产实践经验" class="headerlink" title="三、生产实践经验"></a>三、生产实践经验</h2><h3 id="1-性能调优建议"><a href="#1-性能调优建议" class="headerlink" title="1. 性能调优建议"></a>1. 性能调优建议</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RedissonConfig</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> RedissonClient <span class="title function_">redissonClient</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">Config</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Config</span>();</span><br><span class="line">        config.useSingleServer()</span><br><span class="line">                .setAddress(<span class="string">&quot;redis://localhost:6379&quot;</span>)</span><br><span class="line">                .setConnectionPoolSize(<span class="number">100</span>)  <span class="comment">// 连接池大小</span></span><br><span class="line">                .setConnectionMinimumIdleSize(<span class="number">20</span>)  <span class="comment">// 最小空闲连接</span></span><br><span class="line">                .setConnectTimeout(<span class="number">5000</span>)  <span class="comment">// 连接超时</span></span><br><span class="line">                .setTimeout(<span class="number">3000</span>)  <span class="comment">// 命令超时</span></span><br><span class="line">                .setRetryAttempts(<span class="number">3</span>);  <span class="comment">// 重试次数</span></span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> Redisson.create(config);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-监控和可观测性"><a href="#2-监控和可观测性" class="headerlink" title="2. 监控和可观测性"></a>2. 监控和可观测性</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LockMonitor</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> RedissonClient redissonClient;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@EventListener</span></span><br><span class="line">    <span class="meta">@Async</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleLockEvent</span><span class="params">(LockEvent event)</span> &#123;</span><br><span class="line">        <span class="comment">// 记录锁的获取和释放</span></span><br><span class="line">        log.info(<span class="string">&quot;Lock event: type=&#123;&#125;, key=&#123;&#125;, thread=&#123;&#125;, timestamp=&#123;&#125;&quot;</span>, </span><br><span class="line">                event.getType(), event.getKey(), </span><br><span class="line">                event.getThreadId(), event.getTimestamp());</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 定期检查锁状态</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Scheduled(fixedRate = 60000)</span> <span class="comment">// 每分钟检查一次</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">checkLockStatus</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="comment">// 可以通过 Redisson 的管理接口获取锁信息</span></span><br><span class="line">        <span class="comment">// 这里简化处理</span></span><br><span class="line">        log.debug(<span class="string">&quot;定期锁状态检查完成&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-常见问题和解决方案"><a href="#3-常见问题和解决方案" class="headerlink" title="3. 常见问题和解决方案"></a>3. 常见问题和解决方案</h3><h4 id="问题1：锁粒度过粗导致性能问题"><a href="#问题1：锁粒度过粗导致性能问题" class="headerlink" title="问题1：锁粒度过粗导致性能问题"></a>问题1：锁粒度过粗导致性能问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 错误：锁粒度太粗</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">updateUserProfile</span><span class="params">(Long userId, UserProfile profile)</span> &#123;</span><br><span class="line">    distributedLock.executeWithLock(<span class="string">&quot;user_update&quot;</span>, <span class="number">1000</span>, <span class="number">30000</span>, TimeUnit.MILLISECONDS, () -&gt; &#123;</span><br><span class="line">        <span class="comment">// 所有用户更新都被串行化了</span></span><br><span class="line">        <span class="keyword">return</span> updateProfile(userId, profile);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 正确：细粒度锁</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">updateUserProfile</span><span class="params">(Long userId, UserProfile profile)</span> &#123;</span><br><span class="line">    distributedLock.executeWithLock(<span class="string">&quot;user_update:&quot;</span> + userId, <span class="number">1000</span>, <span class="number">30000</span>, TimeUnit.MILLISECONDS, () -&gt; &#123;</span><br><span class="line">        <span class="comment">// 只有同一用户的更新才会被串行化</span></span><br><span class="line">        <span class="keyword">return</span> updateProfile(userId, profile);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="问题2：死锁风险"><a href="#问题2：死锁风险" class="headerlink" title="问题2：死锁风险"></a>问题2：死锁风险</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 有死锁风险的代码</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">transferInventory</span><span class="params">(Long fromProductId, Long toProductId, <span class="type">int</span> quantity)</span> &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">lockKey1</span> <span class="operator">=</span> <span class="string">&quot;inventory:&quot;</span> + fromProductId;</span><br><span class="line">    <span class="type">String</span> <span class="variable">lockKey2</span> <span class="operator">=</span> <span class="string">&quot;inventory:&quot;</span> + toProductId;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 始终按 ID 大小顺序获取锁，避免死锁</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">firstLock</span> <span class="operator">=</span> fromProductId &lt; toProductId ? lockKey1 : lockKey2;</span><br><span class="line">    <span class="type">String</span> <span class="variable">secondLock</span> <span class="operator">=</span> fromProductId &lt; toProductId ? lockKey2 : lockKey1;</span><br><span class="line">    </span><br><span class="line">    distributedLock.executeWithLock(firstLock, <span class="number">100</span>, <span class="number">30000</span>, TimeUnit.MILLISECONDS, () -&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> distributedLock.executeWithLock(secondLock, <span class="number">100</span>, <span class="number">30000</span>, TimeUnit.MILLISECONDS, () -&gt; &#123;</span><br><span class="line">            <span class="comment">// 执行转移逻辑</span></span><br><span class="line">            <span class="keyword">return</span> doTransfer(fromProductId, toProductId, quantity);</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、方案对比总结"><a href="#四、方案对比总结" class="headerlink" title="四、方案对比总结"></a>四、方案对比总结</h2><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>优点</th>
+<th>缺点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>原生Redis</td>
+<td>简单直接，性能好</td>
+<td>功能不完整，代码复杂</td>
+<td>简单场景，对功能要求不高</td>
+</tr>
+<tr>
+<td>改进Redis</td>
+<td>功能相对完整</td>
+<td>代码复杂，维护成本高，bug风险大</td>
+<td>不推荐使用</td>
+</tr>
+<tr>
+<td>Redisson</td>
+<td>功能完整，稳定可靠，代码简洁</td>
+<td>引入额外依赖，学习成本</td>
+<td>生产环境推荐方案</td>
+</tr>
+</tbody></table>
+<h2 id="五、最佳实践建议"><a href="#五、最佳实践建议" class="headerlink" title="五、最佳实践建议"></a>五、最佳实践建议</h2><ol>
+<li><strong>选择合适的锁粒度</strong>：既要避免锁竞争，又要保证数据一致性</li>
+<li><strong>设置合理的超时时间</strong>：根据业务执行时间设置锁的lease time</li>
+<li><strong>避免长时间持锁</strong>：将耗时操作移到锁外执行</li>
+<li><strong>做好监控和告警</strong>：监控锁的获取失败率和持锁时间</li>
+<li><strong>考虑降级方案</strong>：当锁服务不可用时的备选方案</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>经过三个阶段的实践，我们深刻体会到：<strong>不要重复造轮子，选择成熟的解决方案更重要</strong>。Redisson 不仅解决了我们的技术需求，还提供了丰富的功能和稳定的性能。</p>
+<p>在微服务架构下，分布式锁是必不可少的基础设施。选择合适的工具和方案，能够大大降低开发和维护成本，提高系统的稳定性。希望我们的经验能够帮助其他团队少走弯路，快速构建稳定可靠的分布式系统。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2021/07/08/164java-springboot-distributed-lock-selection-practice/" title="Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验">http://h995.com/2021/07/08/164java-springboot-distributed-lock-selection-practice/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Spring-Boot/" rel="tag"># Spring Boot</a>
+              <a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" rel="tag"># 微服务</a>
+              <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" rel="tag"># 高并发</a>
+              <a href="/tags/Redis/" rel="tag"># Redis</a>
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" rel="tag"># 分布式锁</a>
+              <a href="/tags/Redisson/" rel="tag"># Redisson</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/01/165java-spring-boot-microservices-monitoring-system-practice/" rel="prev" title="Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验">
+      <i class="fa fa-chevron-left"></i> Java Spring Boot 微服务监控体系建设实践：从零搭建到生产优化的完整经验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/14/163java-springboot-redis-cache-penetration-troubleshooting/" rel="next" title="Java SpringBoot Redis缓存击穿生产故障排查实战：从热点数据失效到多级防护的完整处理过程">
+      Java SpringBoot Redis缓存击穿生产故障排查实战：从热点数据失效到多级防护的完整处理过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Spring-Boot-%E5%BE%AE%E6%9C%8D%E5%8A%A1%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E-Redis-%E5%88%B0-Redisson-%E7%9A%84%E9%80%89%E5%9E%8B%E4%B8%8E%E8%90%BD%E5%9C%B0%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.</span> <span class="nav-text">Spring Boot 微服务分布式锁实战：从 Redis 到 Redisson 的选型与落地经验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E4%B8%9A%E5%8A%A1%E8%83%8C%E6%99%AF%E4%B8%8E%E6%8A%80%E6%9C%AF%E6%8C%91%E6%88%98"><span class="nav-number">1.2.</span> <span class="nav-text">一、业务背景与技术挑战</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E5%9C%BA%E6%99%AF"><span class="nav-number">1.2.1.</span> <span class="nav-text">业务场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E8%A6%81%E6%B1%82"><span class="nav-number">1.2.2.</span> <span class="nav-text">技术要求</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B%E5%8E%86%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">二、技术选型历程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E9%98%B6%E6%AE%B5%EF%BC%9A%E5%8E%9F%E7%94%9F-Redis-%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.1.</span> <span class="nav-text">第一阶段：原生 Redis 实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E5%92%8C%E9%97%AE%E9%A2%98%E5%8F%91%E7%8E%B0"><span class="nav-number">1.3.2.</span> <span class="nav-text">使用示例和问题发现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E9%98%B6%E6%AE%B5%EF%BC%9A%E6%94%B9%E8%BF%9B%E7%89%88-Redis-%E5%AE%9E%E7%8E%B0"><span class="nav-number">1.3.3.</span> <span class="nav-text">第二阶段：改进版 Redis 实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E9%98%B6%E6%AE%B5%EF%BC%9ARedisson-%E6%9C%80%E7%BB%88%E6%96%B9%E6%A1%88"><span class="nav-number">1.3.4.</span> <span class="nav-text">第三阶段：Redisson 最终方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E6%B7%BB%E5%8A%A0%E4%BE%9D%E8%B5%96%E5%92%8C%E9%85%8D%E7%BD%AE"><span class="nav-number">1.3.4.1.</span> <span class="nav-text">1. 添加依赖和配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E5%B0%81%E8%A3%85-Redisson-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%B7%A5%E5%85%B7%E7%B1%BB"><span class="nav-number">1.3.4.2.</span> <span class="nav-text">2. 封装 Redisson 分布式锁工具类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E4%BD%BF%E7%94%A8"><span class="nav-number">1.3.4.3.</span> <span class="nav-text">3. 业务代码使用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.4.</span> <span class="nav-text">三、生产实践经验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 性能调优建议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E7%9B%91%E6%8E%A7%E5%92%8C%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 监控和可观测性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%E5%92%8C%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">1.4.3.</span> <span class="nav-text">3. 常见问题和解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%981%EF%BC%9A%E9%94%81%E7%B2%92%E5%BA%A6%E8%BF%87%E7%B2%97%E5%AF%BC%E8%87%B4%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98"><span class="nav-number">1.4.3.1.</span> <span class="nav-text">问题1：锁粒度过粗导致性能问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%982%EF%BC%9A%E6%AD%BB%E9%94%81%E9%A3%8E%E9%99%A9"><span class="nav-number">1.4.3.2.</span> <span class="nav-text">问题2：死锁风险</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">四、方案对比总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.6.</span> <span class="nav-text">五、最佳实践建议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.7.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

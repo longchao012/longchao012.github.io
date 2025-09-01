@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基于在某制造企业推进RPA项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，为RPA落地提供可参考的方法论。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RPA 项目从 POC 到规模化落地：工具选型与踩坑实录">
+<meta property="og:url" content="http://h995.com/2023/09/17/073rpa-project-implementation-experience/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="基于在某制造企业推进RPA项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，为RPA落地提供可参考的方法论。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-09-17T06:44:14.000Z">
+<meta property="article:modified_time" content="2025-09-01T08:49:27.048Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RPA">
+<meta property="article:tag" content="UiPath">
+<meta property="article:tag" content="自动化流程">
+<meta property="article:tag" content="项目管理">
+<meta property="article:tag" content="工具选型">
+<meta property="article:tag" content="开源RPA">
+<meta property="article:tag" content="企业数字化">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2023/09/17/073rpa-project-implementation-experience/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RPA 项目从 POC 到规模化落地：工具选型与踩坑实录 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2023/09/17/073rpa-project-implementation-experience/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RPA 项目从 POC 到规模化落地：工具选型与踩坑实录
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-17 14:44:14" itemprop="dateCreated datePublished" datetime="2023-09-17T14:44:14+08:00">2023-09-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">基于在某制造企业推进RPA项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，为RPA落地提供可参考的方法论。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="RPA-项目从-POC-到规模化落地：工具选型与踩坑实录"><a href="#RPA-项目从-POC-到规模化落地：工具选型与踩坑实录" class="headerlink" title="RPA 项目从 POC 到规模化落地：工具选型与踩坑实录"></a>RPA 项目从 POC 到规模化落地：工具选型与踩坑实录</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>RPA（机器人流程自动化）正从”概念验证”走向”规模化应用”，但很多企业在落地过程中遇到工具选型困惑、开发效率低下、维护成本高企等问题。本文选择”RPA技术”为主题，基于我在某制造企业推进 RPA 项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，希望为你的 RPA 落地提供可参考的方法论。</p>
+<h2 id="项目背景与目标"><a href="#项目背景与目标" class="headerlink" title="项目背景与目标"></a>项目背景与目标</h2><ul>
+<li><strong>业务场景</strong>：财务月结流程涉及 ERP、OA、邮件、Excel 等多系统，人工操作繁琐且易错。</li>
+<li><strong>自动化目标</strong>：将”数据提取→核对→生成报表→邮件通知”的 4 小时手工流程缩短至 30 分钟内。</li>
+<li><strong>技术约束</strong>：现有系统无 API 开放，需通过 UI 自动化实现；要求 7×24 稳定运行，支持异常恢复。</li>
+</ul>
+<h2 id="工具选型与对比"><a href="#工具选型与对比" class="headerlink" title="工具选型与对比"></a>工具选型与对比</h2><p>我们评估了市面主流的 RPA 平台，重点关注易用性、稳定性、成本与生态：</p>
+<h3 id="1-UiPath（商业平台）"><a href="#1-UiPath（商业平台）" class="headerlink" title="1. UiPath（商业平台）"></a>1. UiPath（商业平台）</h3><p><strong>优势</strong>：</p>
+<ul>
+<li>拖拽式开发，学习曲线平缓；内置 AI 能力（OCR、NLP）较强。</li>
+<li>企业级管控：版本管理、权限控制、执行监控、日志审计完善。</li>
+<li>生态丰富：预置大量行业模板与第三方连接器。</li>
+</ul>
+<p><strong>劣势</strong>：</p>
+<ul>
+<li>许可成本高（年费制），中小企业负担重。</li>
+<li>对复杂逻辑的编程灵活性有限，调试体验一般。</li>
+</ul>
+<h3 id="2-开源方案（Python-Selenium-Playwright）"><a href="#2-开源方案（Python-Selenium-Playwright）" class="headerlink" title="2. 开源方案（Python + Selenium&#x2F;Playwright）"></a>2. 开源方案（Python + Selenium&#x2F;Playwright）</h3><p><strong>优势</strong>：</p>
+<ul>
+<li>成本低，技术栈灵活，可深度定制。</li>
+<li>与现有 DevOps 流程集成容易，便于 CI&#x2F;CD。</li>
+</ul>
+<p><strong>劣势</strong>：</p>
+<ul>
+<li>开发门槛高，需要编程基础；缺乏可视化设计器。</li>
+<li>企业级管控能力需自建，初期投入大。</li>
+</ul>
+<h3 id="3-影刀-RPA（国产平台）"><a href="#3-影刀-RPA（国产平台）" class="headerlink" title="3. 影刀 RPA（国产平台）"></a>3. 影刀 RPA（国产平台）</h3><p><strong>优势</strong>：</p>
+<ul>
+<li>本土化支持好，价格相对友好。</li>
+<li>可视化编辑器易上手，支持 Python 脚本扩展。</li>
+</ul>
+<p><strong>劣势</strong>：</p>
+<ul>
+<li>生态相对薄弱，部分高级功能仍在完善。</li>
+</ul>
+<h3 id="最终选择：混合方案"><a href="#最终选择：混合方案" class="headerlink" title="最终选择：混合方案"></a>最终选择：混合方案</h3><p>考虑到成本与灵活性平衡，我们采用了”影刀 RPA + Python 脚本”的混合架构：</p>
+<ul>
+<li>标准流程用影刀可视化开发，降低维护门槛。</li>
+<li>复杂逻辑与数据处理用 Python 实现，保证扩展性。</li>
+</ul>
+<h2 id="核心实现与代码示例"><a href="#核心实现与代码示例" class="headerlink" title="核心实现与代码示例"></a>核心实现与代码示例</h2><h3 id="1-数据提取模块（Python-Selenium）"><a href="#1-数据提取模块（Python-Selenium）" class="headerlink" title="1. 数据提取模块（Python + Selenium）"></a>1. 数据提取模块（Python + Selenium）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># language: python</span></span><br><span class="line"><span class="keyword">from</span> selenium <span class="keyword">import</span> webdriver</span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.common.by <span class="keyword">import</span> By</span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support.ui <span class="keyword">import</span> WebDriverWait</span><br><span class="line"><span class="keyword">from</span> selenium.webdriver.support <span class="keyword">import</span> expected_conditions <span class="keyword">as</span> EC</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ERPDataExtractor</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, headless=<span class="literal">True</span></span>):</span><br><span class="line">        options = webdriver.ChromeOptions()</span><br><span class="line">        <span class="keyword">if</span> headless:</span><br><span class="line">            options.add_argument(<span class="string">&#x27;--headless&#x27;</span>)</span><br><span class="line">        options.add_argument(<span class="string">&#x27;--no-sandbox&#x27;</span>)</span><br><span class="line">        options.add_argument(<span class="string">&#x27;--disable-dev-shm-usage&#x27;</span>)</span><br><span class="line">        <span class="variable language_">self</span>.driver = webdriver.Chrome(options=options)</span><br><span class="line">        <span class="variable language_">self</span>.wait = WebDriverWait(<span class="variable language_">self</span>.driver, <span class="number">10</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">login</span>(<span class="params">self, username, password, login_url</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;登录 ERP 系统&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="variable language_">self</span>.driver.get(login_url)</span><br><span class="line">            <span class="comment"># 等待登录表单加载</span></span><br><span class="line">            username_field = <span class="variable language_">self</span>.wait.until(</span><br><span class="line">                EC.presence_of_element_located((By.ID, <span class="string">&quot;username&quot;</span>))</span><br><span class="line">            )</span><br><span class="line">            password_field = <span class="variable language_">self</span>.driver.find_element(By.ID, <span class="string">&quot;password&quot;</span>)</span><br><span class="line">            login_btn = <span class="variable language_">self</span>.driver.find_element(By.ID, <span class="string">&quot;loginBtn&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            username_field.send_keys(username)</span><br><span class="line">            password_field.send_keys(password)</span><br><span class="line">            login_btn.click()</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 验证登录成功</span></span><br><span class="line">            <span class="variable language_">self</span>.wait.until(</span><br><span class="line">                EC.presence_of_element_located((By.CLASS_NAME, <span class="string">&quot;dashboard&quot;</span>))</span><br><span class="line">            )</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;登录失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">extract_financial_data</span>(<span class="params">self, start_date, end_date</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;提取财务数据&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="comment"># 导航到财务报表页面</span></span><br><span class="line">            <span class="variable language_">self</span>.driver.get(<span class="string">&quot;http://erp.company.com/finance/report&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 设置日期范围</span></span><br><span class="line">            start_input = <span class="variable language_">self</span>.wait.until(</span><br><span class="line">                EC.element_to_be_clickable((By.ID, <span class="string">&quot;startDate&quot;</span>))</span><br><span class="line">            )</span><br><span class="line">            end_input = <span class="variable language_">self</span>.driver.find_element(By.ID, <span class="string">&quot;endDate&quot;</span>)</span><br><span class="line">            </span><br><span class="line">            start_input.clear()</span><br><span class="line">            start_input.send_keys(start_date)</span><br><span class="line">            end_input.clear()</span><br><span class="line">            end_input.send_keys(end_date)</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 点击查询</span></span><br><span class="line">            query_btn = <span class="variable language_">self</span>.driver.find_element(By.ID, <span class="string">&quot;queryBtn&quot;</span>)</span><br><span class="line">            query_btn.click()</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 等待数据加载并提取表格</span></span><br><span class="line">            time.sleep(<span class="number">3</span>)</span><br><span class="line">            table = <span class="variable language_">self</span>.wait.until(</span><br><span class="line">                EC.presence_of_element_located((By.ID, <span class="string">&quot;dataTable&quot;</span>))</span><br><span class="line">            )</span><br><span class="line">            </span><br><span class="line">            <span class="comment"># 解析表格数据</span></span><br><span class="line">            rows = table.find_elements(By.TAG_NAME, <span class="string">&quot;tr&quot;</span>)[<span class="number">1</span>:]  <span class="comment"># 跳过表头</span></span><br><span class="line">            data = []</span><br><span class="line">            <span class="keyword">for</span> row <span class="keyword">in</span> rows:</span><br><span class="line">                cells = row.find_elements(By.TAG_NAME, <span class="string">&quot;td&quot;</span>)</span><br><span class="line">                <span class="keyword">if</span> <span class="built_in">len</span>(cells) &gt;= <span class="number">4</span>:</span><br><span class="line">                    data.append(&#123;</span><br><span class="line">                        <span class="string">&#x27;科目&#x27;</span>: cells[<span class="number">0</span>].text,</span><br><span class="line">                        <span class="string">&#x27;借方&#x27;</span>: cells[<span class="number">1</span>].text,</span><br><span class="line">                        <span class="string">&#x27;贷方&#x27;</span>: cells[<span class="number">2</span>].text,</span><br><span class="line">                        <span class="string">&#x27;余额&#x27;</span>: cells[<span class="number">3</span>].text</span><br><span class="line">                    &#125;)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">return</span> pd.DataFrame(data)</span><br><span class="line">            </span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;数据提取失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">close</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.driver.quit()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例</span></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    extractor = ERPDataExtractor()</span><br><span class="line">    <span class="keyword">if</span> extractor.login(<span class="string">&quot;admin&quot;</span>, <span class="string">&quot;password123&quot;</span>, <span class="string">&quot;http://erp.company.com/login&quot;</span>):</span><br><span class="line">        df = extractor.extract_financial_data(<span class="string">&quot;2024-01-01&quot;</span>, <span class="string">&quot;2024-01-31&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> df <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            df.to_excel(<span class="string">&quot;financial_data.xlsx&quot;</span>, index=<span class="literal">False</span>)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;数据提取完成&quot;</span>)</span><br><span class="line">    extractor.close()</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-异常处理与重试机制"><a href="#2-异常处理与重试机制" class="headerlink" title="2. 异常处理与重试机制"></a>2. 异常处理与重试机制</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># language: python</span></span><br><span class="line"><span class="keyword">import</span> functools</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> logging</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">retry_on_failure</span>(<span class="params">max_retries=<span class="number">3</span>, delay=<span class="number">2</span>, backoff=<span class="number">2</span></span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;装饰器：失败重试机制&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">decorator</span>(<span class="params">func</span>):</span><br><span class="line"><span class="meta">        @functools.wraps(<span class="params">func</span>)</span></span><br><span class="line">        <span class="keyword">def</span> <span class="title function_">wrapper</span>(<span class="params">*args, **kwargs</span>):</span><br><span class="line">            retries = <span class="number">0</span></span><br><span class="line">            <span class="keyword">while</span> retries &lt; max_retries:</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    <span class="keyword">return</span> func(*args, **kwargs)</span><br><span class="line">                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                    retries += <span class="number">1</span></span><br><span class="line">                    <span class="keyword">if</span> retries == max_retries:</span><br><span class="line">                        logging.error(<span class="string">f&quot;函数 <span class="subst">&#123;func.__name__&#125;</span> 执行失败，已重试 <span class="subst">&#123;max_retries&#125;</span> 次: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                        <span class="keyword">raise</span></span><br><span class="line">                    <span class="keyword">else</span>:</span><br><span class="line">                        wait_time = delay * (backoff ** (retries - <span class="number">1</span>))</span><br><span class="line">                        logging.warning(<span class="string">f&quot;函数 <span class="subst">&#123;func.__name__&#125;</span> 第 <span class="subst">&#123;retries&#125;</span> 次失败，<span class="subst">&#123;wait_time&#125;</span>秒后重试: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">                        time.sleep(wait_time)</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">None</span></span><br><span class="line">        <span class="keyword">return</span> wrapper</span><br><span class="line">    <span class="keyword">return</span> decorator</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RPATaskManager</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.logger = logging.getLogger(__name__)</span><br><span class="line">    </span><br><span class="line"><span class="meta">    @retry_on_failure(<span class="params">max_retries=<span class="number">3</span>, delay=<span class="number">5</span></span>)</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">execute_task</span>(<span class="params">self, task_name, task_func, *args, **kwargs</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;执行 RPA 任务&quot;&quot;&quot;</span></span><br><span class="line">        <span class="variable language_">self</span>.logger.info(<span class="string">f&quot;开始执行任务: <span class="subst">&#123;task_name&#125;</span>&quot;</span>)</span><br><span class="line">        start_time = time.time()</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            result = task_func(*args, **kwargs)</span><br><span class="line">            duration = time.time() - start_time</span><br><span class="line">            <span class="variable language_">self</span>.logger.info(<span class="string">f&quot;任务 <span class="subst">&#123;task_name&#125;</span> 执行成功，耗时: <span class="subst">&#123;duration:<span class="number">.2</span>f&#125;</span>秒&quot;</span>)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">            <span class="variable language_">self</span>.logger.error(<span class="string">f&quot;任务 <span class="subst">&#123;task_name&#125;</span> 执行失败: <span class="subst">&#123;e&#125;</span>&quot;</span>)</span><br><span class="line">            <span class="keyword">raise</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="落地过程中的关键踩坑"><a href="#落地过程中的关键踩坑" class="headerlink" title="落地过程中的关键踩坑"></a>落地过程中的关键踩坑</h2><h3 id="1-元素定位不稳定"><a href="#1-元素定位不稳定" class="headerlink" title="1. 元素定位不稳定"></a>1. 元素定位不稳定</h3><p><strong>问题</strong>：页面元素 ID 经常变化，导致脚本频繁失效。<br><strong>解决方案</strong>：</p>
+<ul>
+<li>优先使用相对稳定的属性（data-* 属性、class 组合）。</li>
+<li>实现多重定位策略：ID → XPath → CSS Selector 逐级降级。</li>
+<li>与开发团队协商，为关键元素添加稳定的测试标识。</li>
+</ul>
+<h3 id="2-并发执行冲突"><a href="#2-并发执行冲突" class="headerlink" title="2. 并发执行冲突"></a>2. 并发执行冲突</h3><p><strong>问题</strong>：多个 RPA 实例同时操作共享资源（文件、数据库）导致冲突。<br><strong>解决方案</strong>：</p>
+<ul>
+<li>引入分布式锁（Redis）控制资源访问。</li>
+<li>设计任务队列，避免同类任务并发执行。</li>
+<li>为每个实例分配独立的工作目录。</li>
+</ul>
+<h3 id="3-监控与告警缺失"><a href="#3-监控与告警缺失" class="headerlink" title="3. 监控与告警缺失"></a>3. 监控与告警缺失</h3><p><strong>问题</strong>：任务失败后无法及时发现，影响业务连续性。<br><strong>解决方案</strong>：</p>
+<ul>
+<li>集成企业微信&#x2F;钉钉机器人，实时推送执行状态。</li>
+<li>建立任务执行仪表板，可视化成功率、耗时趋势。</li>
+<li>设置关键节点的健康检查，主动发现潜在问题。</li>
+</ul>
+<h2 id="运维与治理经验"><a href="#运维与治理经验" class="headerlink" title="运维与治理经验"></a>运维与治理经验</h2><h3 id="1-版本管理"><a href="#1-版本管理" class="headerlink" title="1. 版本管理"></a>1. 版本管理</h3><ul>
+<li>将 RPA 脚本纳入 Git 版本控制，配合 Code Review 流程。</li>
+<li>建立测试、预发、生产环境，确保变更可控。</li>
+</ul>
+<h3 id="2-性能优化"><a href="#2-性能优化" class="headerlink" title="2. 性能优化"></a>2. 性能优化</h3><ul>
+<li>合理设置等待时间，避免过度等待影响效率。</li>
+<li>使用无头浏览器模式，减少资源消耗。</li>
+<li>批量处理数据，减少系统交互次数。</li>
+</ul>
+<h3 id="3-安全合规"><a href="#3-安全合规" class="headerlink" title="3. 安全合规"></a>3. 安全合规</h3><ul>
+<li>敏感信息（密码、API Key）使用环境变量或密钥管理系统。</li>
+<li>定期轮换自动化账号密码，避免长期使用固定凭据。</li>
+<li>记录详细的操作日志，满足审计要求。</li>
+</ul>
+<h2 id="效果与收益"><a href="#效果与收益" class="headerlink" title="效果与收益"></a>效果与收益</h2><p>项目上线 6 个月后的数据：</p>
+<ul>
+<li><strong>效率提升</strong>：月结流程从 4 小时缩短至 25 分钟，效率提升 90%+。</li>
+<li><strong>准确性改善</strong>：人工错误率从 3% 降至 0.1%，数据质量显著提升。</li>
+<li><strong>成本节约</strong>：节省人力成本约 60%，ROI 在 8 个月内回正。</li>
+<li><strong>可扩展性</strong>：基于此架构已扩展至采购、库存等 5 个业务场景。</li>
+</ul>
+<h2 id="总结与建议"><a href="#总结与建议" class="headerlink" title="总结与建议"></a>总结与建议</h2><p>RPA 项目成功的关键不在于工具本身，而在于：</p>
+<ol>
+<li><strong>合理的场景选择</strong>：优先自动化规则明确、重复性高、ROI 可观的流程。</li>
+<li><strong>渐进式推进</strong>：从 POC 到小规模试点，再到全面推广，避免一步到位的风险。</li>
+<li><strong>技术与管理并重</strong>：既要关注技术实现，也要建立配套的治理体系。</li>
+<li><strong>持续优化迭代</strong>：根据业务变化和用户反馈，不断完善自动化流程。</li>
+</ol>
+<p>希望这些实战经验能为你的 RPA 项目提供参考，让自动化真正成为业务增长的助推器。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2023/09/17/073rpa-project-implementation-experience/" title="RPA 项目从 POC 到规模化落地：工具选型与踩坑实录">http://h995.com/2023/09/17/073rpa-project-implementation-experience/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RPA/" rel="tag"># RPA</a>
+              <a href="/tags/UiPath/" rel="tag"># UiPath</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%81%E7%A8%8B/" rel="tag"># 自动化流程</a>
+              <a href="/tags/%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86/" rel="tag"># 项目管理</a>
+              <a href="/tags/%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B/" rel="tag"># 工具选型</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90RPA/" rel="tag"># 开源RPA</a>
+              <a href="/tags/%E4%BC%81%E4%B8%9A%E6%95%B0%E5%AD%97%E5%8C%96/" rel="tag"># 企业数字化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/09/12/074rpa-finance-automation-project-implementation-experience/" rel="prev" title="RPA 财务自动化项目实战：从手工作业到智能流程的完整落地经验">
+      <i class="fa fa-chevron-left"></i> RPA 财务自动化项目实战：从手工作业到智能流程的完整落地经验
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/09/25/072rpa-dynamic-element-location-failure-debugging-practice/" rel="next" title="RPA流程执行中的动态元素定位失效调试实战：从定位异常到稳定识别的完整排查过程">
+      RPA流程执行中的动态元素定位失效调试实战：从定位异常到稳定识别的完整排查过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPA-%E9%A1%B9%E7%9B%AE%E4%BB%8E-POC-%E5%88%B0%E8%A7%84%E6%A8%A1%E5%8C%96%E8%90%BD%E5%9C%B0%EF%BC%9A%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B%E4%B8%8E%E8%B8%A9%E5%9D%91%E5%AE%9E%E5%BD%95"><span class="nav-number">1.</span> <span class="nav-text">RPA 项目从 POC 到规模化落地：工具选型与踩坑实录</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E8%83%8C%E6%99%AF%E4%B8%8E%E7%9B%AE%E6%A0%87"><span class="nav-number">1.2.</span> <span class="nav-text">项目背景与目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B%E4%B8%8E%E5%AF%B9%E6%AF%94"><span class="nav-number">1.3.</span> <span class="nav-text">工具选型与对比</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-UiPath%EF%BC%88%E5%95%86%E4%B8%9A%E5%B9%B3%E5%8F%B0%EF%BC%89"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. UiPath（商业平台）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%BC%80%E6%BA%90%E6%96%B9%E6%A1%88%EF%BC%88Python-Selenium-Playwright%EF%BC%89"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 开源方案（Python + Selenium&#x2F;Playwright）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%BD%B1%E5%88%80-RPA%EF%BC%88%E5%9B%BD%E4%BA%A7%E5%B9%B3%E5%8F%B0%EF%BC%89"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. 影刀 RPA（国产平台）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E7%BB%88%E9%80%89%E6%8B%A9%EF%BC%9A%E6%B7%B7%E5%90%88%E6%96%B9%E6%A1%88"><span class="nav-number">1.3.4.</span> <span class="nav-text">最终选择：混合方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%AE%9E%E7%8E%B0%E4%B8%8E%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">1.4.</span> <span class="nav-text">核心实现与代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%95%B0%E6%8D%AE%E6%8F%90%E5%8F%96%E6%A8%A1%E5%9D%97%EF%BC%88Python-Selenium%EF%BC%89"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 数据提取模块（Python + Selenium）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E4%B8%8E%E9%87%8D%E8%AF%95%E6%9C%BA%E5%88%B6"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 异常处理与重试机制</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%90%BD%E5%9C%B0%E8%BF%87%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%85%B3%E9%94%AE%E8%B8%A9%E5%9D%91"><span class="nav-number">1.5.</span> <span class="nav-text">落地过程中的关键踩坑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%85%83%E7%B4%A0%E5%AE%9A%E4%BD%8D%E4%B8%8D%E7%A8%B3%E5%AE%9A"><span class="nav-number">1.5.1.</span> <span class="nav-text">1. 元素定位不稳定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%B9%B6%E5%8F%91%E6%89%A7%E8%A1%8C%E5%86%B2%E7%AA%81"><span class="nav-number">1.5.2.</span> <span class="nav-text">2. 并发执行冲突</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%9B%91%E6%8E%A7%E4%B8%8E%E5%91%8A%E8%AD%A6%E7%BC%BA%E5%A4%B1"><span class="nav-number">1.5.3.</span> <span class="nav-text">3. 监控与告警缺失</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E7%BB%B4%E4%B8%8E%E6%B2%BB%E7%90%86%E7%BB%8F%E9%AA%8C"><span class="nav-number">1.6.</span> <span class="nav-text">运维与治理经验</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%89%88%E6%9C%AC%E7%AE%A1%E7%90%86"><span class="nav-number">1.6.1.</span> <span class="nav-text">1. 版本管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96"><span class="nav-number">1.6.2.</span> <span class="nav-text">2. 性能优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%AE%89%E5%85%A8%E5%90%88%E8%A7%84"><span class="nav-number">1.6.3.</span> <span class="nav-text">3. 安全合规</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E4%B8%8E%E6%94%B6%E7%9B%8A"><span class="nav-number">1.7.</span> <span class="nav-text">效果与收益</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.8.</span> <span class="nav-text">总结与建议</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

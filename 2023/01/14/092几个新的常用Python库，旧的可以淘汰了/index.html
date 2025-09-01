@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="介绍几个值得关注的现代Python库，可以有效替代传统工具，包括pathlib、secrets、zoneinfo、dataclasses等，让Python开发更加高效和现代化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="几个新的常用Python库，旧的可以淘汰了">
+<meta property="og:url" content="http://h995.com/2023/01/14/092%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="介绍几个值得关注的现代Python库，可以有效替代传统工具，包括pathlib、secrets、zoneinfo、dataclasses等，让Python开发更加高效和现代化。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-01-14T03:12:56.000Z">
+<meta property="article:modified_time" content="2025-09-01T08:49:27.516Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="开发工具">
+<meta property="article:tag" content="新库推荐">
+<meta property="article:tag" content="现代化开发">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2023/01/14/092%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>几个新的常用Python库，旧的可以淘汰了 | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2023/01/14/092%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          几个新的常用Python库，旧的可以淘汰了
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-01-14 11:12:56" itemprop="dateCreated datePublished" datetime="2023-01-14T11:12:56+08:00">2023-01-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+            <div class="post-description">介绍几个值得关注的现代Python库，可以有效替代传统工具，包括pathlib、secrets、zoneinfo、dataclasses等，让Python开发更加高效和现代化。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="引言：Python生态的演进"><a href="#引言：Python生态的演进" class="headerlink" title="引言：Python生态的演进"></a>引言：Python生态的演进</h2><p>Python生态系统在不断发展，新的库和工具层出不穷，它们往往提供了更好的性能、更简洁的API和更现代的编程体验。本文将介绍几个值得关注的现代Python库，它们可以有效替代一些传统但相对落后的库，让您的Python开发更加高效和现代化。</p>
+<h2 id="Pathlib：现代化的路径操作库"><a href="#Pathlib：现代化的路径操作库" class="headerlink" title="Pathlib：现代化的路径操作库"></a>Pathlib：现代化的路径操作库</h2><h3 id="传统方案的痛点"><a href="#传统方案的痛点" class="headerlink" title="传统方案的痛点"></a>传统方案的痛点</h3><p>传统的路径操作依赖<code>os.path</code>模块，代码冗长且容易出错：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="comment"># 传统方式：拼接路径</span></span><br><span class="line">config_path = os.path.join(os.getcwd(), <span class="string">&#x27;config&#x27;</span>, <span class="string">&#x27;settings.json&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文件扩展名</span></span><br><span class="line">ext = os.path.splitext(<span class="string">&#x27;document.txt&#x27;</span>)[<span class="number">1</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查文件是否存在</span></span><br><span class="line"><span class="keyword">if</span> os.path.isfile(config_path):</span><br><span class="line">    <span class="keyword">with</span> <span class="built_in">open</span>(config_path) <span class="keyword">as</span> f:</span><br><span class="line">        content = f.read()</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pathlib的优势"><a href="#Pathlib的优势" class="headerlink" title="Pathlib的优势"></a>Pathlib的优势</h3><p><code>pathlib</code>提供了面向对象的路径操作，代码更加直观和Pythonic：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建Path对象</span></span><br><span class="line">config_path = Path.cwd() / <span class="string">&#x27;config&#x27;</span> / <span class="string">&#x27;settings.json&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取文件扩展名</span></span><br><span class="line">ext = Path(<span class="string">&#x27;document.txt&#x27;</span>).suffix</span><br><span class="line"></span><br><span class="line"><span class="comment"># 检查文件并读取内容</span></span><br><span class="line"><span class="keyword">if</span> config_path.exists():</span><br><span class="line">    content = config_path.read_text()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 遍历目录</span></span><br><span class="line"><span class="keyword">for</span> file <span class="keyword">in</span> Path(<span class="string">&#x27;data&#x27;</span>).glob(<span class="string">&#x27;*.csv&#x27;</span>):</span><br><span class="line">    <span class="built_in">print</span>(file.name)</span><br></pre></td></tr></table></figure>
+
+<h3 id="高级特性"><a href="#高级特性" class="headerlink" title="高级特性"></a>高级特性</h3><ul>
+<li><strong>路径拼接</strong>：使用<code>/</code>运算符，直观且不易出错</li>
+<li><strong>文件操作</strong>：内置<code>read_text()</code>, <code>write_text()</code>, <code>read_bytes()</code>, <code>write_bytes()</code></li>
+<li><strong>目录遍历</strong>：<code>glob()</code>, <code>rglob()</code>, <code>iterdir()</code>等方法</li>
+<li><strong>路径解析</strong>：<code>resolve()</code>, <code>absolute()</code>, <code>relative_to()</code></li>
+</ul>
+<h2 id="Secrets：安全的随机数生成"><a href="#Secrets：安全的随机数生成" class="headerlink" title="Secrets：安全的随机数生成"></a>Secrets：安全的随机数生成</h2><h3 id="传统方案的局限"><a href="#传统方案的局限" class="headerlink" title="传统方案的局限"></a>传统方案的局限</h3><p>使用<code>random</code>模块生成随机数不适合安全场景：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> random</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不安全：random生成的随机数是可预测的</span></span><br><span class="line">password = <span class="string">&#x27;&#x27;</span>.join(random.choice(<span class="string">&#x27;abcdefghijklmnopqrstuvwxyz&#x27;</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="Secrets的安全保障"><a href="#Secrets的安全保障" class="headerlink" title="Secrets的安全保障"></a>Secrets的安全保障</h3><p><code>secrets</code>模块专为安全敏感的场景设计：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> secrets</span><br><span class="line"><span class="keyword">import</span> string</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成安全随机数</span></span><br><span class="line">secure_token = secrets.token_urlsafe(<span class="number">32</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成安全密码</span></span><br><span class="line">alphabet = string.ascii_letters + string.digits + string.punctuation</span><br><span class="line">password = <span class="string">&#x27;&#x27;</span>.join(secrets.choice(alphabet) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">12</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成加密密钥</span></span><br><span class="line">key = secrets.token_bytes(<span class="number">32</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 生成URL安全的token</span></span><br><span class="line">url_token = secrets.token_urlsafe(<span class="number">16</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h3><ul>
+<li><strong>密码生成</strong>：创建强密码</li>
+<li><strong>API密钥</strong>：生成安全的访问令牌</li>
+<li><strong>会话ID</strong>：创建不可预测的会话标识符</li>
+<li><strong>加密密钥</strong>：为加密算法生成密钥</li>
+</ul>
+<h2 id="Zoneinfo：现代化的时区处理"><a href="#Zoneinfo：现代化的时区处理" class="headerlink" title="Zoneinfo：现代化的时区处理"></a>Zoneinfo：现代化的时区处理</h2><h3 id="传统方案的复杂性"><a href="#传统方案的复杂性" class="headerlink" title="传统方案的复杂性"></a>传统方案的复杂性</h3><p>使用<code>pytz</code>处理时区需要额外安装且API不够直观：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> pytz</span><br><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line"></span><br><span class="line"><span class="comment"># pytz方式：相对复杂</span></span><br><span class="line">tz = pytz.timezone(<span class="string">&#x27;America/New_York&#x27;</span>)</span><br><span class="line">dt = tz.localize(datetime(<span class="number">2023</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">12</span>, <span class="number">0</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="Zoneinfo的简洁性"><a href="#Zoneinfo的简洁性" class="headerlink" title="Zoneinfo的简洁性"></a>Zoneinfo的简洁性</h3><p><code>zoneinfo</code>从Python 3.9开始内置，无需额外安装：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> zoneinfo <span class="keyword">import</span> ZoneInfo</span><br><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line"></span><br><span class="line"><span class="comment"># 直接创建带时区的datetime</span></span><br><span class="line">ny_time = datetime(<span class="number">2023</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">12</span>, <span class="number">0</span>, tzinfo=ZoneInfo(<span class="string">&#x27;America/New_York&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 时区转换</span></span><br><span class="line">utc_time = ny_time.astimezone(ZoneInfo(<span class="string">&#x27;UTC&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取当前时区时间</span></span><br><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line">now_ny = datetime.now(ZoneInfo(<span class="string">&#x27;America/New_York&#x27;</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="高级用法"><a href="#高级用法" class="headerlink" title="高级用法"></a>高级用法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 处理夏令时转换</span></span><br><span class="line">dt = datetime(<span class="number">2023</span>, <span class="number">11</span>, <span class="number">5</span>, <span class="number">1</span>, <span class="number">30</span>, tzinfo=ZoneInfo(<span class="string">&#x27;America/New_York&#x27;</span>))</span><br><span class="line"><span class="built_in">print</span>(dt)  <span class="comment"># 自动处理夏令时结束</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取所有可用时区</span></span><br><span class="line"><span class="keyword">import</span> zoneinfo</span><br><span class="line">available_zones = zoneinfo.available_timezones()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;Total timezones: <span class="subst">&#123;<span class="built_in">len</span>(available_zones)&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="Dataclasses：优雅的数据类"><a href="#Dataclasses：优雅的数据类" class="headerlink" title="Dataclasses：优雅的数据类"></a>Dataclasses：优雅的数据类</h2><h3 id="传统方案的冗长"><a href="#传统方案的冗长" class="headerlink" title="传统方案的冗长"></a>传统方案的冗长</h3><p>使用普通类定义数据结构需要大量样板代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Person</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, name, age, email</span>):</span><br><span class="line">        <span class="variable language_">self</span>.name = name</span><br><span class="line">        <span class="variable language_">self</span>.age = age</span><br><span class="line">        <span class="variable language_">self</span>.email = email</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__repr__</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="string">f&quot;Person(name=&#x27;<span class="subst">&#123;self.name&#125;</span>&#x27;, age=<span class="subst">&#123;self.age&#125;</span>, email=&#x27;<span class="subst">&#123;self.email&#125;</span>&#x27;)&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__eq__</span>(<span class="params">self, other</span>):</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> <span class="built_in">isinstance</span>(other, Person):</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">        <span class="keyword">return</span> (<span class="variable language_">self</span>.name, <span class="variable language_">self</span>.age, <span class="variable language_">self</span>.email) == (other.name, other.age, other.email)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Dataclasses的简洁"><a href="#Dataclasses的简洁" class="headerlink" title="Dataclasses的简洁"></a>Dataclasses的简洁</h3><p><code>dataclasses</code>通过装饰器自动生成样板代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Person</span>:</span><br><span class="line">    name: <span class="built_in">str</span></span><br><span class="line">    age: <span class="built_in">int</span></span><br><span class="line">    email: <span class="built_in">str</span></span><br><span class="line">    hobbies: <span class="type">List</span>[<span class="built_in">str</span>] = <span class="literal">None</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用示例</span></span><br><span class="line">person = Person(<span class="string">&quot;Alice&quot;</span>, <span class="number">30</span>, <span class="string">&quot;alice@example.com&quot;</span>, [<span class="string">&quot;reading&quot;</span>, <span class="string">&quot;hiking&quot;</span>])</span><br><span class="line"><span class="built_in">print</span>(person)  <span class="comment"># 自动生成的__repr__</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 比较实例</span></span><br><span class="line">person1 = Person(<span class="string">&quot;Alice&quot;</span>, <span class="number">30</span>, <span class="string">&quot;alice@example.com&quot;</span>)</span><br><span class="line">person2 = Person(<span class="string">&quot;Alice&quot;</span>, <span class="number">30</span>, <span class="string">&quot;alice@example.com&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(person1 == person2)  <span class="comment"># 自动生成的__eq__</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="高级特性-1"><a href="#高级特性-1" class="headerlink" title="高级特性"></a>高级特性</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass, field</span><br><span class="line"></span><br><span class="line"><span class="meta">@dataclass</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Product</span>:</span><br><span class="line">    name: <span class="built_in">str</span></span><br><span class="line">    price: <span class="built_in">float</span> = field(default=<span class="number">0.0</span>)</span><br><span class="line">    stock: <span class="built_in">int</span> = field(default=<span class="number">0</span>)</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 计算属性</span></span><br><span class="line"><span class="meta">    @property</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">total_value</span>(<span class="params">self</span>) -&gt; <span class="built_in">float</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.price * <span class="variable language_">self</span>.stock</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不可变数据类</span></span><br><span class="line"><span class="meta">@dataclass(<span class="params">frozen=<span class="literal">True</span></span>)</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Coordinate</span>:</span><br><span class="line">    x: <span class="built_in">float</span></span><br><span class="line">    y: <span class="built_in">float</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">distance_to</span>(<span class="params">self, other: <span class="string">&#x27;Coordinate&#x27;</span></span>) -&gt; <span class="built_in">float</span>:</span><br><span class="line">        <span class="keyword">return</span> ((<span class="variable language_">self</span>.x - other.x) ** <span class="number">2</span> + (<span class="variable language_">self</span>.y - other.y) ** <span class="number">2</span>) ** <span class="number">0.5</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="迁移策略和最佳实践"><a href="#迁移策略和最佳实践" class="headerlink" title="迁移策略和最佳实践"></a>迁移策略和最佳实践</h2><h3 id="逐步迁移"><a href="#逐步迁移" class="headerlink" title="逐步迁移"></a>逐步迁移</h3><ol>
+<li><strong>评估现有代码</strong>：识别使用传统库的代码段</li>
+<li><strong>制定迁移计划</strong>：按优先级逐步替换</li>
+<li><strong>测试验证</strong>：确保新库的行为符合预期</li>
+<li><strong>文档更新</strong>：更新项目文档和开发规范</li>
+</ol>
+<h3 id="兼容性考虑"><a href="#兼容性考虑" class="headerlink" title="兼容性考虑"></a>兼容性考虑</h3><ul>
+<li><strong>Python版本</strong>：确保目标环境支持新库</li>
+<li><strong>依赖关系</strong>：检查新库与其他依赖的兼容性</li>
+<li><strong>性能测试</strong>：对比新旧方案的性能差异</li>
+</ul>
+<h3 id="代码示例对比"><a href="#代码示例对比" class="headerlink" title="代码示例对比"></a>代码示例对比</h3><h4 id="文件操作对比"><a href="#文件操作对比" class="headerlink" title="文件操作对比"></a>文件操作对比</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 传统方式</span></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(os.path.join(<span class="string">&#x27;data&#x27;</span>, <span class="string">&#x27;users.json&#x27;</span>)) <span class="keyword">as</span> f:</span><br><span class="line">    data = json.load(f)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 现代方式</span></span><br><span class="line"><span class="keyword">from</span> pathlib <span class="keyword">import</span> Path</span><br><span class="line">data = json.loads(Path(<span class="string">&#x27;data/users.json&#x27;</span>).read_text())</span><br></pre></td></tr></table></figure>
+
+<h4 id="安全配置对比"><a href="#安全配置对比" class="headerlink" title="安全配置对比"></a>安全配置对比</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 传统方式（不安全）</span></span><br><span class="line"><span class="keyword">import</span> random</span><br><span class="line">session_id = <span class="built_in">str</span>(random.randint(<span class="number">100000</span>, <span class="number">999999</span>))</span><br><span class="line"></span><br><span class="line"><span class="comment"># 现代方式（安全）</span></span><br><span class="line"><span class="keyword">import</span> secrets</span><br><span class="line">session_id = secrets.token_urlsafe(<span class="number">16</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这些现代Python库代表了Python生态系统的演进方向，它们提供了：</p>
+<ul>
+<li><strong>更直观的API设计</strong>：减少认知负担，提高代码可读性</li>
+<li><strong>更好的安全性</strong>：特别是secrets库在安全敏感场景的应用</li>
+<li><strong>更高的开发效率</strong>：减少样板代码，专注于业务逻辑</li>
+<li><strong>更强的类型支持</strong>：与现代Python类型系统集成更好</li>
+</ul>
+<p>建议开发者在新的项目中优先采用这些现代库，对于现有项目，可以制定逐步迁移计划，享受现代Python开发带来的便利。记住，技术栈的更新是一个持续的过程，保持学习和适应的心态是成为优秀Python开发者的关键。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2023/01/14/092%E5%87%A0%E4%B8%AA%E6%96%B0%E7%9A%84%E5%B8%B8%E7%94%A8Python%E5%BA%93%EF%BC%8C%E6%97%A7%E7%9A%84%E5%8F%AF%E4%BB%A5%E6%B7%98%E6%B1%B0%E4%BA%86/" title="几个新的常用Python库，旧的可以淘汰了">http://h995.com/2023/01/14/092几个新的常用Python库，旧的可以淘汰了/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+              <a href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/" rel="tag"># 开发工具</a>
+              <a href="/tags/%E6%96%B0%E5%BA%93%E6%8E%A8%E8%8D%90/" rel="tag"># 新库推荐</a>
+              <a href="/tags/%E7%8E%B0%E4%BB%A3%E5%8C%96%E5%BC%80%E5%8F%91/" rel="tag"># 现代化开发</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/01/09/093MySQL%E4%B8%BB%E4%BB%8E%E6%9C%8D%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE%E5%8F%8A%E5%85%B6%E4%B8%AD%E5%8F%AF%E8%83%BD%E4%BC%9A%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/" rel="prev" title="MySQL主从服务的配置及其中可能会遇到的问题">
+      <i class="fa fa-chevron-left"></i> MySQL主从服务的配置及其中可能会遇到的问题
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/01/24/092python-metaclass-mechanism-deep-analysis-complete-guide/" rel="next" title="Python 元类机制深度解析：从原理到实战的完整技术指南">
+      Python 元类机制深度解析：从原理到实战的完整技术指南 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80%EF%BC%9APython%E7%94%9F%E6%80%81%E7%9A%84%E6%BC%94%E8%BF%9B"><span class="nav-number">1.</span> <span class="nav-text">引言：Python生态的演进</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Pathlib%EF%BC%9A%E7%8E%B0%E4%BB%A3%E5%8C%96%E7%9A%84%E8%B7%AF%E5%BE%84%E6%93%8D%E4%BD%9C%E5%BA%93"><span class="nav-number">2.</span> <span class="nav-text">Pathlib：现代化的路径操作库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E7%9A%84%E7%97%9B%E7%82%B9"><span class="nav-number">2.1.</span> <span class="nav-text">传统方案的痛点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pathlib%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-number">2.2.</span> <span class="nav-text">Pathlib的优势</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7"><span class="nav-number">2.3.</span> <span class="nav-text">高级特性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Secrets%EF%BC%9A%E5%AE%89%E5%85%A8%E7%9A%84%E9%9A%8F%E6%9C%BA%E6%95%B0%E7%94%9F%E6%88%90"><span class="nav-number">3.</span> <span class="nav-text">Secrets：安全的随机数生成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E7%9A%84%E5%B1%80%E9%99%90"><span class="nav-number">3.1.</span> <span class="nav-text">传统方案的局限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Secrets%E7%9A%84%E5%AE%89%E5%85%A8%E4%BF%9D%E9%9A%9C"><span class="nav-number">3.2.</span> <span class="nav-text">Secrets的安全保障</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.3.</span> <span class="nav-text">应用场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Zoneinfo%EF%BC%9A%E7%8E%B0%E4%BB%A3%E5%8C%96%E7%9A%84%E6%97%B6%E5%8C%BA%E5%A4%84%E7%90%86"><span class="nav-number">4.</span> <span class="nav-text">Zoneinfo：现代化的时区处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E7%9A%84%E5%A4%8D%E6%9D%82%E6%80%A7"><span class="nav-number">4.1.</span> <span class="nav-text">传统方案的复杂性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Zoneinfo%E7%9A%84%E7%AE%80%E6%B4%81%E6%80%A7"><span class="nav-number">4.2.</span> <span class="nav-text">Zoneinfo的简洁性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E7%94%A8%E6%B3%95"><span class="nav-number">4.3.</span> <span class="nav-text">高级用法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dataclasses%EF%BC%9A%E4%BC%98%E9%9B%85%E7%9A%84%E6%95%B0%E6%8D%AE%E7%B1%BB"><span class="nav-number">5.</span> <span class="nav-text">Dataclasses：优雅的数据类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%A0%E7%BB%9F%E6%96%B9%E6%A1%88%E7%9A%84%E5%86%97%E9%95%BF"><span class="nav-number">5.1.</span> <span class="nav-text">传统方案的冗长</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dataclasses%E7%9A%84%E7%AE%80%E6%B4%81"><span class="nav-number">5.2.</span> <span class="nav-text">Dataclasses的简洁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7-1"><span class="nav-number">5.3.</span> <span class="nav-text">高级特性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%81%E7%A7%BB%E7%AD%96%E7%95%A5%E5%92%8C%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">6.</span> <span class="nav-text">迁移策略和最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%90%E6%AD%A5%E8%BF%81%E7%A7%BB"><span class="nav-number">6.1.</span> <span class="nav-text">逐步迁移</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%BC%E5%AE%B9%E6%80%A7%E8%80%83%E8%99%91"><span class="nav-number">6.2.</span> <span class="nav-text">兼容性考虑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B%E5%AF%B9%E6%AF%94"><span class="nav-number">6.3.</span> <span class="nav-text">代码示例对比</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C%E5%AF%B9%E6%AF%94"><span class="nav-number">6.3.1.</span> <span class="nav-text">文件操作对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E9%85%8D%E7%BD%AE%E5%AF%B9%E6%AF%94"><span class="nav-number">6.3.2.</span> <span class="nav-text">安全配置对比</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

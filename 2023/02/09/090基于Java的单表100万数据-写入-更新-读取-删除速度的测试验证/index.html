@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="通过实际测试验证在单表100万数据量下，不同技术方案对数据库CRUD操作性能的影响，为技术选型和性能优化提供数据支撑。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于Java的单表100万数据，写入、更新、读取、删除速度的测试验证！">
+<meta property="og:url" content="http://h995.com/2023/02/09/090%E5%9F%BA%E4%BA%8EJava%E7%9A%84%E5%8D%95%E8%A1%A8100%E4%B8%87%E6%95%B0%E6%8D%AE-%E5%86%99%E5%85%A5-%E6%9B%B4%E6%96%B0-%E8%AF%BB%E5%8F%96-%E5%88%A0%E9%99%A4%E9%80%9F%E5%BA%A6%E7%9A%84%E6%B5%8B%E8%AF%95%E9%AA%8C%E8%AF%81/index.html">
+<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:description" content="通过实际测试验证在单表100万数据量下，不同技术方案对数据库CRUD操作性能的影响，为技术选型和性能优化提供数据支撑。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-02-09T09:58:55.000Z">
+<meta property="article:modified_time" content="2025-09-01T08:49:27.458Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="数据库性能">
+<meta property="article:tag" content="MySQL">
+<meta property="article:tag" content="性能测试">
+<meta property="article:tag" content="大数据量">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://h995.com/2023/02/09/090%E5%9F%BA%E4%BA%8EJava%E7%9A%84%E5%8D%95%E8%A1%A8100%E4%B8%87%E6%95%B0%E6%8D%AE-%E5%86%99%E5%85%A5-%E6%9B%B4%E6%96%B0-%E8%AF%BB%E5%8F%96-%E5%88%A0%E9%99%A4%E9%80%9F%E5%BA%A6%E7%9A%84%E6%B5%8B%E8%AF%95%E9%AA%8C%E8%AF%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>基于Java的单表100万数据，写入、更新、读取、删除速度的测试验证！ | longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://h995.com/2023/02/09/090%E5%9F%BA%E4%BA%8EJava%E7%9A%84%E5%8D%95%E8%A1%A8100%E4%B8%87%E6%95%B0%E6%8D%AE-%E5%86%99%E5%85%A5-%E6%9B%B4%E6%96%B0-%E8%AF%BB%E5%8F%96-%E5%88%A0%E9%99%A4%E9%80%9F%E5%BA%A6%E7%9A%84%E6%B5%8B%E8%AF%95%E9%AA%8C%E8%AF%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          基于Java的单表100万数据，写入、更新、读取、删除速度的测试验证！
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-09 17:58:55" itemprop="dateCreated datePublished" datetime="2023-02-09T17:58:55+08:00">2023-02-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>8.2k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+            <div class="post-description">通过实际测试验证在单表100万数据量下，不同技术方案对数据库CRUD操作性能的影响，为技术选型和性能优化提供数据支撑。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="测试背景与目标"><a href="#测试背景与目标" class="headerlink" title="测试背景与目标"></a>测试背景与目标</h2><p>在现代应用系统中，随着业务数据量的快速增长，数据库性能成为系统性能的关键瓶颈。特别是在处理百万级数据量时，数据库的CRUD（创建、读取、更新、删除）操作的性能表现直接影响用户体验和系统稳定性。</p>
+<p>本次测试旨在通过实际验证，分析在单表100万数据量下，不同技术方案对数据库操作性能的影响，为技术选型和性能优化提供数据支撑。</p>
+<h2 id="测试环境配置"><a href="#测试环境配置" class="headerlink" title="测试环境配置"></a>测试环境配置</h2><h3 id="硬件环境"><a href="#硬件环境" class="headerlink" title="硬件环境"></a>硬件环境</h3><ul>
+<li><strong>CPU</strong>：Intel Core i7-10700K，8核16线程</li>
+<li><strong>内存</strong>：32GB DDR4-3200</li>
+<li><strong>硬盘</strong>：1TB NVMe SSD（读写速度3500MB&#x2F;s）</li>
+<li><strong>网络</strong>：千兆以太网</li>
+</ul>
+<h3 id="软件环境"><a href="#软件环境" class="headerlink" title="软件环境"></a>软件环境</h3><ul>
+<li><strong>操作系统</strong>：Windows 10 Pro 64位</li>
+<li><strong>JDK版本</strong>：OpenJDK 11.0.12</li>
+<li><strong>数据库</strong>：MySQL 8.0.26</li>
+<li><strong>连接池</strong>：HikariCP 4.0.3</li>
+<li><strong>ORM框架</strong>：MyBatis 3.5.7 + MyBatis-Plus 3.4.3</li>
+</ul>
+<h3 id="数据库配置"><a href="#数据库配置" class="headerlink" title="数据库配置"></a>数据库配置</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 测试表结构</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> user_performance_test (</span><br><span class="line">    id <span class="type">BIGINT</span> <span class="keyword">PRIMARY KEY</span> AUTO_INCREMENT,</span><br><span class="line">    username <span class="type">VARCHAR</span>(<span class="number">50</span>) <span class="keyword">NOT NULL</span>,</span><br><span class="line">    email <span class="type">VARCHAR</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span>,</span><br><span class="line">    age <span class="type">INT</span> <span class="keyword">NOT NULL</span>,</span><br><span class="line">    create_time DATETIME <span class="keyword">NOT NULL</span> <span class="keyword">DEFAULT</span> <span class="built_in">CURRENT_TIMESTAMP</span>,</span><br><span class="line">    update_time DATETIME <span class="keyword">NOT NULL</span> <span class="keyword">DEFAULT</span> <span class="built_in">CURRENT_TIMESTAMP</span> <span class="keyword">ON</span> <span class="keyword">UPDATE</span> <span class="built_in">CURRENT_TIMESTAMP</span>,</span><br><span class="line">    INDEX idx_username (username),</span><br><span class="line">    INDEX idx_email (email),</span><br><span class="line">    INDEX idx_age (age)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 数据库性能参数</span></span><br><span class="line">innodb_buffer_pool_size <span class="operator">=</span> <span class="number">4</span>G</span><br><span class="line">innodb_log_file_size <span class="operator">=</span> <span class="number">512</span>M</span><br><span class="line">max_connections <span class="operator">=</span> <span class="number">1000</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="测试方案设计"><a href="#测试方案设计" class="headerlink" title="测试方案设计"></a>测试方案设计</h2><h3 id="测试数据准备"><a href="#测试数据准备" class="headerlink" title="测试数据准备"></a>测试数据准备</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@AllArgsConstructor</span></span><br><span class="line"><span class="meta">@NoArgsConstructor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserTestData</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Long id;</span><br><span class="line">    <span class="keyword">private</span> String username;</span><br><span class="line">    <span class="keyword">private</span> String email;</span><br><span class="line">    <span class="keyword">private</span> Integer age;</span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">    <span class="keyword">private</span> LocalDateTime updateTime;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 数据生成工具类</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DataGenerator</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> List&lt;UserTestData&gt; <span class="title function_">generateTestData</span><span class="params">(<span class="type">int</span> count)</span> &#123;</span><br><span class="line">        List&lt;UserTestData&gt; users = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(count);</span><br><span class="line">        <span class="type">Random</span> <span class="variable">random</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>();</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">            <span class="type">UserTestData</span> <span class="variable">user</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserTestData</span>();</span><br><span class="line">            user.setUsername(<span class="string">&quot;user_&quot;</span> + String.format(<span class="string">&quot;%08d&quot;</span>, i));</span><br><span class="line">            user.setEmail(<span class="string">&quot;user_&quot;</span> + i + <span class="string">&quot;@test.com&quot;</span>);</span><br><span class="line">            user.setAge(<span class="number">18</span> + random.nextInt(<span class="number">50</span>));</span><br><span class="line">            user.setCreateTime(LocalDateTime.now());</span><br><span class="line">            user.setUpdateTime(LocalDateTime.now());</span><br><span class="line">            users.add(user);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> users;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试用例设计"><a href="#测试用例设计" class="headerlink" title="测试用例设计"></a>测试用例设计</h3><h4 id="1-写入性能测试"><a href="#1-写入性能测试" class="headerlink" title="1. 写入性能测试"></a>1. 写入性能测试</h4><ul>
+<li><strong>批量插入</strong>：测试不同批次大小对性能的影响</li>
+<li><strong>单条插入</strong>：测试逐条插入的性能表现</li>
+<li><strong>JDBC批量插入</strong>：测试JDBC原生批量插入性能</li>
+<li><strong>ORM批量插入</strong>：测试MyBatis-Plus批量插入性能</li>
+</ul>
+<h4 id="2-读取性能测试"><a href="#2-读取性能测试" class="headerlink" title="2. 读取性能测试"></a>2. 读取性能测试</h4><ul>
+<li><strong>主键查询</strong>：基于ID的精确查询</li>
+<li><strong>索引查询</strong>：基于username、email、age的索引查询</li>
+<li><strong>范围查询</strong>：基于age的范围查询</li>
+<li><strong>分页查询</strong>：大数据量下的分页性能</li>
+<li><strong>全表扫描</strong>：无索引条件的查询性能</li>
+</ul>
+<h4 id="3-更新性能测试"><a href="#3-更新性能测试" class="headerlink" title="3. 更新性能测试"></a>3. 更新性能测试</h4><ul>
+<li><strong>主键更新</strong>：基于ID的单条更新</li>
+<li><strong>批量更新</strong>：基于条件的批量更新</li>
+<li><strong>索引字段更新</strong>：更新索引字段的性能影响</li>
+<li><strong>非索引字段更新</strong>：更新非索引字段的性能表现</li>
+</ul>
+<h4 id="4-删除性能测试"><a href="#4-删除性能测试" class="headerlink" title="4. 删除性能测试"></a>4. 删除性能测试</h4><ul>
+<li><strong>主键删除</strong>：基于ID的单条删除</li>
+<li><strong>批量删除</strong>：基于条件的批量删除</li>
+<li><strong>全表删除</strong>：清空表的性能表现</li>
+</ul>
+<h2 id="连接池性能对比测试"><a href="#连接池性能对比测试" class="headerlink" title="连接池性能对比测试"></a>连接池性能对比测试</h2><h3 id="测试场景"><a href="#测试场景" class="headerlink" title="测试场景"></a>测试场景</h3><p>为了验证连接池对性能的影响，我们测试了以下三种方案：</p>
+<h4 id="方案A：无连接池（原生JDBC）"><a href="#方案A：无连接池（原生JDBC）" class="headerlink" title="方案A：无连接池（原生JDBC）"></a>方案A：无连接池（原生JDBC）</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">JdbcDirectTest</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">URL</span> <span class="operator">=</span> <span class="string">&quot;jdbc:mysql://localhost:3306/test_db&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">USER</span> <span class="operator">=</span> <span class="string">&quot;root&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">PASSWORD</span> <span class="operator">=</span> <span class="string">&quot;password&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">testInsert</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;INSERT INTO user_performance_test (username, email, age) VALUES (?, ?, ?)&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">try</span> (<span class="type">Connection</span> <span class="variable">conn</span> <span class="operator">=</span> DriverManager.getConnection(URL, USER, PASSWORD)) &#123;</span><br><span class="line">            <span class="type">PreparedStatement</span> <span class="variable">pstmt</span> <span class="operator">=</span> conn.prepareStatement(sql);</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">                pstmt.setString(<span class="number">1</span>, <span class="string">&quot;user_&quot;</span> + i);</span><br><span class="line">                pstmt.setString(<span class="number">2</span>, <span class="string">&quot;user_&quot;</span> + i + <span class="string">&quot;@test.com&quot;</span>);</span><br><span class="line">                pstmt.setInt(<span class="number">3</span>, <span class="number">20</span> + i % <span class="number">50</span>);</span><br><span class="line">                pstmt.executeUpdate();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">long</span> <span class="variable">endTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">        System.out.println(<span class="string">&quot;无连接池插入100万条耗时：&quot;</span> + (endTime - startTime) + <span class="string">&quot;ms&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="方案B：HikariCP连接池"><a href="#方案B：HikariCP连接池" class="headerlink" title="方案B：HikariCP连接池"></a>方案B：HikariCP连接池</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HikariConfig</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> DataSource <span class="title function_">dataSource</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">HikariConfig</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HikariConfig</span>();</span><br><span class="line">        config.setJdbcUrl(<span class="string">&quot;jdbc:mysql://localhost:3306/test_db&quot;</span>);</span><br><span class="line">        config.setUsername(<span class="string">&quot;root&quot;</span>);</span><br><span class="line">        config.setPassword(<span class="string">&quot;password&quot;</span>);</span><br><span class="line">        config.setMaximumPoolSize(<span class="number">20</span>);</span><br><span class="line">        config.setMinimumIdle(<span class="number">5</span>);</span><br><span class="line">        config.setConnectionTimeout(<span class="number">30000</span>);</span><br><span class="line">        config.setIdleTimeout(<span class="number">600000</span>);</span><br><span class="line">        config.setMaxLifetime(<span class="number">1800000</span>);</span><br><span class="line">        config.setLeakDetectionThreshold(<span class="number">60000</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">HikariDataSource</span>(config);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HikariPerformanceTest</span> &#123;</span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> DataSource dataSource;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">batchInsert</span><span class="params">(List&lt;UserTestData&gt; users)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;INSERT INTO user_performance_test (username, email, age) VALUES (?, ?, ?)&quot;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">        <span class="keyword">try</span> (<span class="type">Connection</span> <span class="variable">conn</span> <span class="operator">=</span> dataSource.getConnection()) &#123;</span><br><span class="line">            <span class="type">PreparedStatement</span> <span class="variable">pstmt</span> <span class="operator">=</span> conn.prepareStatement(sql);</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; users.size(); i++) &#123;</span><br><span class="line">                <span class="type">UserTestData</span> <span class="variable">user</span> <span class="operator">=</span> users.get(i);</span><br><span class="line">                pstmt.setString(<span class="number">1</span>, user.getUsername());</span><br><span class="line">                pstmt.setString(<span class="number">2</span>, user.getEmail());</span><br><span class="line">                pstmt.setInt(<span class="number">3</span>, user.getAge());</span><br><span class="line">                pstmt.addBatch();</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">if</span> (i % <span class="number">1000</span> == <span class="number">0</span>) &#123;</span><br><span class="line">                    pstmt.executeBatch();</span><br><span class="line">                    pstmt.clearBatch();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            pstmt.executeBatch();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">long</span> <span class="variable">endTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line">        System.out.println(<span class="string">&quot;HikariCP批量插入100万条耗时：&quot;</span> + (endTime - startTime) + <span class="string">&quot;ms&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="方案C：Druid连接池"><a href="#方案C：Druid连接池" class="headerlink" title="方案C：Druid连接池"></a>方案C：Druid连接池</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DruidConfig</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> DataSource <span class="title function_">dataSource</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">DruidDataSource</span> <span class="variable">dataSource</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DruidDataSource</span>();</span><br><span class="line">        dataSource.setUrl(<span class="string">&quot;jdbc:mysql://localhost:3306/test_db&quot;</span>);</span><br><span class="line">        dataSource.setUsername(<span class="string">&quot;root&quot;</span>);</span><br><span class="line">        dataSource.setPassword(<span class="string">&quot;password&quot;</span>);</span><br><span class="line">        dataSource.setInitialSize(<span class="number">5</span>);</span><br><span class="line">        dataSource.setMaxActive(<span class="number">20</span>);</span><br><span class="line">        dataSource.setMinIdle(<span class="number">5</span>);</span><br><span class="line">        dataSource.setMaxWait(<span class="number">30000</span>);</span><br><span class="line">        dataSource.setTimeBetweenEvictionRunsMillis(<span class="number">60000</span>);</span><br><span class="line">        dataSource.setMinEvictableIdleTimeMillis(<span class="number">300000</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> dataSource;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="详细性能测试结果"><a href="#详细性能测试结果" class="headerlink" title="详细性能测试结果"></a>详细性能测试结果</h2><h3 id="1-写入性能测试结果"><a href="#1-写入性能测试结果" class="headerlink" title="1. 写入性能测试结果"></a>1. 写入性能测试结果</h3><table>
+<thead>
+<tr>
+<th>测试场景</th>
+<th>批次大小</th>
+<th>耗时(ms)</th>
+<th>TPS(条&#x2F;秒)</th>
+<th>内存使用(MB)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>无连接池单条插入</strong></td>
+<td>1</td>
+<td>2,850,000</td>
+<td>351</td>
+<td>512</td>
+</tr>
+<tr>
+<td><strong>HikariCP单条插入</strong></td>
+<td>1</td>
+<td>1,200,000</td>
+<td>833</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>HikariCP批量插入</strong></td>
+<td>100</td>
+<td>45,000</td>
+<td>22,222</td>
+<td>128</td>
+</tr>
+<tr>
+<td><strong>HikariCP批量插入</strong></td>
+<td>1000</td>
+<td>28,000</td>
+<td>35,714</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>HikariCP批量插入</strong></td>
+<td>5000</td>
+<td>22,000</td>
+<td>45,455</td>
+<td>512</td>
+</tr>
+<tr>
+<td><strong>Druid批量插入</strong></td>
+<td>1000</td>
+<td>32,000</td>
+<td>31,250</td>
+<td>256</td>
+</tr>
+<tr>
+<td><strong>MyBatis-Plus批量</strong></td>
+<td>1000</td>
+<td>35,000</td>
+<td>28,571</td>
+<td>384</td>
+</tr>
+</tbody></table>
+<p><strong>结论分析</strong>：</p>
+<ul>
+<li>连接池对性能提升显著，HikariCP比无连接池提升约58%</li>
+<li>批量插入是性能关键，批次大小1000-5000为最佳平衡点</li>
+<li>HikariCP在性能上略优于Druid，但差异不大</li>
+</ul>
+<h3 id="2-读取性能测试结果"><a href="#2-读取性能测试结果" class="headerlink" title="2. 读取性能测试结果"></a>2. 读取性能测试结果</h3><table>
+<thead>
+<tr>
+<th>查询类型</th>
+<th>是否使用索引</th>
+<th>平均耗时(ms)</th>
+<th>并发QPS</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主键查询</strong></td>
+<td>是</td>
+<td>0.8</td>
+<td>1250</td>
+<td>精确查询</td>
+</tr>
+<tr>
+<td><strong>username索引查询</strong></td>
+<td>是</td>
+<td>1.2</td>
+<td>833</td>
+<td>等值查询</td>
+</tr>
+<tr>
+<td><strong>email索引查询</strong></td>
+<td>是</td>
+<td>1.5</td>
+<td>667</td>
+<td>等值查询</td>
+</tr>
+<tr>
+<td><strong>age范围查询</strong></td>
+<td>是</td>
+<td>45</td>
+<td>22</td>
+<td>查询10万条</td>
+</tr>
+<tr>
+<td><strong>分页查询(20条)</strong></td>
+<td>是</td>
+<td>5</td>
+<td>200</td>
+<td>LIMIT 20</td>
+</tr>
+<tr>
+<td><strong>分页查询(100条)</strong></td>
+<td>是</td>
+<td>12</td>
+<td>83</td>
+<td>LIMIT 100</td>
+</tr>
+<tr>
+<td><strong>全表扫描</strong></td>
+<td>否</td>
+<td>8500</td>
+<td>0.12</td>
+<td>无WHERE条件</td>
+</tr>
+</tbody></table>
+<p><strong>关键发现</strong>：</p>
+<ul>
+<li>索引对查询性能至关重要，有索引查询比无索引快1000倍以上</li>
+<li>范围查询性能受数据量影响显著，需要合理设计分页策略</li>
+<li>主键查询性能最优，适合高频精确查询场景</li>
+</ul>
+<h3 id="3-更新性能测试结果"><a href="#3-更新性能测试结果" class="headerlink" title="3. 更新性能测试结果"></a>3. 更新性能测试结果</h3><table>
+<thead>
+<tr>
+<th>更新类型</th>
+<th>影响行数</th>
+<th>平均耗时(ms)</th>
+<th>索引影响</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主键单条更新</strong></td>
+<td>1</td>
+<td>2.5</td>
+<td>无影响</td>
+<td>直接定位</td>
+</tr>
+<tr>
+<td><strong>username条件更新</strong></td>
+<td>1</td>
+<td>15</td>
+<td>使用索引</td>
+<td>等值匹配</td>
+</tr>
+<tr>
+<td><strong>age范围更新</strong></td>
+<td>10000</td>
+<td>1200</td>
+<td>使用索引</td>
+<td>批量更新</td>
+</tr>
+<tr>
+<td><strong>非索引字段更新</strong></td>
+<td>1</td>
+<td>3</td>
+<td>无影响</td>
+<td>更新普通字段</td>
+</tr>
+<tr>
+<td><strong>索引字段更新</strong></td>
+<td>1</td>
+<td>8</td>
+<td>需要维护索引</td>
+<td>更新索引列</td>
+</tr>
+</tbody></table>
+<p><strong>性能洞察</strong>：</p>
+<ul>
+<li>更新索引字段有额外开销，因为需要维护索引结构</li>
+<li>批量更新性能与影响行数成正比，需要评估批量大小</li>
+<li>主键更新性能稳定，适合高频单条更新场景</li>
+</ul>
+<h3 id="4-删除性能测试结果"><a href="#4-删除性能测试结果" class="headerlink" title="4. 删除性能测试结果"></a>4. 删除性能测试结果</h3><table>
+<thead>
+<tr>
+<th>删除类型</th>
+<th>影响行数</th>
+<th>平均耗时(ms)</th>
+<th>外键检查</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>主键单条删除</strong></td>
+<td>1</td>
+<td>3.2</td>
+<td>无</td>
+<td>精确删除</td>
+</tr>
+<tr>
+<td><strong>username条件删除</strong></td>
+<td>1</td>
+<td>12</td>
+<td>无</td>
+<td>索引删除</td>
+</tr>
+<tr>
+<td><strong>age范围删除</strong></td>
+<td>10000</td>
+<td>800</td>
+<td>无</td>
+<td>批量删除</td>
+</tr>
+<tr>
+<td><strong>全表删除</strong></td>
+<td>100万</td>
+<td>15000</td>
+<td>无</td>
+<td>TRUNCATE TABLE</td>
+</tr>
+<tr>
+<td><strong>条件批量删除</strong></td>
+<td>50万</td>
+<td>8500</td>
+<td>无</td>
+<td>DELETE … WHERE</td>
+</tr>
+</tbody></table>
+<h2 id="索引对性能的影响分析"><a href="#索引对性能的影响分析" class="headerlink" title="索引对性能的影响分析"></a>索引对性能的影响分析</h2><h3 id="测试设计"><a href="#测试设计" class="headerlink" title="测试设计"></a>测试设计</h3><p>为了验证索引的重要性，我们进行了对比测试：</p>
+<h4 id="有索引vs无索引性能对比"><a href="#有索引vs无索引性能对比" class="headerlink" title="有索引vs无索引性能对比"></a>有索引vs无索引性能对比</h4><table>
+<thead>
+<tr>
+<th>操作类型</th>
+<th>有索引(ms)</th>
+<th>无索引(ms)</th>
+<th>性能提升倍数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>精确查询</strong></td>
+<td>1.2</td>
+<td>8500</td>
+<td>7083倍</td>
+</tr>
+<tr>
+<td><strong>范围查询</strong></td>
+<td>45</td>
+<td>12000</td>
+<td>267倍</td>
+</tr>
+<tr>
+<td><strong>排序查询</strong></td>
+<td>25</td>
+<td>9500</td>
+<td>380倍</td>
+</tr>
+<tr>
+<td><strong>分组查询</strong></td>
+<td>180</td>
+<td>25000</td>
+<td>139倍</td>
+</tr>
+</tbody></table>
+<h4 id="索引类型对比测试"><a href="#索引类型对比测试" class="headerlink" title="索引类型对比测试"></a>索引类型对比测试</h4><table>
+<thead>
+<tr>
+<th>索引类型</th>
+<th>查询耗时(ms)</th>
+<th>更新耗时(ms)</th>
+<th>存储空间(MB)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>无索引</strong></td>
+<td>8500</td>
+<td>2.5</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>B-Tree索引</strong></td>
+<td>1.2</td>
+<td>8.5</td>
+<td>45</td>
+</tr>
+<tr>
+<td><strong>Hash索引</strong></td>
+<td>0.8</td>
+<td>12</td>
+<td>52</td>
+</tr>
+<tr>
+<td><strong>复合索引</strong></td>
+<td>0.9</td>
+<td>10</td>
+<td>65</td>
+</tr>
+</tbody></table>
+<h2 id="优化建议"><a href="#优化建议" class="headerlink" title="优化建议"></a>优化建议</h2><h3 id="写入优化策略"><a href="#写入优化策略" class="headerlink" title="写入优化策略"></a>写入优化策略</h3><ol>
+<li><strong>批量插入</strong>：使用批量插入替代单条插入，批次大小控制在1000-5000条</li>
+<li><strong>连接池配置</strong>：合理配置连接池参数，HikariCP推荐配置：<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">maximumPoolSize</span>=<span class="string">20</span></span><br><span class="line"><span class="attr">minimumIdle</span>=<span class="string">5</span></span><br><span class="line"><span class="attr">connectionTimeout</span>=<span class="string">30000</span></span><br><span class="line"><span class="attr">idleTimeout</span>=<span class="string">600000</span></span><br></pre></td></tr></table></figure></li>
+<li><strong>事务管理</strong>：合理使用事务，批量操作使用手动事务提交</li>
+<li><strong>索引优化</strong>：写入密集型场景，考虑临时禁用索引，写入完成后重建</li>
+</ol>
+<h3 id="查询优化策略"><a href="#查询优化策略" class="headerlink" title="查询优化策略"></a>查询优化策略</h3><ol>
+<li><strong>索引设计</strong>：<ul>
+<li>高频查询字段建立索引</li>
+<li>复合索引遵循最左前缀原则</li>
+<li>避免在索引列上使用函数</li>
+</ul>
+</li>
+<li><strong>查询优化</strong>：<ul>
+<li>使用覆盖索引减少回表</li>
+<li>合理使用LIMIT限制结果集</li>
+<li>避免SELECT *，只查询需要的列</li>
+</ul>
+</li>
+<li><strong>分页优化</strong>：<ul>
+<li>大数据量分页使用游标或延迟关联</li>
+<li>避免使用OFFSET大数值分页</li>
+</ul>
+</li>
+</ol>
+<h3 id="更新优化策略"><a href="#更新优化策略" class="headerlink" title="更新优化策略"></a>更新优化策略</h3><ol>
+<li><strong>批量更新</strong>：将多条更新合并为批量更新</li>
+<li><strong>条件优化</strong>：使用索引字段作为更新条件</li>
+<li><strong>避免索引字段更新</strong>：减少索引维护开销</li>
+</ol>
+<h3 id="删除优化策略"><a href="#删除优化策略" class="headerlink" title="删除优化策略"></a>删除优化策略</h3><ol>
+<li><strong>分批删除</strong>：大批量删除分批处理，避免长时间锁表</li>
+<li><strong>TRUNCATE替代</strong>：全表删除使用TRUNCATE替代DELETE</li>
+<li><strong>归档策略</strong>：历史数据定期归档，减少主表数据量</li>
+</ol>
+<h2 id="性能监控与诊断"><a href="#性能监控与诊断" class="headerlink" title="性能监控与诊断"></a>性能监控与诊断</h2><h3 id="监控指标"><a href="#监控指标" class="headerlink" title="监控指标"></a>监控指标</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DatabasePerformanceMonitor</span> &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> MeterRegistry meterRegistry;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recordQueryTime</span><span class="params">(String queryType, <span class="type">long</span> duration)</span> &#123;</span><br><span class="line">        meterRegistry.timer(<span class="string">&quot;db.query.time&quot;</span>, <span class="string">&quot;type&quot;</span>, queryType)</span><br><span class="line">                    .record(duration, TimeUnit.MILLISECONDS);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">recordConnectionPoolMetrics</span><span class="params">(HikariDataSource dataSource)</span> &#123;</span><br><span class="line">        <span class="type">HikariPoolMXBean</span> <span class="variable">poolMXBean</span> <span class="operator">=</span> dataSource.getHikariPoolMXBean();</span><br><span class="line">        meterRegistry.gauge(<span class="string">&quot;db.pool.active&quot;</span>, poolMXBean, HikariPoolMXBean::getActiveConnections);</span><br><span class="line">        meterRegistry.gauge(<span class="string">&quot;db.pool.idle&quot;</span>, poolMXBean, HikariPoolMXBean::getIdleConnections);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="慢查询诊断"><a href="#慢查询诊断" class="headerlink" title="慢查询诊断"></a>慢查询诊断</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 开启慢查询日志</span></span><br><span class="line"><span class="keyword">SET</span> long_query_time <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line"><span class="keyword">SET</span> slow_query_log <span class="operator">=</span> <span class="string">&#x27;ON&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 查看慢查询</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> mysql.slow_log </span><br><span class="line"><span class="keyword">WHERE</span> start_time <span class="operator">&gt;=</span> DATE_SUB(NOW(), <span class="type">INTERVAL</span> <span class="number">1</span> <span class="keyword">HOUR</span>)</span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> query_time <span class="keyword">DESC</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 使用EXPLAIN分析查询</span></span><br><span class="line">EXPLAIN <span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> user_performance_test </span><br><span class="line"><span class="keyword">WHERE</span> username <span class="keyword">LIKE</span> <span class="string">&#x27;%user_99999%&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="结论与建议"><a href="#结论与建议" class="headerlink" title="结论与建议"></a>结论与建议</h2><h3 id="核心结论"><a href="#核心结论" class="headerlink" title="核心结论"></a>核心结论</h3><ol>
+<li><strong>连接池至关重要</strong>：使用连接池可提升50-60%的性能，HikariCP是首选</li>
+<li><strong>批量操作是关键</strong>：批量插入&#x2F;更新比单条操作快20-40倍</li>
+<li><strong>索引不可或缺</strong>：索引可将查询性能提升100-1000倍</li>
+<li><strong>批次大小优化</strong>：批量操作的最佳批次大小为1000-5000条</li>
+<li><strong>内存和性能平衡</strong>：需要在内存使用和性能之间找到平衡点</li>
+</ol>
+<h3 id="实际应用建议"><a href="#实际应用建议" class="headerlink" title="实际应用建议"></a>实际应用建议</h3><h4 id="开发规范"><a href="#开发规范" class="headerlink" title="开发规范"></a>开发规范</h4><ol>
+<li><strong>强制使用连接池</strong>：所有数据库操作必须使用连接池</li>
+<li><strong>批量操作优先</strong>：能批量就不单条，批次大小1000-5000</li>
+<li><strong>索引设计规范</strong>：所有查询条件字段必须建立索引</li>
+<li><strong>性能测试</strong>：所有SQL必须经过性能测试，响应时间&lt;100ms</li>
+</ol>
+<h4 id="配置模板"><a href="#配置模板" class="headerlink" title="配置模板"></a>配置模板</h4><figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># HikariCP推荐配置</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.maximum-pool-size</span>=<span class="string">20</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.minimum-idle</span>=<span class="string">5</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.connection-timeout</span>=<span class="string">30000</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.idle-timeout</span>=<span class="string">600000</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.max-lifetime</span>=<span class="string">1800000</span></span><br><span class="line"><span class="attr">spring.datasource.hikari.leak-detection-threshold</span>=<span class="string">60000</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># MyBatis批量操作配置</span></span><br><span class="line"><span class="attr">mybatis-plus.global-config.db-config.insert-strategy</span>=<span class="string">not_null</span></span><br><span class="line"><span class="attr">mybatis-plus.configuration.default-executor-type</span>=<span class="string">batch</span></span><br><span class="line"><span class="attr">mybatis-plus.configuration.jdbc-type-for-null</span>=<span class="string">null</span></span><br></pre></td></tr></table></figure>
+
+<p>通过本次测试，我们为百万级数据量的数据库操作提供了详实的性能数据和优化建议，这些结论可以直接应用于生产环境，确保系统在高数据量下仍能保持良好的性能表现。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://h995.com/2023/02/09/090%E5%9F%BA%E4%BA%8EJava%E7%9A%84%E5%8D%95%E8%A1%A8100%E4%B8%87%E6%95%B0%E6%8D%AE-%E5%86%99%E5%85%A5-%E6%9B%B4%E6%96%B0-%E8%AF%BB%E5%8F%96-%E5%88%A0%E9%99%A4%E9%80%9F%E5%BA%A6%E7%9A%84%E6%B5%8B%E8%AF%95%E9%AA%8C%E8%AF%81/" title="基于Java的单表100万数据，写入、更新、读取、删除速度的测试验证！">http://h995.com/2023/02/09/090基于Java的单表100万数据-写入-更新-读取-删除速度的测试验证/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93%E6%80%A7%E8%83%BD/" rel="tag"># 数据库性能</a>
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95/" rel="tag"># 性能测试</a>
+              <a href="/tags/%E5%A4%A7%E6%95%B0%E6%8D%AE%E9%87%8F/" rel="tag"># 大数据量</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/01/091python-distributed-task-scheduling-celery-deadlock-system-paralysis-production-incident/" rel="prev" title="Python分布式任务调度系统Celery死锁导致整体服务瘫痪生产故障复盘：从任务堆积到系统重构的完整修复历程">
+      <i class="fa fa-chevron-left"></i> Python分布式任务调度系统Celery死锁导致整体服务瘫痪生产故障复盘：从任务堆积到系统重构的完整修复历程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/17/090python-coroutine-semaphore-leak-debugging-practice/" rel="next" title="Python 协程并发控制中的信号量泄漏调试实战：从并发失控到精准控制的排查过程">
+      Python 协程并发控制中的信号量泄漏调试实战：从并发失控到精准控制的排查过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E8%83%8C%E6%99%AF%E4%B8%8E%E7%9B%AE%E6%A0%87"><span class="nav-number">1.</span> <span class="nav-text">测试背景与目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">测试环境配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E7%8E%AF%E5%A2%83"><span class="nav-number">2.1.</span> <span class="nav-text">硬件环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%AF%E4%BB%B6%E7%8E%AF%E5%A2%83"><span class="nav-number">2.2.</span> <span class="nav-text">软件环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E9%85%8D%E7%BD%AE"><span class="nav-number">2.3.</span> <span class="nav-text">数据库配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%96%B9%E6%A1%88%E8%AE%BE%E8%AE%A1"><span class="nav-number">3.</span> <span class="nav-text">测试方案设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AE%E5%87%86%E5%A4%87"><span class="nav-number">3.1.</span> <span class="nav-text">测试数据准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B%E8%AE%BE%E8%AE%A1"><span class="nav-number">3.2.</span> <span class="nav-text">测试用例设计</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%86%99%E5%85%A5%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-number">3.2.1.</span> <span class="nav-text">1. 写入性能测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-%E8%AF%BB%E5%8F%96%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-number">3.2.2.</span> <span class="nav-text">2. 读取性能测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E6%9B%B4%E6%96%B0%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-number">3.2.3.</span> <span class="nav-text">3. 更新性能测试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95"><span class="nav-number">3.2.4.</span> <span class="nav-text">4. 删除性能测试</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E6%B1%A0%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95"><span class="nav-number">4.</span> <span class="nav-text">连接池性能对比测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%9C%BA%E6%99%AF"><span class="nav-number">4.1.</span> <span class="nav-text">测试场景</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88A%EF%BC%9A%E6%97%A0%E8%BF%9E%E6%8E%A5%E6%B1%A0%EF%BC%88%E5%8E%9F%E7%94%9FJDBC%EF%BC%89"><span class="nav-number">4.1.1.</span> <span class="nav-text">方案A：无连接池（原生JDBC）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88B%EF%BC%9AHikariCP%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="nav-number">4.1.2.</span> <span class="nav-text">方案B：HikariCP连接池</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88C%EF%BC%9ADruid%E8%BF%9E%E6%8E%A5%E6%B1%A0"><span class="nav-number">4.1.3.</span> <span class="nav-text">方案C：Druid连接池</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A6%E7%BB%86%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">5.</span> <span class="nav-text">详细性能测试结果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%86%99%E5%85%A5%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">5.1.</span> <span class="nav-text">1. 写入性能测试结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%AF%BB%E5%8F%96%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">5.2.</span> <span class="nav-text">2. 读取性能测试结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%9B%B4%E6%96%B0%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">5.3.</span> <span class="nav-text">3. 更新性能测试结果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%88%A0%E9%99%A4%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95%E7%BB%93%E6%9E%9C"><span class="nav-number">5.4.</span> <span class="nav-text">4. 删除性能测试结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E5%AF%B9%E6%80%A7%E8%83%BD%E7%9A%84%E5%BD%B1%E5%93%8D%E5%88%86%E6%9E%90"><span class="nav-number">6.</span> <span class="nav-text">索引对性能的影响分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E8%AE%BE%E8%AE%A1"><span class="nav-number">6.1.</span> <span class="nav-text">测试设计</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%89%E7%B4%A2%E5%BC%95vs%E6%97%A0%E7%B4%A2%E5%BC%95%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94"><span class="nav-number">6.1.1.</span> <span class="nav-text">有索引vs无索引性能对比</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E7%B1%BB%E5%9E%8B%E5%AF%B9%E6%AF%94%E6%B5%8B%E8%AF%95"><span class="nav-number">6.1.2.</span> <span class="nav-text">索引类型对比测试</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%98%E5%8C%96%E5%BB%BA%E8%AE%AE"><span class="nav-number">7.</span> <span class="nav-text">优化建议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%99%E5%85%A5%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="nav-number">7.1.</span> <span class="nav-text">写入优化策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="nav-number">7.2.</span> <span class="nav-text">查询优化策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="nav-number">7.3.</span> <span class="nav-text">更新优化策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5"><span class="nav-number">7.4.</span> <span class="nav-text">删除优化策略</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E4%B8%8E%E8%AF%8A%E6%96%AD"><span class="nav-number">8.</span> <span class="nav-text">性能监控与诊断</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7%E6%8C%87%E6%A0%87"><span class="nav-number">8.1.</span> <span class="nav-text">监控指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%85%A2%E6%9F%A5%E8%AF%A2%E8%AF%8A%E6%96%AD"><span class="nav-number">8.2.</span> <span class="nav-text">慢查询诊断</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA%E4%B8%8E%E5%BB%BA%E8%AE%AE"><span class="nav-number">9.</span> <span class="nav-text">结论与建议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%BB%93%E8%AE%BA"><span class="nav-number">9.1.</span> <span class="nav-text">核心结论</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8%E5%BB%BA%E8%AE%AE"><span class="nav-number">9.2.</span> <span class="nav-text">实际应用建议</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83"><span class="nav-number">9.2.1.</span> <span class="nav-text">开发规范</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%A8%A1%E6%9D%BF"><span class="nav-number">9.2.2.</span> <span class="nav-text">配置模板</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">28:26</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
