@@ -17,14 +17,14 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"h995.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
   <meta name="description" content="复盘一次因 Agent 工具调用缺乏幂等与防重入导致的“重复下单&#x2F;重复转账”生产事故，从故障现象、根因到修复方案，并给出可落地的 Python 代码骨架（幂等键、令牌栅栏、调用账本、补偿流程）。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用">
-<meta property="og:url" content="http://h995.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/index.html">
-<meta property="og:site_name" content="longchao&#39;s Blog">
+<meta property="og:url" content="http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/index.html">
+<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
 <meta property="og:description" content="复盘一次因 Agent 工具调用缺乏幂等与防重入导致的“重复下单&#x2F;重复转账”生产事故，从故障现象、根因到修复方案，并给出可落地的 Python 代码骨架（幂等键、令牌栅栏、调用账本、补偿流程）。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2024-09-30T13:06:20.000Z">
@@ -38,7 +38,7 @@
 <meta property="article:tag" content="去重">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://h995.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
+<link rel="canonical" href="http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
 
 
 <script id="page-configurations">
@@ -51,7 +51,7 @@
   };
 </script>
 
-  <title>AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用 | longchao's Blog</title>
+  <title>AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用 | 梦中飞鸟AI longchao's Blog</title>
   
 
 
@@ -102,12 +102,12 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">longchao's Blog</h1>
+      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">A blog about life</p>
       <a>
-        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="longchao's Blog">
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
       </a>
   </div>
 
@@ -185,7 +185,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://h995.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -194,7 +194,7 @@
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="longchao's Blog">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -340,7 +340,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="http://h995.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/" title="AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用">http://h995.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/</a>
+    <a href="http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/" title="AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用">http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
