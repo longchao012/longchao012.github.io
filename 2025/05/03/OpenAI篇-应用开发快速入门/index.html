@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="全面介绍OpenAI API的使用方法，详解各种参数的作用和调优技巧，以及定价策略分析，帮助开发者高效构建AI应用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenAI篇-应用开发快速入门">
+<meta property="og:url" content="http://mzfnai.com/2025/05/03/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
+<meta property="og:description" content="全面介绍OpenAI API的使用方法，详解各种参数的作用和调优技巧，以及定价策略分析，帮助开发者高效构建AI应用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_I1wobPKR9orwLHxgFSIcaGTXnwd_20250831_161705_590.png">
+<meta property="og:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_GdgtbbgWdoNerDxKtNWcCjeSnxc_20250831_161705_590.png">
+<meta property="og:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_99340e8aad778292f9ebcb1ac072be_20250831_161705_590.png">
+<meta property="og:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_cec613ea2c21eb036b3caa68647777_20250831_161705_590.png">
+<meta property="og:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_ab3ca7c6e81f675f5ac65b16c9b283_20250831_161705_590.png">
+<meta property="article:published_time" content="2025-05-03T08:12:34.000Z">
+<meta property="article:modified_time" content="2025-09-03T13:52:41.959Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="OpenAI">
+<meta property="article:tag" content="GPT-4">
+<meta property="article:tag" content="API开发">
+<meta property="article:tag" content="参数调优">
+<meta property="article:tag" content="应用开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_I1wobPKR9orwLHxgFSIcaGTXnwd_20250831_161705_590.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/05/03/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>OpenAI篇-应用开发快速入门 | 梦中飞鸟AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/05/03/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenAI篇-应用开发快速入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-05-03 16:12:34" itemprop="dateCreated datePublished" datetime="2025-05-03T16:12:34+08:00">2025-05-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+            <div class="post-description">全面介绍OpenAI API的使用方法，详解各种参数的作用和调优技巧，以及定价策略分析，帮助开发者高效构建AI应用。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="OpenAI模型常用参数详解"><a href="#OpenAI模型常用参数详解" class="headerlink" title="OpenAI模型常用参数详解"></a><strong>OpenAI模型常用参数详解</strong></h2><h3 id="1-max-tokens（最大token数）"><a href="#1-max-tokens（最大token数）" class="headerlink" title="1. max_tokens（最大token数）"></a><strong>1.</strong> <strong><code>max_tokens</code>（最大token数）</strong></h3><p><strong>定义</strong>：指令生成的回答中包含的最大token数。例如，如果设置为100，那么模型生成的回答中token数不会超过100个。</p>
+<p><strong>用法</strong>：用来控制生成内容的长度。特别是在需要简短回答或有限字数情况下，这个参数非常实用。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：你问模型一个问题：“请简单解释一下黑洞。”</p>
+</li>
+<li><p><strong>max_tokens &#x3D; 50</strong>：模型会尽量在50个token内完成回答。</p>
+<ul>
+<li><strong>回应</strong>：“黑洞是一个宇宙中极高密度的区域，其引力强大到光也无法逃脱。它是由大质量恒星坍缩形成的。”</li>
+</ul>
+</li>
+</ul>
+<p><img src="/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_I1wobPKR9orwLHxgFSIcaGTXnwd_20250831_161705_590.png"></p>
+<h3 id="2-temperature（温度-文风的温度）"><a href="#2-temperature（温度-文风的温度）" class="headerlink" title="2. temperature（温度&#x2F;文风的温度）"></a><strong>2.</strong> <strong><code>temperature</code>（温度&#x2F;文风的温度）</strong></h3><p><strong>定义</strong>：控制文本生成的随机性。值范围通常在0到1之间。值越大，生成文本越随机；值越小，生成文本越确定。</p>
+<p><strong>用法</strong>：用来调整模型回答的创造性。高温度适合创造性任务；低温度适合需要确定性高的回答。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：你要写一首关于秋天的诗。</p>
+</li>
+<li><p><strong>temperature &#x3D; 0.2</strong>（低温度，收敛回答）：</p>
+<ul>
+<li><strong>回应</strong>：“秋天的树叶飘舞在风中，金黄色的田野映入眼帘。”</li>
+</ul>
+</li>
+<li><p><strong>temperature &#x3D; 0.8</strong>（高温度，更随机）：</p>
+<ul>
+<li><strong>回应</strong>：“秋天的旋律在微风中回荡，金黄的梦幻洒满田野。”</li>
+</ul>
+</li>
+</ul>
+<p>使用较低温度生成的文本将更加集中和保守，而使用较高温度生成的文本则会更具创意和变化。温度的范围是从 0 到 1。</p>
+<ul>
+<li><p>温度 &#x3D; 0：模型会产生最确定的输出，但可能显得重复或模板化。</p>
+</li>
+<li><p>0 &lt; 温度 &lt; 0.5：输出将倾向于较为稳定和保守，提供高度相关且一致的回应。</p>
+</li>
+<li><p>温度 &#x3D; 0.5：产生的文本会有一个适中的平衡，既不过于随机也不过于保守。</p>
+</li>
+<li><p>0.5 &lt; 温度 &lt; 1：输出会更具创意和变化，但可能牺牲一些连贯性。</p>
+</li>
+<li><p>温度 &#x3D; 1：模型会产生最大程度的创意和随机性，可能产生出奇不意的答案，但风险也更高。</p>
+</li>
+</ul>
+<p><img src="/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_GdgtbbgWdoNerDxKtNWcCjeSnxc_20250831_161705_590.png"></p>
+<h3 id="3-n（生成次数）"><a href="#3-n（生成次数）" class="headerlink" title="3. n（生成次数）"></a><strong>3.</strong> <strong><code>n</code>（生成次数）</strong></h3><p><strong>定义</strong>：模型对每个输入生成的回答数量。设置为n就会生成n个独立的回答。</p>
+<p><strong>用法</strong>：用来获取多个回答，便于选择或综合。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：你问模型一个问题：“什么是人工智能？”</p>
+</li>
+<li><p><strong>n &#x3D; 3</strong>：模型生成三个独立的回答。</p>
+<ul>
+<li><p><strong>回应1</strong>：“人工智能是模拟人类智能的计算机技术。”</p>
+</li>
+<li><p><strong>回应2</strong>：“人工智能通过算法和大数据实现自动化任务。”</p>
+</li>
+<li><p><strong>回应3</strong>：“人工智能涉及机器学习和神经网络等技术。”</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-top-p（控制采样）"><a href="#4-top-p（控制采样）" class="headerlink" title="4. top_p（控制采样）"></a><strong>4.</strong> <strong><code>top_p</code>（控制采样）</strong></h3><p><strong>定义</strong>：确定生成文本时考虑的token累计概率。值为0到1之间，常用来替代温度设置。top_p为0.9时，模型仅在最有可能的token集合（累计概率达到0.9）中进行选择。</p>
+<p><strong>用法</strong>：控制生成内容的多样性，top_p越小，生成内容越确定。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：描述一个梦想中的度假胜地。</p>
+</li>
+<li><p><strong>top_p &#x3D; 0.9</strong>（较有创意）：</p>
+<ul>
+<li><strong>回应</strong>：“岛屿被蓝色的海水环绕，白色沙滩上点缀着茅草屋，椰子树随风摇曳。”</li>
+</ul>
+</li>
+<li><p><strong>top_p &#x3D; 0.5</strong>（较确定）：</p>
+<ul>
+<li><strong>回应</strong>：“度假胜地是一座热带岛屿，有着美丽的海滩和清澈的海水，适合享受安静的时光。”</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-presence-penalty（出现惩罚-阻止调整）"><a href="#5-presence-penalty（出现惩罚-阻止调整）" class="headerlink" title="5. presence_penalty（出现惩罚&#x2F;阻止调整）"></a><strong>5.</strong> <strong><code>presence_penalty</code>（出现惩罚&#x2F;阻止调整）</strong></h3><p><strong>定义</strong>：影响模型生成新主题内容的倾向。值范围通常在-2.0到2.0之间。较高的值鼓励模型生成前面未出现过的新内容。</p>
+<p><strong>用法</strong>：用来避免重复内容，增加多样性。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：重新生成描述夏天的句子。</p>
+</li>
+<li><p><strong>presence_penalty &#x3D; 1.0</strong>（较高惩罚）：</p>
+<ul>
+<li><strong>回应</strong>：“夏天阳光充足，清凉的冰淇淋是人们的最爱。”</li>
+</ul>
+</li>
+<li><p><strong>presence_penalty &#x3D; 0.0</strong>（无惩罚）：</p>
+<ul>
+<li><strong>回应</strong>：“夏天阳光灿烂，人们喜欢躺在沙滩上享受日光浴。”</li>
+</ul>
+</li>
+</ul>
+<p><img src="/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_99340e8aad778292f9ebcb1ac072be_20250831_161705_590.png"></p>
+<p><img src="/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_cec613ea2c21eb036b3caa68647777_20250831_161705_590.png"></p>
+<h3 id="6-frequency-penalty（频率惩罚、短语效应）"><a href="#6-frequency-penalty（频率惩罚、短语效应）" class="headerlink" title="6. frequency_penalty（频率惩罚、短语效应）"></a><strong>6.</strong> <strong><code>frequency_penalty</code>（频率惩罚、短语效应）</strong></h3><p><strong>定义</strong>：影响模型是否重复使用某些词或短语。值范围通常在-2.0到2.0之间。较高的值会减少模型重复使用某些词或短语的频率。</p>
+<p><strong>用法</strong>：用来减少重复词语，提高输出的流畅度和多样性。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>输入</strong>：描述你的一天。</p>
+</li>
+<li><p><strong>frequency_penalty &#x3D; 1.5</strong>（较高惩罚）：</p>
+<ul>
+<li><strong>回应</strong>：“我的一天开始于晨跑，然后享用早餐并开始工作。午餐后，进行一些锻炼和阅读。”</li>
+</ul>
+</li>
+<li><p><strong>frequency_penalty &#x3D; 0.0</strong>（无惩罚）：</p>
+<ul>
+<li><strong>回应</strong>：“我的一天从晨跑开始，之后吃早餐准备工作。午饭后，我会去健身房锻炼，结束后读书放松。”</li>
+</ul>
+</li>
+</ul>
+<p><img src="/images/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8_ab3ca7c6e81f675f5ac65b16c9b283_20250831_161705_590.png"></p>
+<h3 id="7-stream"><a href="#7-stream" class="headerlink" title="7. stream"></a><strong>7.</strong> <strong><code>stream</code></strong></h3><p><strong>定义</strong>：<code>stream</code> 参数用于控制是否以流式方式接收生成的文本。流式输出意味着生成的文本会逐步发送，而不是一次性全部发送。</p>
+<p><strong>用法</strong>：</p>
+<ul>
+<li><p><code>stream=True</code>：启用流式输出，生成的文本会逐步发送。</p>
+</li>
+<li><p><code>stream=False</code>：禁用流式输出，生成的文本会一次性发送。</p>
+</li>
+</ul>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p>如果你想要在用户输入问题后，逐字逐句地看到回答，可以设置 <code>stream=True</code>。</p>
+</li>
+<li><p>如果你想要在用户输入问题后，等待一段时间再一次性看到完整回答，可以设置 <code>stream=False</code>。</p>
+</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h3><ul>
+<li><p><code>max_tokens</code>：控制生成内容的长度。</p>
+</li>
+<li><p><code>temperature</code>：控制生成内容的随机性和创造性。</p>
+</li>
+<li><p><code>n</code>：生成多个回答供选择。</p>
+</li>
+<li><p><code>top_p</code>：通过概率控制生成内容的多样性。</p>
+</li>
+<li><p><code>presence_penalty</code>：鼓励生成新内容，避免重复。</p>
+</li>
+<li><p><code>frequency_penalty</code>：减少词语重复，提高多样性。</p>
+</li>
+<li><p>stream：控制生成的文本是否以流式方式逐步发送。</p>
+</li>
+</ul>
+<p>理解这些参数可以帮助你更有效地定制和使用ChatGPT以满足各种需求。</p>
+<p>实战中可以多个组合使用，比如</p>
+<p>temperature：0.7 至 1，以获得最大的创意和多样性。</p>
+<p>frequency_penalty：1 至 2，用于产生各种独特的短语和想法。</p>
+<p>max_tokens：根据你所需的故事长度或场景进行设置。</p>
+<h2 id="OpenAI-接口文档"><a href="#OpenAI-接口文档" class="headerlink" title="OpenAI 接口文档"></a><strong>OpenAI 接口文档</strong></h2><p>官方文档：<a target="_blank" rel="noopener" href="https://platform.openai.com/docs/api-reference/chat/create">https://platform.openai.com/docs/api-reference/chat/create</a></p>
+<p>Apifox中文文档：<a target="_blank" rel="noopener" href="https://openai.apifox.cn/">https://openai.apifox.cn/</a></p>
+<h2 id="OpenAI-模型定价"><a href="#OpenAI-模型定价" class="headerlink" title="OpenAI 模型定价"></a><strong>OpenAI 模型定价</strong></h2><p>模型定价：<a target="_blank" rel="noopener" href="https://openai.com/api/pricing/">https://openai.com/api/pricing/</a></p>
+<h3 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a><strong>基本概念</strong></h3><ol>
+<li><p><strong>Tokens</strong>（标记）：</p>
+<ul>
+<li><p><strong>定义</strong>：在自然语言处理中，token是输入文本被分割成的小单元。一个token可以是一个单词、一个子词，甚至是一个字符。这取决于文本的具体分割方式。</p>
+</li>
+<li><p><strong>举例</strong>：在GPT模型中，”Hello, world!” 可能被分割成几个token，比如 [‘Hello’, ‘,’, ‘ world’, ‘!’]。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>计费方式</strong>：</p>
+<ul>
+<li><p><strong>单位</strong>：计费是按百万个输入token（1M input tokens）来计算的，即每处理一百万个输入token的费用为5美金。</p>
+</li>
+<li><p><strong>实际意义</strong>：这意味着你使用GPT-4生成的文本越多，处理的输入token数量越大，费用也会随之增加。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="示例和详细解释"><a href="#示例和详细解释" class="headerlink" title="示例和详细解释"></a><strong>示例和详细解释</strong></h3><h4 id="示例一：简单对话"><a href="#示例一：简单对话" class="headerlink" title="示例一：简单对话"></a><strong>示例一：简单对话</strong></h4><p>假设你使用GPT-4o进行一个简单对话，输入如下：</p>
+<ul>
+<li><p><strong>用户输入</strong>： “What is the capital of France?”</p>
+<ul>
+<li><strong>Token 数量</strong>：这句话大概会被分成7个token。</li>
+</ul>
+</li>
+</ul>
+<p>总共6个token。</p>
+<ul>
+<li><p><strong>模型生成的输出</strong>： “The capital of France is Paris.”</p>
+<ul>
+<li><strong>Token 数量</strong>：这句话大概会被分成7个token。</li>
+</ul>
+</li>
+</ul>
+<p>总共7个token。</p>
+<p>整个对话会消耗13个token（6个输入 + 7个输出）。</p>
+<h3 id="理解和应用场景"><a href="#理解和应用场景" class="headerlink" title="理解和应用场景"></a><strong>理解和应用场景</strong></h3><ol>
+<li><p><strong>成本控制</strong>：</p>
+<ul>
+<li><p><strong>优化使用</strong>：如果你对使用成本敏感，可以通过优化输入文本的长度和复杂度来控制费用。</p>
+</li>
+<li><p><strong>批量处理</strong>：对于需要处理大量文本的应用，可以进行成本效益分析，确定最佳的使用策略。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>商业应用</strong>：</p>
+<ul>
+<li><p><strong>对话系统</strong>：在客户服务、技术支持等应用中，可以根据对话量估算成本。</p>
+</li>
+<li><p><strong>内容生成</strong>：对于需要生成大量内容的应用（如文章写作或编程助手），可以根据每百万个token的费用来预算项目成本。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>“US$5.00&#x2F;1M input tokens”在GPT-4o中表示按百万个输入token来计费，每百万个输入token的计算费用为5美元。这种计费方式让用户能够更透明地了解和管理使用这些高级自然语言处理模型的成本。通过理解token的分割方式和具体的使用范例，用户可以更有效地计划和控制使用成本。GPT-4 可能提供两种不同的定价模式，分别为标准定价和批量API（Batch API）定价。让我们详细解释这些定价模式及其区别，以及为什么价格不同。</p>
+<h2 id="OpenAI-标准定价-vs-批量API"><a href="#OpenAI-标准定价-vs-批量API" class="headerlink" title="OpenAI 标准定价 vs 批量API"></a><strong>OpenAI 标准定价 vs 批量API</strong></h2><p>模型定价：<a target="_blank" rel="noopener" href="https://openai.com/api/pricing/">https://openai.com/api/pricing/</a></p>
+<p>Batch API：<a target="_blank" rel="noopener" href="https://platform.openai.com/docs/guides/batch">https://platform.openai.com/docs/guides/batch</a></p>
+<h3 id="标准定价-vs-批量API定价"><a href="#标准定价-vs-批量API定价" class="headerlink" title="标准定价 vs 批量API定价"></a><strong>标准定价 vs 批量API定价</strong></h3><ol>
+<li><p><strong>标准定价（US$5.00&#x2F;1M input tokens）</strong>：</p>
+<ul>
+<li><p><strong>价格</strong>：每处理一百万个输入token的费用是5美元。</p>
+</li>
+<li><p><strong>适用场景</strong>：这种定价通常适用于常规使用，比如单次请求或小规模的交互。这适用于大多数开发者和小型应用。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>批量API定价（Batch API Pricing - US$2.50&#x2F;1M input tokens）</strong>：</p>
+<ul>
+<li><p><strong>价格</strong>：每处理一百万个输入token的费用是2.5美元，相当于标准定价的一半。</p>
+</li>
+<li><p><strong>适用场景</strong>：这种较低价格通常适用于大量处理或批量操作场景。大型企业、需要处理大量数据的应用或者需要高频调用的场景更适合这种模式。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="为什么价格不一样？"><a href="#为什么价格不一样？" class="headerlink" title="为什么价格不一样？"></a><strong>为什么价格不一样？</strong></h3><ol>
+<li><p><strong>经济规模效应</strong>：</p>
+<ul>
+<li><p><strong>批量折扣</strong>：批量API定价反映了经济规模效应，即大量使用云计算资源可以分摊固定成本。因此，服务提供商通过较低的批量价格吸引大客户，用户通过批量使用享受折扣。</p>
+</li>
+<li><p><strong>资源利用优化</strong>：批量请求可以优化资源分配，使提供商能更高效地利用计算资源，从而降低整体成本。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>使用模式不同</strong>：</p>
+<ul>
+<li><p><strong>标准请求</strong>：标准定价适用于散布在较长时间内的单次请求或小规模的互动场景，这些场景下的调用可能更分散，资源利用率较低，需要更高的单价以覆盖运营和支持成本。</p>
+</li>
+<li><p><strong>批量请求</strong>：批量API允许在短时间内处理大量请求，提升了资源利用率，同时减少了单次请求的管理和通信开销。这使服务提供商可以通过降低单价来吸引更多批量用户。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="选择的考虑因素"><a href="#选择的考虑因素" class="headerlink" title="选择的考虑因素"></a><strong>选择的考虑因素</strong></h3><ol>
+<li><p><strong>使用量</strong>：</p>
+<ul>
+<li><p><strong>小规模</strong>：对于不频繁或小规模调用的开发者，标准定价可能更加适合，因为他们不会达到批量使用的门槛。</p>
+</li>
+<li><p><strong>大规模</strong>：对于频繁调用或大规模数据处理的场景，批量API定价更加经济实惠。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>预算和成本控制</strong>：</p>
+<ul>
+<li><p><strong>成本敏感</strong>：如果你的项目预算紧张，选择批量API可以显著降低成本。</p>
+</li>
+<li><p><strong>方便性</strong>：标准定价可能提供更灵活的调用方式，并且不需要批量请求的规划。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>技术实现</strong>：</p>
+<ul>
+<li><p><strong>批量处理</strong>：需要考虑如何将调用合并成批量请求，这可能需要一些额外的开发工作。</p>
+</li>
+<li><p><strong>实时性</strong>：标准定价可能更适合需要实时响应的应用，而批量处理适用于可以延迟处理的任务。</p>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a><strong>总结</strong></h3><p>两个不同的定价方案主要区别在于使用模式和规模的不同。标准定价（US5.00&#x2F;1������������）适用于小规模和分散调用，而批量���定价（��2.50&#x2F;1M input tokens）更适合大规模、批量处理的场景。价格差异反映了经济规模效应和资源利用的优化，当选择哪种定价方式时，需要根据具体的使用场景和需求进行考虑。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/05/03/OpenAI%E7%AF%87-%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" title="OpenAI篇-应用开发快速入门">http://mzfnai.com/2025/05/03/OpenAI篇-应用开发快速入门/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/OpenAI/" rel="tag"># OpenAI</a>
+              <a href="/tags/GPT-4/" rel="tag"># GPT-4</a>
+              <a href="/tags/API%E5%BC%80%E5%8F%91/" rel="tag"># API开发</a>
+              <a href="/tags/%E5%8F%82%E6%95%B0%E8%B0%83%E4%BC%98/" rel="tag"># 参数调优</a>
+              <a href="/tags/%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91/" rel="tag"># 应用开发</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/04/26/MCP%E7%AF%87-MCP%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" rel="prev" title="MCP篇-MCP快速入门">
+      <i class="fa fa-chevron-left"></i> MCP篇-MCP快速入门
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenAI%E6%A8%A1%E5%9E%8B%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0%E8%AF%A6%E8%A7%A3"><span class="nav-number">1.</span> <span class="nav-text">OpenAI模型常用参数详解</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-max-tokens%EF%BC%88%E6%9C%80%E5%A4%A7token%E6%95%B0%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">1. max_tokens（最大token数）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-temperature%EF%BC%88%E6%B8%A9%E5%BA%A6-%E6%96%87%E9%A3%8E%E7%9A%84%E6%B8%A9%E5%BA%A6%EF%BC%89"><span class="nav-number">1.2.</span> <span class="nav-text">2. temperature（温度&#x2F;文风的温度）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-n%EF%BC%88%E7%94%9F%E6%88%90%E6%AC%A1%E6%95%B0%EF%BC%89"><span class="nav-number">1.3.</span> <span class="nav-text">3. n（生成次数）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-top-p%EF%BC%88%E6%8E%A7%E5%88%B6%E9%87%87%E6%A0%B7%EF%BC%89"><span class="nav-number">1.4.</span> <span class="nav-text">4. top_p（控制采样）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-presence-penalty%EF%BC%88%E5%87%BA%E7%8E%B0%E6%83%A9%E7%BD%9A-%E9%98%BB%E6%AD%A2%E8%B0%83%E6%95%B4%EF%BC%89"><span class="nav-number">1.5.</span> <span class="nav-text">5. presence_penalty（出现惩罚&#x2F;阻止调整）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-frequency-penalty%EF%BC%88%E9%A2%91%E7%8E%87%E6%83%A9%E7%BD%9A%E3%80%81%E7%9F%AD%E8%AF%AD%E6%95%88%E5%BA%94%EF%BC%89"><span class="nav-number">1.6.</span> <span class="nav-text">6. frequency_penalty（频率惩罚、短语效应）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-stream"><span class="nav-number">1.7.</span> <span class="nav-text">7. stream</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenAI-%E6%8E%A5%E5%8F%A3%E6%96%87%E6%A1%A3"><span class="nav-number">2.</span> <span class="nav-text">OpenAI 接口文档</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenAI-%E6%A8%A1%E5%9E%8B%E5%AE%9A%E4%BB%B7"><span class="nav-number">3.</span> <span class="nav-text">OpenAI 模型定价</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">3.1.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%E5%92%8C%E8%AF%A6%E7%BB%86%E8%A7%A3%E9%87%8A"><span class="nav-number">3.2.</span> <span class="nav-text">示例和详细解释</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B%E4%B8%80%EF%BC%9A%E7%AE%80%E5%8D%95%E5%AF%B9%E8%AF%9D"><span class="nav-number">3.2.1.</span> <span class="nav-text">示例一：简单对话</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%90%86%E8%A7%A3%E5%92%8C%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">3.3.</span> <span class="nav-text">理解和应用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-1"><span class="nav-number">3.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OpenAI-%E6%A0%87%E5%87%86%E5%AE%9A%E4%BB%B7-vs-%E6%89%B9%E9%87%8FAPI"><span class="nav-number">4.</span> <span class="nav-text">OpenAI 标准定价 vs 批量API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%87%E5%87%86%E5%AE%9A%E4%BB%B7-vs-%E6%89%B9%E9%87%8FAPI%E5%AE%9A%E4%BB%B7"><span class="nav-number">4.1.</span> <span class="nav-text">标准定价 vs 批量API定价</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BB%B7%E6%A0%BC%E4%B8%8D%E4%B8%80%E6%A0%B7%EF%BC%9F"><span class="nav-number">4.2.</span> <span class="nav-text">为什么价格不一样？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E7%9A%84%E8%80%83%E8%99%91%E5%9B%A0%E7%B4%A0"><span class="nav-number">4.3.</span> <span class="nav-text">选择的考虑因素</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-2"><span class="nav-number">4.4.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">72</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">503</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:15</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

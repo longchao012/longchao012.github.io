@@ -176,7 +176,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/07/17/079rpa-browser-shadowdom-iframe-locator-engineering/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/10/31/067rpa-batch-data-processing-memory-overflow-production-incident-postmortem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -190,7 +190,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/17/079rpa-browser-shadowdom-iframe-locator-engineering/" class="post-title-link" itemprop="url">RPA 浏览器自动化中的 Shadow DOM 与 iframe 定位工程化：稳定选择器与容错策略实战</a>
+            <a href="/2023/10/31/067rpa-batch-data-processing-memory-overflow-production-incident-postmortem/" class="post-title-link" itemprop="url">RPA批量数据处理任务内存溢出生产故障复盘：从系统崩溃到架构重构的完整修复历程</a>
         </h2>
 
         <div class="post-meta">
@@ -200,7 +200,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-07-17 17:22:58" itemprop="dateCreated datePublished" datetime="2023-07-17T17:22:58+08:00">2023-07-17</time>
+              <time title="创建时间：2023-10-31 15:26:25" itemprop="dateCreated datePublished" datetime="2023-10-31T15:26:25+08:00">2023-10-31</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -212,7 +212,739 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E6%8A%80%E6%9C%AF%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">技术实践</span></a>
+                  <a href="/categories/RPA/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>深度复盘一次RPA批量数据处理任务引发的严重内存溢出生产故障，从系统完全崩溃到架构全面重构的完整修复过程，包含详细的故障现象、根因分析、解决方案和预防措施，为RPA大规模数据处理提供重要的工程实践参考。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/10/31/067rpa-batch-data-processing-memory-overflow-production-incident-postmortem/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/10/23/068rpa-web-element-dynamic-loading-automation-failure-debugging-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/10/23/068rpa-web-element-dynamic-loading-automation-failure-debugging-practice/" class="post-title-link" itemprop="url">RPA网页元素动态加载自动化失效调试实战：从随机失败到稳定识别的完整排查过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-23 21:11:45" itemprop="dateCreated datePublished" datetime="2023-10-23T21:11:45+08:00">2023-10-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%8A%9F%E8%83%BD%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">功能调试</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>深度分享RPA网页自动化中动态加载元素识别失效的完整调试过程，从随机失败现象到稳定识别机制的全过程实战经验，包含详细的问题现象、排查步骤、解决思路和优化方案，为RPA网页自动化开发提供实用的调试指导。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/10/23/068rpa-web-element-dynamic-loading-automation-failure-debugging-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/10/11/069rpa-large-scale-concurrent-execution-failure-production-incident/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/10/11/069rpa-large-scale-concurrent-execution-failure-production-incident/" class="post-title-link" itemprop="url">RPA流程机器人大规模并发执行失败生产事故复盘：从集群瘫痪到架构重构的完整修复过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-11 17:28:39" itemprop="dateCreated datePublished" datetime="2023-10-11T17:28:39+08:00">2023-10-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>复盘一次RPA流程机器人大规模并发执行失败引发的生产事故，从机器人集群完全瘫痪到最终架构重构的完整修复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为RPA生产环境运维提供深度实战经验和架构优化指导。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/10/11/069rpa-large-scale-concurrent-execution-failure-production-incident/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/10/06/070rpa-enterprise-cluster-failure-emergency-troubleshooting/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/10/06/070rpa-enterprise-cluster-failure-emergency-troubleshooting/" class="post-title-link" itemprop="url">RPA企业级流程机器人集群故障紧急排查实战：从大规模任务失败到系统全面恢复的完整处理过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-10-06 19:28:49" itemprop="dateCreated datePublished" datetime="2023-10-06T19:28:49+08:00">2023-10-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" itemprop="url" rel="index"><span itemprop="name">故障排查</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录一次RPA企业级流程机器人集群大规模故障的完整排查和解决过程，从300+机器人同时异常到最终系统全面恢复，包含详细的故障定位、根因分析、应急处理和预防措施，为企业RPA运维提供实战指导。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/10/06/070rpa-enterprise-cluster-failure-emergency-troubleshooting/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/09/28/071rpa-batch-task-execution-failure-troubleshooting/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/28/071rpa-batch-task-execution-failure-troubleshooting/" class="post-title-link" itemprop="url">RPA批量任务执行失败生产故障排查实战：从机器人集体罢工到稳定运行的完整修复过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-28 18:10:51" itemprop="dateCreated datePublished" datetime="2023-09-28T18:10:51+08:00">2023-09-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" itemprop="url" rel="index"><span itemprop="name">故障排查</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>13k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>12 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录一次RPA生产环境中批量任务执行失败的完整故障排查过程，从50个机器人同时失效到找出资源冲突和调度策略问题的根本原因，包含详细的问题定位、解决方案和预防措施，为RPA生产运维提供实战参考。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/09/28/071rpa-batch-task-execution-failure-troubleshooting/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/09/25/072rpa-dynamic-element-location-failure-debugging-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/25/072rpa-dynamic-element-location-failure-debugging-practice/" class="post-title-link" itemprop="url">RPA流程执行中的动态元素定位失效调试实战：从定位异常到稳定识别的完整排查过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-25 23:14:35" itemprop="dateCreated datePublished" datetime="2023-09-25T23:14:35+08:00">2023-09-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E6%8A%80%E6%9C%AF%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">技术调试</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>深入分享RPA流程执行中动态元素定位失效问题的完整调试过程，从定位异常现象分析到稳定识别方案实现的全过程实战经验，包含详细的问题排查步骤、解决思路和优化策略，为RPA流程稳定性提供实用的调试指导。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/09/25/072rpa-dynamic-element-location-failure-debugging-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/09/17/073rpa-project-implementation-experience/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/17/073rpa-project-implementation-experience/" class="post-title-link" itemprop="url">RPA 项目从 POC 到规模化落地：工具选型与踩坑实录</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-17 14:44:14" itemprop="dateCreated datePublished" datetime="2023-09-17T14:44:14+08:00">2023-09-17</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>基于在某制造企业推进RPA项目的实际经验，分享从工具评估、架构设计到运维治理的完整心得，为RPA落地提供可参考的方法论。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/09/17/073rpa-project-implementation-experience/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/09/12/074rpa-finance-automation-project-implementation-experience/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/12/074rpa-finance-automation-project-implementation-experience/" class="post-title-link" itemprop="url">RPA 财务自动化项目实战：从手工作业到智能流程的完整落地经验</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-12 18:17:20" itemprop="dateCreated datePublished" datetime="2023-09-12T18:17:20+08:00">2023-09-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>8 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分享在企业财务部门实施RPA自动化的完整项目经验，从需求调研、工具选型到流程设计和落地实施，包含影刀平台的实际应用案例和踩坑心得，为企业数字化转型提供实战参考。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/09/12/074rpa-finance-automation-project-implementation-experience/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/09/05/075rpa-browser-file-download-stabilization-engineering-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/09/05/075rpa-browser-file-download-stabilization-engineering-practice/" class="post-title-link" itemprop="url">RPA 浏览器文件下载稳定化工程实践：从原生弹窗到无头下载与断点续传</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-09-05 19:48:41" itemprop="dateCreated datePublished" datetime="2023-09-05T19:48:41+08:00">2023-09-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
                 </span>
             </span>
 
@@ -241,10 +973,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>以真实页面为背景，系统讲解浏览器 RPA 中 Shadow DOM 与 iframe 的稳定定位与容错设计，包含可直接套用的 Python 代码骨架与调试清单。</p>
+          <p>总结浏览器自动化中的文件下载稳定化方案，覆盖对话框规避、无头下载、Blob/重定向处理、会话直连与断点续传，并提供可落地的 Python 代码骨架与调试清单。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/17/079rpa-browser-shadowdom-iframe-locator-engineering/">
+              <a class="btn" href="/2023/09/05/075rpa-browser-file-download-stabilization-engineering-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -268,7 +1000,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/07/06/079%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/08/25/076rpa-browser-automation-excel-data-import-debugging-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -282,7 +1014,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2023/07/06/079%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/" class="post-title-link" itemprop="url">基于UiBot的滑动验证码检测实例</a>
+            <a href="/2023/08/25/076rpa-browser-automation-excel-data-import-debugging-practice/" class="post-title-link" itemprop="url">RPA浏览器自动化Excel数据导入异常调试实战：从数据格式错乱到稳定处理的完整排查过程</a>
         </h2>
 
         <div class="post-meta">
@@ -292,95 +1024,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2023-07-06 14:46:17" itemprop="dateCreated datePublished" datetime="2023-07-06T14:46:17+08:00">2023-07-06</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>11k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>10 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>详细介绍如何使用UiBot结合Python实现滑动验证码的智能检测和自动破解，包括图像处理、缺口识别、轨迹生成等技术环节。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/07/06/079%E5%9F%BA%E4%BA%8EUiBot%E7%9A%84%E6%BB%91%E5%8A%A8%E9%AA%8C%E8%AF%81%E7%A0%81%E6%A3%80%E6%B5%8B%E5%AE%9E%E4%BE%8B/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/07/04/080rpa-human-resources-management-automation-practice-experience/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/07/04/080rpa-human-resources-management-automation-practice-experience/" class="post-title-link" itemprop="url">RPA人力资源管理自动化实战经验分享：从手工处理到智能化HR的完整转型实践</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-07-04 11:04:37" itemprop="dateCreated datePublished" datetime="2023-07-04T11:04:37+08:00">2023-07-04</time>
+              <time title="创建时间：2023-08-25 19:19:00" itemprop="dateCreated datePublished" datetime="2023-08-25T19:19:00+08:00">2023-08-25</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -392,7 +1036,7 @@
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">项目实践</span></a>
+                  <a href="/categories/RPA/%E8%B0%83%E8%AF%95%E5%AE%9E%E6%88%98/" itemprop="url" rel="index"><span itemprop="name">调试实战</span></a>
                 </span>
             </span>
 
@@ -402,14 +1046,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4.8k</span>
+              <span>13k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
+              <span>11 分钟</span>
             </span>
 
         </div>
@@ -421,638 +1065,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>分享RPA技术在人力资源管理领域的完整应用实践经验，从传统手工HR流程到智能化人力资源管理的转型全过程，包含需求分析、技术选型、实施策略、效果评估和最佳实践，为企业HR数字化转型提供实战指导和经验总结。</p>
+          <p>深度解析RPA浏览器自动化中Excel数据导入异常问题的完整调试过程，从数据格式错乱、导入失败到最终实现稳定数据处理的排查和优化经验，提供RPA数据处理场景的实战调试指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2023/07/04/080rpa-human-resources-management-automation-practice-experience/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/06/21/080%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/06/21/080%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/" class="post-title-link" itemprop="url">我们应该从哪些方面思考公司场景是否适合RPA流程自动化</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-06-21 23:02:08" itemprop="dateCreated datePublished" datetime="2023-06-21T23:02:08+08:00">2023-06-21</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>17k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>16 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>提供一个系统性的评估框架，帮助企业从业务、技术、组织、经济和风险多个维度判断特定场景是否适合RPA流程自动化。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/06/21/080%E6%88%91%E4%BB%AC%E5%BA%94%E8%AF%A5%E4%BB%8E%E5%93%AA%E4%BA%9B%E6%96%B9%E9%9D%A2%E6%80%9D%E8%80%83%E5%85%AC%E5%8F%B8%E5%9C%BA%E6%99%AF%E6%98%AF%E5%90%A6%E9%80%82%E5%90%88RPA%E6%B5%81%E7%A8%8B%E8%87%AA%E5%8A%A8%E5%8C%96/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/06/16/081rpa-citrix-remote-desktop-automation-engineering-practice/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/06/16/081rpa-citrix-remote-desktop-automation-engineering-practice/" class="post-title-link" itemprop="url">RPA 远程桌面/Citrix 场景自动化工程化实践：从无法注入到“图像+OCR+坐标”混合定位</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-06-16 19:56:14" itemprop="dateCreated datePublished" datetime="2023-06-16T19:56:14+08:00">2023-06-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E5%85%B3%E9%94%AE%E6%8A%80%E6%9C%AF%E7%82%B9/" itemprop="url" rel="index"><span itemprop="name">关键技术点</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>5.2k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在远程桌面/Citrix 场景下，传统控件注入与选择器失效，本文给出“图像+OCR+坐标”的混合定位与工程化方案，包括问题画像、排查路径、核心技术点与可用的 Python 代码骨架，显著提升稳定性与可回放性。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/06/16/081rpa-citrix-remote-desktop-automation-engineering-practice/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/06/07/081%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/06/07/081%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/" class="post-title-link" itemprop="url">国家电网某超高压变电公司RPA案例分享</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-06-07 16:51:05" itemprop="dateCreated datePublished" datetime="2023-06-07T16:51:05+08:00">2023-06-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%A1%88%E4%BE%8B%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">案例研究</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>5.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>5 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>分享国家电网超高压变电公司RPA自动化项目的完整实施过程，包括设备巡检、缺陷管理、运行报表等业务流程的自动化改造。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/06/07/081%E5%9B%BD%E5%AE%B6%E7%94%B5%E7%BD%91%E6%9F%90%E8%B6%85%E9%AB%98%E5%8E%8B%E5%8F%98%E7%94%B5%E5%85%AC%E5%8F%B8RPA%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/06/04/082Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/06/04/082Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/" class="post-title-link" itemprop="url">Python中常用的 pip 命令</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-06-04 17:29:19" itemprop="dateCreated datePublished" datetime="2023-06-04T17:29:19+08:00">2023-06-04</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>1.5k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>pip 是 Python 的包管理工具，用于安装和管理 Python 包。它是 Python 标准库的一部分，提供了简单易用的命令行接口。本文将详细介绍 Python 中常用的 pip 命令及其用法。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/06/04/082Python%E4%B8%AD%E5%B8%B8%E7%94%A8%E7%9A%84%20pip%20%E5%91%BD%E4%BB%A4/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/05/26/083python-anti-scrape-debugging-practice/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/26/083python-anti-scrape-debugging-practice/" class="post-title-link" itemprop="url">Python 爬虫反爬调试实战：从 403 与滑块到稳定采集的完整过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-05-26 19:20:58" itemprop="dateCreated datePublished" datetime="2023-05-26T19:20:58+08:00">2023-05-26</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/%E6%8A%80%E6%9C%AF%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">技术实践</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.2k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>记录一次在生产环境中调试 Python 爬虫的完整过程，从 403 与滑块验证码出发，逐步定位反爬点并构建稳定的采集方案，代码可复用，策略可迁移。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/26/083python-anti-scrape-debugging-practice/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/05/23/083RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/23/083RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">RPA与敏捷开发方法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-05-23 16:36:52" itemprop="dateCreated datePublished" datetime="2023-05-23T16:36:52+08:00">2023-05-23</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>2.6k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>2 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>探讨RPA与敏捷开发方法的结合，分析敏捷RPA的优势和实施策略</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/23/083RPA%E4%B8%8E%E6%95%8F%E6%8D%B7%E5%BC%80%E5%8F%91%E6%96%B9%E6%B3%95/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2023/05/13/084python-memory-leak-system-crash-production-incident/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2023/05/13/084python-memory-leak-system-crash-production-incident/" class="post-title-link" itemprop="url">Python应用内存泄漏引发系统崩溃生产事故复盘：从服务器宕机到根治内存管理问题的完整修复过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2023-05-13 14:13:06" itemprop="dateCreated datePublished" datetime="2023-05-13T14:13:06+08:00">2023-05-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Python/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>6.7k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>6 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>复盘一次Python应用内存泄漏引发的大规模系统崩溃生产事故，从服务器集群宕机到最终根治内存管理问题的完整修复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为Python生产环境运维提供深度实战经验。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2023/05/13/084python-memory-leak-system-crash-production-incident/">
+              <a class="btn" href="/2023/08/25/076rpa-browser-automation-excel-data-import-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1075,7 +1091,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/8/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/20/">20</a><a class="extend next" rel="next" href="/page/10/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/8/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/8/">8</a><span class="page-number current">9</span><a class="page-number" href="/page/10/">10</a><span class="space">&hellip;</span><a class="page-number" href="/page/21/">21</a><a class="extend next" rel="next" href="/page/10/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1143,16 +1159,16 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">191</span>
+          <span class="site-state-item-count">206</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">68</span>
+        <span class="site-state-item-count">72</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">446</span>
+        <span class="site-state-item-count">503</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -1211,7 +1227,7 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">28:26</span>
+    <span title="站点阅读时长">29:15</span>
 </div>
 
         

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍Microsoft AutoGen多智能体协作框架，包括环境搭建、配置方法和实际应用案例，帮助开发者构建强大的AI协作系统。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AutoGen篇-AutoGen快速入门">
+<meta property="og:url" content="http://mzfnai.com/2025/04/19/AutoGen%E7%AF%87-AutoGen%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍Microsoft AutoGen多智能体协作框架，包括环境搭建、配置方法和实际应用案例，帮助开发者构建强大的AI协作系统。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_U1hpbGAE1ozlYbxwZ6wcaJ6Bn9f_20250831_111228_761.jpg">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_Adzgb4sERoKy7fxzwQjcZ12hnHg_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_RgxgbZx4lo0erzxwcnFcQD5RntX_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_QYurbhXNjovxn5xWWoocTgFEnKd_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_EoBxbRKWSoRTalxexVJcNh2LnTd_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_IQKebuEPIoT1zlx0aXOc00umn7b_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_ODcIbDJFcoV89ix4neQcqpffnxb_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_EVNSb8YHwoTz0VxfqCCc7JNDnKb_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_MuG2bxyqVo68oAx2xPMc5PUonDh_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_FEjUbbeKwozBm4xyMU0c8Py3ntf_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_E6OMbOnkQoDsGZxk0ioctCTlnpg_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_PdECbWybOo3xMfxplIGcu4OHnGe_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_YfbrbCVjio7RdZxWI6Qc57IQnzh_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_MksPbd9rJowlcAxe1qpct9IKnUc_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_NK6XbSKG7oagEgxtiCKcQLl0nSc_20250831_111228_761.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_T3GXb1HCpoZVJyxWyZqcF9HLnVr_20250831_111231_180.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_image%20(1)_20250831_111231_180.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_PGZSbttMjoJuwtxleNTcjt28nAd_20250831_111231_180.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_image_20250831_111231_180.png">
+<meta property="og:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_ZOc1bBjmKoAMnFxMH3CcgzCFnwf_20250831_111231_180.png">
+<meta property="article:published_time" content="2025-04-19T06:25:08.000Z">
+<meta property="article:modified_time" content="2025-09-03T13:52:33.201Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="AI Agent">
+<meta property="article:tag" content="多智能体">
+<meta property="article:tag" content="AutoGen">
+<meta property="article:tag" content="Microsoft">
+<meta property="article:tag" content="协作框架">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/AutoGen%E7%AF%87-A_U1hpbGAE1ozlYbxwZ6wcaJ6Bn9f_20250831_111228_761.jpg">
+
+<link rel="canonical" href="http://mzfnai.com/2025/04/19/AutoGen%E7%AF%87-AutoGen%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>AutoGen篇-AutoGen快速入门 | 梦中飞鸟AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/04/19/AutoGen%E7%AF%87-AutoGen%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AutoGen篇-AutoGen快速入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-04-19 14:25:08" itemprop="dateCreated datePublished" datetime="2025-04-19T14:25:08+08:00">2025-04-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI-Agent</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+            <div class="post-description">详细介绍Microsoft AutoGen多智能体协作框架，包括环境搭建、配置方法和实际应用案例，帮助开发者构建强大的AI协作系统。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Autogen是什么"><a href="#Autogen是什么" class="headerlink" title="Autogen是什么"></a><strong>Autogen是什么</strong></h2><p>AutoGen 是一个开源编程框架，用于构建 AI 代理并促进多个代理之间的合作以解决问题。AutoGen 旨在提供一个易于使用和灵活的框架，以加速代理型 AI 的开发和研究，就像 PyTorch 之于深度学习。它提供了诸如代理之间可以对话、LLM 和工具使用支持、自主和人机协作工作流以及多代理对话模式等功能。</p>
+<h2 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a><strong>环境准备</strong></h2><h3 id="1-部署-Autogen-Studio"><a href="#1-部署-Autogen-Studio" class="headerlink" title="1.部署 Autogen Studio"></a><strong>1.部署 Autogen Studio</strong></h3><p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/microsoft/autogen">https://github.com/microsoft/autogen</a></p>
+<p>官方文档：<a target="_blank" rel="noopener" href="https://microsoft.github.io/autogen/0.2/docs/autogen-studio/getting-started/">https://microsoft.github.io/autogen/0.2/docs/autogen-studio/getting-started/</a></p>
+<p>中文文档：<a target="_blank" rel="noopener" href="https://www.aidoczh.com/autogen/docs/Getting-Started/">https://www.aidoczh.com/autogen/docs/Getting-Started/</a></p>
+<p>一，Python 环境的准备</p>
+<p>AutoGen Studio 依赖 Python 环境，这里建议大家使用 Anaconda 去管理 Python 环境，避免环境之间的冲突问题。</p>
+<p>有的小伙伴不懂 Python，但并不妨碍我们学习 AutoGen，只要按照步骤来，谁都可以搞定。</p>
+<p><strong>下载安装 Conda</strong></p>
+<p>点击 <a target="_blank" rel="noopener" href="https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/">mirrors.tuna.tsinghua.edu.cn&#x2F;anaconda&#x2F;archive&#x2F;</a> 进入到<a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=%E6%B8%85%E5%8D%8E%E5%A4%A7%E5%AD%A6&spm=1001.2101.3001.7020">清华大学</a>开源软件镜像站下载界面。</p>
+<p>会发现有很多版本可选，用网页搜索功能搜索<code>2023.09-0</code>，以 windows 为例，下载 exe 安装文件。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_U1hpbGAE1ozlYbxwZ6wcaJ6Bn9f_20250831_111228_761.jpg"></p>
+<p>下载完成之后点击 exe 文件进行安装，安装非常简单。</p>
+<p><strong>使用 anaconda 创建 python 环境</strong></p>
+<p>windows 开始菜单搜索栏，搜索 prompt，搜索结果中可以看应用<code>Aanconda Powershell Prompt</code>。</p>
+<p>打开这个应用。</p>
+<p>接下来，我们将使用这个工具创建一个特定版本的 Python 环境。</p>
+<p>在打开的命令行工具中输入如下命令，然后回车。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">conda create -n autogenstudio python=3.10</span><br></pre></td></tr></table></figure>
+
+<p>-n 后面是的 autogenstudio 是环境的名称，相当于一个标识，后续要用这个环境时通过这个名称进行查找python&#x3D;3.10，是指定 python 的版本</p>
+<p>执行命令创建环境的过程中，会有一次交互 (如下图)，命令行界面等待输入时，键盘输入字母<code>y</code>即可。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_Adzgb4sERoKy7fxzwQjcZ12hnHg_20250831_111228_761.png"></p>
+<p>稍等片刻，知道有如下输出，说明环境创建成功。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_RgxgbZx4lo0erzxwcnFcQD5RntX_20250831_111228_761.png"></p>
+<p>接下来，输入如下命令，切换到创建好的环境。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">conda activate autogenstudio</span><br></pre></td></tr></table></figure>
+
+<p>顾名思义，这个命令的含义是激活我们刚刚创建好的环境，这个环境的名称是autogenstudio。</p>
+<p>到此为止，Python 环境已经准备好了，非常简单吧。</p>
+<p><strong>安装 Autogen Studio</strong></p>
+<p><strong>1，下载 autogen studio</strong></p>
+<p>接下来我们需要安装 Autogen Studio。</p>
+<p>那怎么安装呢？超级简单，在刚刚我们准备好的 python 环境中执行一个命令就好。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install autogenstudio==0.1.5</span><br></pre></td></tr></table></figure>
+
+<p>但如果直接这样执行的话，因为它会访问国外的网站完成下载，所以速度非常慢，慢到不能忍受。</p>
+<p>所以我们需要让它去国内的镜像下载。</p>
+<p>通过参数<code>-i</code>指定国内镜像地址，我们使用阿里云的镜像。</p>
+<p>上述命令就变成如下这样了。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install autogenstudio==0.1.5 -i https://mirrors.aliyun.com/pypi/simple</span><br></pre></td></tr></table></figure>
+
+<p>回车执行命令。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_QYurbhXNjovxn5xWWoocTgFEnKd_20250831_111228_761.png"></p>
+<p>速度相当 OK，很快就完成下载和安装了。</p>
+<p><strong>2，启动 autogen studio</strong></p>
+<p>下载之后，使用如下命令启动 autogen studio 服务。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">autogenstudio ui --port 6000</span><br></pre></td></tr></table></figure>
+
+<p>回车执行命令。</p>
+<p>有如下输出，说明启动成功。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_EoBxbRKWSoRTalxexVJcNh2LnTd_20250831_111228_761.png"></p>
+<p><strong>3，访问 autogen studio</strong></p>
+<p>从开始准备环境，到部署启动 Autogen Studio，大约半小时可以搞定。</p>
+<p>启动成功后，在浏览器输入如下地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://localhost:8081/build</span><br></pre></td></tr></table></figure>
+
+<p>即可看到如下界面。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_IQKebuEPIoT1zlx0aXOc00umn7b_20250831_111228_761.png"></p>
+<h3 id="2-准备-Deepseek-API-Key"><a href="#2-准备-Deepseek-API-Key" class="headerlink" title="2.准备 Deepseek API Key"></a><strong>2.准备 Deepseek API Key</strong></h3><p><strong>前提条件需要扣子 Coze 专业版账号</strong></p>
+<p>第一步，登陆火山引擎扣子专业版后台</p>
+<p><a target="_blank" rel="noopener" href="https://console.volcengine.com/coze-pro/overview">https://console.volcengine.com/coze-pro/overview</a></p>
+<p><img src="/images/AutoGen%E7%AF%87-A_ODcIbDJFcoV89ix4neQcqpffnxb_20250831_111228_761.png"></p>
+<p>第二步，左上上角菜单进入「火山方舟」的模型广场找到「DeepSeek-R1」</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_EVNSb8YHwoTz0VxfqCCc7JNDnKb_20250831_111228_761.png"></p>
+<p>第三步，鼠标悬浮到该卡片上，点击「查看详情」可以看到不同版本。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_MuG2bxyqVo68oAx2xPMc5PUonDh_20250831_111228_761.png"></p>
+<p>第四步，点击右上角「模型推理」在这里会看到无法「确认接入」原因是需要先开通模型，点击接入配置下方的立即开通链接。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_FEjUbbeKwozBm4xyMU0c8Py3ntf_20250831_111228_761.png"></p>
+<p>勾选你需要的模型，然后勾选下方同意协议立即开通。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_E6OMbOnkQoDsGZxk0ioctCTlnpg_20250831_111228_761.png"></p>
+<p>开通完成后点击确认接入。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_PdECbWybOo3xMfxplIGcu4OHnGe_20250831_111228_761.png"></p>
+<p>接入成功后可以在「在线推理」菜单看到</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_YfbrbCVjio7RdZxWI6Qc57IQnzh_20250831_111228_761.png"></p>
+<p>同时在「在线推理列表」的模型还支持 API 调用。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_MksPbd9rJowlcAxe1qpct9IKnUc_20250831_111228_761.png"></p>
+<p>选择 API Key</p>
+<p>请按如下方式设置 API Key 作为环境变量，其中 “YOUR_API_KEY” 需要替换为您在平台创建的 API Key</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export ARK_API_KEY=&quot;YOUR_API_KEY&quot;</span><br></pre></td></tr></table></figure>
+
+<p>火山方舟 v3 API 与 OpenAI API 协议兼容，您可以使用火山引擎官方 SDK，也可以使用 OpenAI SDK 或其他兼容 OpenAI API 协议的多语言社区 SDK 调用火山方舟推理服务。第三方 SDK 不由火山引擎团队维护，仅供参考</p>
+<p>请参考如下示例代码进行调用</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_NK6XbSKG7oagEgxtiCKcQLl0nSc_20250831_111228_761.png"></p>
+<h2 id="给-Autogen-的代理配置大脑"><a href="#给-Autogen-的代理配置大脑" class="headerlink" title="给 Autogen 的代理配置大脑"></a><strong>给 Autogen 的代理配置大脑</strong></h2><p>智能体相当于一家公司，公司的工作通常是由多个人协作完成的，与此类似，智能体的工作是由多个代理协作完成的，从这个角度来看，代理可以类比为人。</p>
+<p>注意，Autogen 中，代理是非常核心的概念。</p>
+<p>既然把代理比作人，那么它一定有思考能力和推理能力，也就是说，它一定有大脑。</p>
+<p>对，只不过代理的大脑是大模型。在我们的这个实验中，选择 Deepseek 作为代理的大脑。</p>
+<p>所以，接下来，就是给代理配置大脑。</p>
+<h3 id="1，模型登记"><a href="#1，模型登记" class="headerlink" title="1，模型登记"></a><strong>1，模型登记</strong></h3><p>就像员工入职登记信息一样，首先要在 Autogen Studio 界面上登记 Deepseek 的信息。</p>
+<p>如下图，在 Autogen Studio 的界面上，按照如下步骤打开登记界面 。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_T3GXb1HCpoZVJyxWyZqcF9HLnVr_20250831_111231_180.png"></p>
+<ul>
+<li><p>① 选择 Build</p>
+</li>
+<li><p>② 选 models 菜单</p>
+</li>
+<li><p>③ 点击 <code>New Model</code> 按钮</p>
+</li>
+</ul>
+<p><strong>模型登记界面如下。</strong></p>
+<ul>
+<li><p>① 填写模型名称</p>
+</li>
+<li><p>② API Key，把之前创建好的 API Key 复制粘贴到这里即可</p>
+</li>
+<li><p>③ 接口地址，直接复制粘贴，不要修改：<a target="_blank" rel="noopener" href="https://ark.cn-beijing.volces.com/api/v3">https://ark.cn-beijing.volces.com/api/v3</a></p>
+</li>
+<li><p>④ 备注，按需填写即可</p>
+</li>
+</ul>
+<p>登记完成后，点击 <code>Test Model</code> 进行测试，校验信息是否准确。有如下提示，说明模型登记成功，点击<code>保存</code>即可。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_image%20(1)_20250831_111231_180.png"></p>
+<h3 id="2，给代理配置大脑"><a href="#2，给代理配置大脑" class="headerlink" title="2，给代理配置大脑"></a><strong>2，给代理配置大脑</strong></h3><p>目前，仅仅登记了大脑的信息，接下来得给代理装上这个大脑。</p>
+<p>代理是怎么来的呢？</p>
+<p>我们要打造的智能体 - AI 旅游规划师，是 Autogen Studio 中自带的智能体，所有的代理都已经创建好了，只是这些代理目前都没有大脑。</p>
+<p>如下图，点击①Agents 菜单，切换到代理列表界面，<code>需要给如图所示2~6一共五个代理配置大脑</code>。</p>
+<p>注意，第一个<code>代理user_proxy不需要大脑</code>，user_proxy 只是前端接待和指令执行者，不需要动脑子。</p>
+<p><img src="/images/AutoGen%E7%AF%87-A_PGZSbttMjoJuwtxleNTcjt28nAd_20250831_111231_180.png"></p>
+<p>以给代理 default_assistant 配置大脑为例，演示步骤，其他代理类似。</p>
+<ul>
+<li><p>① 点击代理 default_assistant</p>
+</li>
+<li><p>② 在弹出的浮窗中点击 Models，切换到模型选择界面</p>
+</li>
+<li><p>③ 点击<code>add</code>按钮</p>
+</li>
+</ul>
+<p><img src="/images/AutoGen%E7%AF%87-A_image_20250831_111231_180.png"></p>
+<ul>
+<li>④ 在弹出的下来列表中选择 deepseek-code 模型作为代理的大脑</li>
+</ul>
+<p><img src="/images/AutoGen%E7%AF%87-A_ZOc1bBjmKoAMnFxMH3CcgzCFnwf_20250831_111231_180.png"></p>
+<p>其实，到此位置，我们的智能体已经打造完成，接下来可以让 AI 旅游规划师开始工作了。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/04/19/AutoGen%E7%AF%87-AutoGen%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" title="AutoGen篇-AutoGen快速入门">http://mzfnai.com/2025/04/19/AutoGen篇-AutoGen快速入门/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AI-Agent/" rel="tag"># AI Agent</a>
+              <a href="/tags/%E5%A4%9A%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># 多智能体</a>
+              <a href="/tags/AutoGen/" rel="tag"># AutoGen</a>
+              <a href="/tags/Microsoft/" rel="tag"># Microsoft</a>
+              <a href="/tags/%E5%8D%8F%E4%BD%9C%E6%A1%86%E6%9E%B6/" rel="tag"># 协作框架</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/04/12/AI%E6%A8%A1%E5%9E%8B%E7%9B%B8%E5%85%B3%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B%EF%BC%88%E6%96%B0%E5%A2%9E%E5%90%88%E5%90%8C%E8%AF%84%E5%AE%A1%E9%A1%B9%E7%9B%AE%E7%89%88%EF%BC%89/" rel="prev" title="AI模型相关项目简介（新增合同评审项目版）">
+      <i class="fa fa-chevron-left"></i> AI模型相关项目简介（新增合同评审项目版）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/04/26/MCP%E7%AF%87-MCP%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" rel="next" title="MCP篇-MCP快速入门">
+      MCP篇-MCP快速入门 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Autogen%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">Autogen是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="nav-number">2.</span> <span class="nav-text">环境准备</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E9%83%A8%E7%BD%B2-Autogen-Studio"><span class="nav-number">2.1.</span> <span class="nav-text">1.部署 Autogen Studio</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%87%86%E5%A4%87-Deepseek-API-Key"><span class="nav-number">2.2.</span> <span class="nav-text">2.准备 Deepseek API Key</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%99-Autogen-%E7%9A%84%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE%E5%A4%A7%E8%84%91"><span class="nav-number">3.</span> <span class="nav-text">给 Autogen 的代理配置大脑</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%BC%8C%E6%A8%A1%E5%9E%8B%E7%99%BB%E8%AE%B0"><span class="nav-number">3.1.</span> <span class="nav-text">1，模型登记</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%BC%8C%E7%BB%99%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE%E5%A4%A7%E8%84%91"><span class="nav-number">3.2.</span> <span class="nav-text">2，给代理配置大脑</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">72</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">503</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:15</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

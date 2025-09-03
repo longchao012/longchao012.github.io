@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍Hugging Face AI社区平台，包括其核心组件Transformers、Dataset、Tokenizer的使用方法和实战案例。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型介绍篇-Hugging Face（AI 社区）">
+<meta property="og:url" content="http://mzfnai.com/2025/03/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hugging%20Face%EF%BC%88AI%20%E7%A4%BE%E5%8C%BA%EF%BC%89/index.html">
+<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍Hugging Face AI社区平台，包括其核心组件Transformers、Dataset、Tokenizer的使用方法和实战案例。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hug_Ag0wbm9U1oyqjrxgXR3cjLcXnje_20250831_161302_946.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hug_Z26rbKoaoospP4xz1rRcujmGnIg_20250831_161302_946.png">
+<meta property="article:published_time" content="2025-03-15T09:43:29.000Z">
+<meta property="article:modified_time" content="2025-09-03T13:52:11.211Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Hugging Face">
+<meta property="article:tag" content="Transformers">
+<meta property="article:tag" content="开源社区">
+<meta property="article:tag" content="预训练模型">
+<meta property="article:tag" content="NLP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hug_Ag0wbm9U1oyqjrxgXR3cjLcXnje_20250831_161302_946.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/03/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hugging%20Face%EF%BC%88AI%20%E7%A4%BE%E5%8C%BA%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>大模型介绍篇-Hugging Face（AI 社区） | 梦中飞鸟AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/03/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hugging%20Face%EF%BC%88AI%20%E7%A4%BE%E5%8C%BA%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          大模型介绍篇-Hugging Face（AI 社区）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-03-15 17:43:29" itemprop="dateCreated datePublished" datetime="2025-03-15T17:43:29+08:00">2025-03-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>7 分钟</span>
+            </span>
+            <div class="post-description">详细介绍Hugging Face AI社区平台，包括其核心组件Transformers、Dataset、Tokenizer的使用方法和实战案例。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>Hugging Face常见问题</strong></p>
+<ol>
+<li><p>什么是 Hugging Face？它的目标是什么？</p>
+</li>
+<li><p>Hugging Face 中包含哪些知名的预训练模型?</p>
+</li>
+<li><p>如果我们要在 Hugging Face 中下载 BERT，那么</p>
+<ol>
+<li><p>只有一种版本，还是有多种版本可以选择？</p>
+</li>
+<li><p>每一种版本的 BERT 中，只有一种格式还是有多种格式可以适应多种下游任务？</p>
+</li>
+</ol>
+</li>
+<li><p>Hugging Face 库中有哪些有用的组件？</p>
+</li>
+</ol>
+<h2 id="一、Hugging-Face-简介"><a href="#一、Hugging-Face-简介" class="headerlink" title="一、Hugging Face 简介"></a><strong>一、Hugging Face 简介</strong></h2><p>官网：<a target="_blank" rel="noopener" href="https://huggingface.co/">https://huggingface.co/</a></p>
+<p>Hugging Face 是一个开源的 AI 社区网站，站内几乎囊括了所有常见的 AI 开源模型，号称：一网打尽，应有尽有，全部开源。</p>
+<p>在 Hugging Face 中可以下载到众多开源的预训练大模型，模型本身包含相关信息和参数，可以拿来做微调和重新训练，非常方便。</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hug_Ag0wbm9U1oyqjrxgXR3cjLcXnje_20250831_161302_946.png"></p>
+<h2 id="二、Hugging-Face-核心组件"><a href="#二、Hugging-Face-核心组件" class="headerlink" title="二、Hugging Face 核心组件"></a><strong>二、Hugging Face 核心组件</strong></h2><p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hug_Z26rbKoaoospP4xz1rRcujmGnIg_20250831_161302_946.png"></p>
+<p>Hugging Face 核心组件包括 <strong>Transformers、Dataset、Tokenizer</strong>，此外还有一些辅助工具，如 <strong>Accelerate</strong>，用于加速深度学习训练过程。</p>
+<p>更多内容可以去 Hugging Face 官网上发掘，下面重点介绍下它的三个核心组件。</p>
+<h3 id="1、Hugging-Face-Transformers"><a href="#1、Hugging-Face-Transformers" class="headerlink" title="1、Hugging Face Transformers"></a><strong>1、Hugging Face Transformers</strong></h3><p>Transformers 是 Hugging Face 的核心组件，主要用于自然语言处理，提供了预训练的语言模型和相关工具，使得研究者和工程师能够轻松的训练和使用海量的 NLP 模型。</p>
+<p>常用的模型包括 BERT、GPT、XLNet、RoBERTa 等，并提供了模型的各种版本。</p>
+<p>通过 Transformers 库，开发人员可以用这些预训练模型进行文本分类、命名实体识别、机器翻译、问答系统等 NLP 任务。</p>
+<p>Transformers 库本身还提供方便的 API、实例代码、文档，让开发者学习和使用这些模型都变得非常简单，同时开发者也可以上传自己的预训练模型和 API。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 首先通过 pip 下载相关库：pip install transformers</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入 transformers 相关库</span></span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoModelForSequenceClassification</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化分词器和模型</span></span><br><span class="line">model_name = <span class="string">&quot;bert-base-cased&quot;</span></span><br><span class="line">model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将编码后的张量输入模型进行预测</span></span><br><span class="line">outputs = model(**inputs)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取预测结果和标签</span></span><br><span class="line">predictions = outputs.logits.argmax(dim=-<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、Hugging-Face-Dataset"><a href="#2、Hugging-Face-Dataset" class="headerlink" title="2、Hugging Face Dataset"></a><strong>2、Hugging Face Dataset</strong></h3><p>Dataset 是 Hugging Face 的公共数据集仓库，以下是常用的一些数据集（欢迎补充）：</p>
+<ol>
+<li><p>SQuAD：Stanford 大学发布的问答数据集</p>
+</li>
+<li><p>IMBDB：电影评论数据集</p>
+</li>
+<li><p>CoNLL-2003：NER 命名实体识别数据集</p>
+</li>
+<li><p>GLUE：公共基准测试集</p>
+</li>
+</ol>
+<p>Hugging Face Dataset 简化了数据集的下载、预处理过程，并具备数据集分割、采样和迭代器等功能。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 首先通过 pip 下载相关库：pip install datasets</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入数据集</span></span><br><span class="line"><span class="keyword">from</span> datasets <span class="keyword">import</span> load_dataset</span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载数据集并打乱数据</span></span><br><span class="line">dataset_name = <span class="string">&quot;imdb&quot;</span></span><br><span class="line">dataset = load_dataset(dataset_name)</span><br></pre></td></tr></table></figure>
+
+<h3 id="3、Hugging-Face-Tokenizer"><a href="#3、Hugging-Face-Tokenizer" class="headerlink" title="3、Hugging Face Tokenizer"></a><strong>3、Hugging Face Tokenizer</strong></h3><p>Tokenizer 是 Hugging Face 的分词器，它的任务是将输入文本转换为一个个标记（tokens），它还能对文本序列进行清洗、截断和填充等预处理，以满足模型的输入要求。它的主要功能是将文本分解为更小的单元（通常是词或子词），并将这些单元映射到数值表示。</p>
+<p>以下是分词器的简单解释：</p>
+<ol>
+<li><p><strong>文本分割</strong>：分词器首先将输入的文本分割成更小的单元。例如，对于句子 “I love NLP”，分词器可能会将其分割为 <code>[&quot;I&quot;, &quot;love&quot;, &quot;NLP&quot;]</code>。</p>
+</li>
+<li><p><strong>词汇映射</strong>：分词器会将每个单元映射到一个唯一的数值索引，这些索引通常来自一个预定义的词汇表。例如，假设词汇表中 “I” 的索引是 1，”love” 的索引是 2，”NLP” 的索引是 3，那么分词器会将句子转换为 <code>[1, 2, 3]</code>。</p>
+</li>
+<li><p><strong>处理特殊标记</strong>：分词器还会处理一些特殊的标记，比如句子开头的 <code>[CLS]</code> 标记和句子结尾的 <code>[SEP]</code> 标记，这些标记在某些模型中是必需的。</p>
+</li>
+<li><p><strong>填充和截断</strong>：为了使输入的长度一致，分词器可以对较短的序列进行填充（添加特殊的填充标记）或对较长的序列进行截断。</p>
+</li>
+</ol>
+<p>通过这些步骤，分词器将文本转换为模型可以理解的数值格式，使得模型能够进行进一步的处理和预测。希望这个解释能帮助你理解分词器的作用！</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 首先通过 pip 下载相关库：pip install transformers</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 导入分词器</span></span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer</span><br><span class="line"></span><br><span class="line"><span class="comment"># 初始化分词器和模型</span></span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(model_name)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将文本编码为模型期望的张量格式</span></span><br><span class="line">inputs = tokenizer(dataset[<span class="string">&quot;train&quot;</span>][<span class="string">&quot;text&quot;</span>][:<span class="number">10</span>], </span><br><span class="line">                   padding=<span class="literal">True</span>, truncation=<span class="literal">True</span>, return_tensors=<span class="string">&quot;pt&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="张量概念"><a href="#张量概念" class="headerlink" title="张量概念"></a><strong>张量概念</strong></h4><p>在机器学习和深度学习中，”张量”（Tensor）是一个多维数组的通用术语。它是数据的基本结构，类似于标量、向量和矩阵，但可以扩展到更高的维度。</p>
+<p>以下是张量的简单解释：</p>
+<ol>
+<li><p><strong>标量（0维张量）</strong>：一个单一的数值。例如，<code>3</code> 或 <code>-1.5</code>。</p>
+</li>
+<li><p><strong>向量（1维张量）</strong>：一组有序的数值。例如，<code>[1, 2, 3]</code>。</p>
+</li>
+<li><p><strong>矩阵（2维张量）</strong>：一个二维数组。例如：</p>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[[1, 2, 3],</span><br><span class="line"> [4, 5, 6]]</span><br></pre></td></tr></table></figure>
+
+<ol start="4">
+<li><strong>高维张量（3维及以上）</strong>：可以想象成多层的矩阵。例如，一个3维张量可以是一个矩阵的集合。</li>
+</ol>
+<p>在你的代码中，<code>inputs</code> 是一个张量，它是通过分词器将文本数据转换为模型可以理解的格式。这个张量通常是一个二维的，形状为 <code>[batch_size, sequence_length]</code>，其中 <code>batch_size</code> 是批处理的样本数量，<code>sequence_length</code> 是每个样本的最大长度。这个张量包含了文本的数值化表示，通常是词汇表中每个词的索引。</p>
+<p>通过这种方式，模型可以处理文本数据并进行预测。</p>
+<h4 id="CLS-SEP-标记作用"><a href="#CLS-SEP-标记作用" class="headerlink" title="[CLS] [SEP]标记作用"></a><strong>[CLS]</strong> <strong>[SEP]标记作用</strong></h4><p>在一些自然语言处理模型（如BERT）中，特殊标记 <code>[CLS]</code> 和 <code>[SEP]</code> 被用来帮助模型理解输入的结构和上下文。以下是它们的作用和简单解释：</p>
+<ol>
+<li><code>[CLS]</code>** 标记**：</li>
+</ol>
+<p>[CLS] 的英文全称是 “Classification”。在中文中，它通常被翻译为“分类”。这个标记在模型中用于表示整个输入序列的聚合信息，特别是在分类任务中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- </span><br><span class="line">**作用**</span><br><span class="line">：`[CLS]` 标记通常放在输入序列的开头，用于表示整个序列的聚合信息。对于分类任务，模型会使用与 `[CLS]` 标记对应的输出向量来进行最终的分类。</span><br><span class="line">- **例子**：假设你有一个句子 &quot;I love NLP&quot;，在输入到模型之前，分词器会将其转换为 `[&quot;[CLS]&quot;, &quot;I&quot;, &quot;love&quot;, &quot;NLP&quot;]`。模型会特别关注 `[CLS]` 的输出，因为它代表了整个句子的语义。</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li><code>[SEP]</code>** 标记**：</li>
+</ol>
+<p>[SEP] 的英文全称是 “Separator”。在中文中，它通常被翻译为“分隔符”。这个标记用于分隔不同的句子或段落，帮助模型理解句子之间的边界。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- </span><br><span class="line">**作用**</span><br><span class="line">：`[SEP]` 标记用于分隔不同的句子或段落，帮助模型理解句子之间的边界。在句子对任务（如问答或句子对分类）中，`[SEP]` 标记用于分隔两个句子。</span><br><span class="line">- **例子**：如果你有两个句子 &quot;I love NLP&quot; 和 &quot;It is fascinating&quot;，在输入到模型之前，分词器会将其转换为 `[&quot;[CLS]&quot;, &quot;I&quot;, &quot;love&quot;, &quot;NLP&quot;, &quot;[SEP]&quot;, &quot;It&quot;, &quot;is&quot;, &quot;fascinating&quot;, &quot;[SEP]&quot;]`。这样，模型就能识别出两个句子之间的分界。</span><br></pre></td></tr></table></figure>
+
+<p>通过使用这些特殊标记，模型能够更好地理解输入的结构和上下文，从而提高处理和预测的准确性。</p>
+<h2 id="三、Hugging-Face-应用实战"><a href="#三、Hugging-Face-应用实战" class="headerlink" title="三、Hugging Face 应用实战"></a><strong>三、Hugging Face 应用实战</strong></h2><p>该应用实战是通过 Hugging Face Transformers 完成一个很简单的文本分类任务（预测影评是正面还是负面），完整代码如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 导入必要的库</span></span><br><span class="line"><span class="keyword">from</span> transformers <span class="keyword">import</span> AutoTokenizer, AutoModelForSequenceClassification</span><br><span class="line"><span class="keyword">from</span> datasets <span class="keyword">import</span> load_dataset</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 定义数据集名称和任务类型：使用的是 imdb 影评数据集</span></span><br><span class="line">dataset_name = <span class="string">&quot;imdb&quot;</span></span><br><span class="line">task = <span class="string">&quot;sentiment-analysis&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 下载数据集并打乱数据</span></span><br><span class="line">dataset = load_dataset(dataset_name)</span><br><span class="line">dataset = dataset.shuffle()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 初始化分词器和模型</span></span><br><span class="line">model_name = <span class="string">&quot;bert-base-cased&quot;</span></span><br><span class="line">tokenizer = AutoTokenizer.from_pretrained(model_name)</span><br><span class="line">model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 将文本编码为模型期望的张量格式</span></span><br><span class="line">inputs = tokenizer(dataset[<span class="string">&quot;train&quot;</span>][<span class="string">&quot;text&quot;</span>][:<span class="number">10</span>], padding=<span class="literal">True</span>, truncation=<span class="literal">True</span>, return_tensors=<span class="string">&quot;pt&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 6. 将编码后的张量输入模型进行预测</span></span><br><span class="line">outputs = model(**inputs)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 7. 获取预测结果和标签</span></span><br><span class="line">predictions = outputs.logits.argmax(dim=-<span class="number">1</span>)</span><br><span class="line">labels = dataset[<span class="string">&quot;train&quot;</span>][<span class="string">&quot;label&quot;</span>][:<span class="number">10</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 8. 打印预测结果和标签</span></span><br><span class="line"><span class="keyword">for</span> i, (prediction, label) <span class="keyword">in</span> <span class="built_in">enumerate</span>(<span class="built_in">zip</span>(predictions, labels)):</span><br><span class="line">    prediction_label = <span class="string">&quot;正面评论&quot;</span> <span class="keyword">if</span> prediction == <span class="number">1</span> <span class="keyword">else</span> <span class="string">&quot;负面评论&quot;</span></span><br><span class="line">    true_label = <span class="string">&quot;正面评论&quot;</span> <span class="keyword">if</span> label == <span class="number">1</span> <span class="keyword">else</span> <span class="string">&quot;负面评论&quot;</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;Example <span class="subst">&#123;i+<span class="number">1</span>&#125;</span>: Prediction: <span class="subst">&#123;prediction_label&#125;</span>, True label: <span class="subst">&#123;true_label&#125;</span>&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>注意：要运行代码，需要安装最新的 pytorch 、transformers 和 datasets。</p>
+<p>将代码文件保存为：huggingface.py，运行后结果如下（第一次运行需要从 Hugging Face 上下载数据集和模型，需要一点时间）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\Lenovo\anaconda3\envs\pytorch211\python.exe &quot;huggingface.py&quot;</span><br><span class="line">Downloading readme: 100%|██████████| 7.81k/7.81k [00:00&lt;?, ?B/s]</span><br><span class="line">Downloading data: 100%|██████████| 21.0M/21.0M [00:27&lt;00:00, 753kB/s]</span><br><span class="line">Downloading data: 100%|██████████| 20.5M/20.5M [00:07&lt;00:00, 2.88MB/s]</span><br><span class="line">Downloading data: 100%|██████████| 42.0M/42.0M [00:08&lt;00:00, 5.13MB/s]</span><br><span class="line">Generating train split: 100%|██████████| 25000/25000 [00:00&lt;00:00, 347815.24 examples/s]</span><br><span class="line">Generating test split: 100%|██████████| 25000/25000 [00:00&lt;00:00, 481791.57 examples/s]</span><br><span class="line">Generating unsupervised split: 100%|██████████| 50000/50000 [00:00&lt;00:00, 450755.18 examples/s]</span><br><span class="line">C:\Users\Lenovo\anaconda3\envs\pytorch211\Lib\site-packages\huggingface_hub\file_download.py:149: UserWarning: `huggingface_hub` cache-system uses symlinks by default to efficiently store duplicated files but your machine does not support them in C:\Users\Lenovo\.cache\huggingface\hub\models--bert-base-cased. Caching files will still work but in a degraded version that might require more space on your disk. This warning can be disabled by setting the `HF_HUB_DISABLE_SYMLINKS_WARNING` environment variable. For more details, see https://huggingface.co/docs/huggingface_hub/how-to-cache#limitations.</span><br><span class="line">To support symlinks on Windows, you either need to activate Developer Mode or to run Python as an administrator. In order to see activate developer mode, see this article: https://docs.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development</span><br><span class="line">  warnings.warn(message)</span><br><span class="line">Some weights of BertForSequenceClassification were not initialized from the model checkpoint at bert-base-cased and are newly initialized: [&#x27;classifier.bias&#x27;, &#x27;classifier.weight&#x27;]</span><br><span class="line">You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.</span><br><span class="line">Example 1: Prediction: 正面评论, True label: 正面评论</span><br><span class="line">Example 2: Prediction: 正面评论, True label: 正面评论</span><br><span class="line">Example 3: Prediction: 正面评论, True label: 负面评论</span><br><span class="line">Example 4: Prediction: 正面评论, True label: 正面评论</span><br><span class="line">Example 5: Prediction: 正面评论, True label: 正面评论</span><br><span class="line">Example 6: Prediction: 正面评论, True label: 正面评论</span><br><span class="line">Example 7: Prediction: 正面评论, True label: 负面评论</span><br><span class="line">Example 8: Prediction: 正面评论, True label: 负面评论</span><br><span class="line">Example 9: Prediction: 正面评论, True label: 负面评论</span><br><span class="line">Example 10: Prediction: 正面评论, True label: 负面评论</span><br><span class="line"></span><br><span class="line">Process finished with exit code 0</span><br></pre></td></tr></table></figure>
+
+<p>该实战主要演示如何使用 HuggingFace，预测结果并不是那么准确（准确率 50%），因为模型本身还未做过电影评论相关的微调。</p>
+<p>Hugging Face 也提醒我们，可能需要用一些下游任务重新训练这个模型（即微调），再用它来做预测和推理：You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a><strong>四、总结</strong></h2><p>Hugging Face 是当前最知名的 Transformer 工具库和 AI 开源模型网站，它的目标是让人们更方便地使用和开发 AI 模型。</p>
+<ol>
+<li><p>什么是 Hugging Face？它的目标是什么？</p>
+<ul>
+<li>Hugging Face Hugging Face 是一个 AI 社区网站，站内几乎囊括了所有的 AI 开源模型。Hugging Face 是当前最知名的 Transformer 工具库和 AI 开源模型网站，它的目标是让人们更方便地使用和开发 AI 模型。</li>
+</ul>
+</li>
+<li><p>Hugging Face 中包含哪些知名的预训练模型?</p>
+<ul>
+<li>如 BERT、GPT、XLNet、RoBERTa</li>
+</ul>
+</li>
+<li><p>如果我要在 Hugging Face 中下载 BERT，那么</p>
+<ul>
+<li><p>只有一种版本，还是有多种版本可以选择？</p>
+<ul>
+<li>多版本</li>
+</ul>
+</li>
+<li><p>每一种版本的 BERT 中，只有一种格式还是有多种格式可以适应多种下游任务？</p>
+<ul>
+<li>多种格式</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Hugging Face 库中有哪些有用的组件？</p>
+<ul>
+<li>核心组件包括：Transformers、Dataset、Tokenizer，此外还有一些辅助工具，如 Accelerate 等</li>
+</ul>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/03/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Hugging%20Face%EF%BC%88AI%20%E7%A4%BE%E5%8C%BA%EF%BC%89/" title="大模型介绍篇-Hugging Face（AI 社区）">http://mzfnai.com/2025/03/15/大模型介绍篇-Hugging Face（AI 社区）/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Hugging-Face/" rel="tag"># Hugging Face</a>
+              <a href="/tags/Transformers/" rel="tag"># Transformers</a>
+              <a href="/tags/%E5%BC%80%E6%BA%90%E7%A4%BE%E5%8C%BA/" rel="tag"># 开源社区</a>
+              <a href="/tags/%E9%A2%84%E8%AE%AD%E7%BB%83%E6%A8%A1%E5%9E%8B/" rel="tag"># 预训练模型</a>
+              <a href="/tags/NLP/" rel="tag"># NLP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/03/08/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Gemini/" rel="prev" title="大模型介绍篇-Gemini">
+      <i class="fa fa-chevron-left"></i> 大模型介绍篇-Gemini
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/03/22/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-HuggingFace%EF%BC%88%E6%A8%A1%E5%9E%8B%E5%8F%91%E5%B8%83%E4%B8%8E%E6%A0%BC%E5%BC%8F%E8%BD%AC%E6%8D%A2%EF%BC%89/" rel="next" title="大模型介绍篇-HuggingFace（模型发布与格式转换）">
+      大模型介绍篇-HuggingFace（模型发布与格式转换） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81Hugging-Face-%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">一、Hugging Face 简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Hugging-Face-%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6"><span class="nav-number">2.</span> <span class="nav-text">二、Hugging Face 核心组件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%E3%80%81Hugging-Face-Transformers"><span class="nav-number">2.1.</span> <span class="nav-text">1、Hugging Face Transformers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%E3%80%81Hugging-Face-Dataset"><span class="nav-number">2.2.</span> <span class="nav-text">2、Hugging Face Dataset</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E3%80%81Hugging-Face-Tokenizer"><span class="nav-number">2.3.</span> <span class="nav-text">3、Hugging Face Tokenizer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BC%A0%E9%87%8F%E6%A6%82%E5%BF%B5"><span class="nav-number">2.3.1.</span> <span class="nav-text">张量概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CLS-SEP-%E6%A0%87%E8%AE%B0%E4%BD%9C%E7%94%A8"><span class="nav-number">2.3.2.</span> <span class="nav-text">[CLS] [SEP]标记作用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Hugging-Face-%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98"><span class="nav-number">3.</span> <span class="nav-text">三、Hugging Face 应用实战</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">四、总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">72</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">503</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:15</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

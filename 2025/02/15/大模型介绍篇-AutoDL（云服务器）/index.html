@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍AutoDL云平台的使用方法，包括GPU选择、环境配置、远程开发等，帮助开发者高效利用云端算力进行AI模型训练和部署。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="大模型介绍篇-AutoDL（云服务器）">
+<meta property="og:url" content="http://mzfnai.com/2025/02/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-AutoDL%EF%BC%88%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%89/index.html">
+<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍AutoDL云平台的使用方法，包括GPU选择、环境配置、远程开发等，帮助开发者高效利用云端算力进行AI模型训练和部署。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_DiajbH7uHo2k3RxS08cckg9snfe_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Aa00bj11CoBEkpx5r5AcVse7nDb_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_H05ObUhnioD7wExguJkcWJj6nbb_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_LiKtbE8W9oBCzXx7ivvc05M3nbf_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_SgiBb73iCoGps1x8005ciYXGnne_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_ORHObWZ8PofgtkxCYNycPEX9neB_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_D2Z6bCS4WoslNfx8ZRDcLoRNnOe_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_FKwmb30G2oBZnox9ullcaivFnch_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_UQ1EbDqGToG5WXxu9Zyc7RYfnBe_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_G0CRbi0Buor8uJxGnGvcS2MLnhh_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_AG5abOgNNo8TGWx5ZXVc6RignSg_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_AnbnbQu0PoMOoAxiibHc28OynIc_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_GQN6bFYtsoFFKfx6qSBczxrbnBd_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_MLW0bTMeBowyFLxrbDoc3YMdnuh_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Hd8qbWljto18X0xlO2PcXoa1nWg_20250831_161425_810.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_GNwEb1iApoapSax8HXLcErlPnbc_20250831_161426_834.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_TvxSb77rQoVkaExxeKvcZ9xenCc_20250831_161426_834.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Cy2ObNIoAoRvrBxTs36czS4bnee_20250831_161426_834.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_JKrlbTijtoithExbFnTcNETtneg_20250831_161426_834.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_L0nubgGaqoiXrSxaFktcA7hRn8f_20250831_161426_834.png">
+<meta property="article:published_time" content="2025-02-15T03:18:25.000Z">
+<meta property="article:modified_time" content="2025-09-03T13:51:53.194Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="AutoDL">
+<meta property="article:tag" content="云服务器">
+<meta property="article:tag" content="GPU">
+<meta property="article:tag" content="算力平台">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_DiajbH7uHo2k3RxS08cckg9snfe_20250831_161425_810.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/02/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-AutoDL%EF%BC%88%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%89/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>大模型介绍篇-AutoDL（云服务器） | 梦中飞鸟AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/02/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-AutoDL%EF%BC%88%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          大模型介绍篇-AutoDL（云服务器）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-02-15 11:18:25" itemprop="dateCreated datePublished" datetime="2025-02-15T11:18:25+08:00">2025-02-15</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.8k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">详细介绍AutoDL云平台的使用方法，包括GPU选择、环境配置、远程开发等，帮助开发者高效利用云端算力进行AI模型训练和部署。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="AutoDL可以方便我们在没有计算资源或者计算资源不足的时候学习本地部署大模型"><a href="#AutoDL可以方便我们在没有计算资源或者计算资源不足的时候学习本地部署大模型" class="headerlink" title="AutoDL可以方便我们在没有计算资源或者计算资源不足的时候学习本地部署大模型"></a><strong>AutoDL可以方便我们在没有计算资源或者计算资源不足的时候学习本地部署大模型</strong></h3><p><strong>本节内容</strong></p>
+<ol>
+<li><p>AutoDL介绍与快速开始</p>
+</li>
+<li><p>如何选择GPU服务器</p>
+</li>
+<li><p>如何使用JupyterLab和SSH远程连接</p>
+</li>
+<li><p>Conda环境安装与PyCharm远程开发</p>
+</li>
+</ol>
+<h2 id="快速开始"><a href="#快速开始" class="headerlink" title="快速开始"></a><strong>快速开始</strong></h2><p>AutoDL 是一个专注于提供深度学习算力的云平台。它通过提供高性能的 GPU 资源，帮助用户轻松应对复杂的深度学习任务，同时保持成本的可控性。</p>
+<p><strong>为什么选择 AutoDL 云平台？</strong></p>
+<p>平价好用：相比其他云平台，AutoDL 提供的算力价格更加亲民，适合预算有限的研究者和开发者。</p>
+<p>高性能：支持多种高性能 GPU，如 NVIDIA Tesla V100、A100 等，确保训练速度和模型性能。</p>
+<p>易用性：简洁的界面和丰富的文档，即使是初学者也能快速上手。</p>
+<p>灵活性：支持按需付费和包年包月等多种计费方式，满足不同用户的需求。</p>
+<p><strong>如何使用 AutoDL 云平台？</strong></p>
+<p>注册账号：访问 AutoDL 官网，注册并登录账号。</p>
+<p>选择算力：根据你的需求选择合适的 GPU 配置。</p>
+<p>上传数据：将你的数据集上传到 AutoDL 云平台。</p>
+<p>启动训练：编写或上传你的训练脚本，启动训练任务。</p>
+<p>监控进度：通过平台提供的监控工具，实时查看训练进度和资源使用情况。</p>
+<blockquote>
+<p>AutoDL 实例中的数据（包括环境）在关机后将全部保存，开机后无需再次配置和上传数据。总而言之，实例在数据在，但是连续关机 15 天实例将被释放。</p>
+</blockquote>
+<h2 id="创建实例"><a href="#创建实例" class="headerlink" title="创建实例"></a><strong>创建实例</strong></h2><p>注册后进入控制台，在我的实例菜单下，点击租用新实例</p>
+<p>在租用实例页面：选择<strong>计费方式</strong>，选择合适的主机，选择要创建实例中的 GPU 数量，选择镜像（内置了不同的深度学习框架），最后创建即可</p>
+<blockquote>
+<p>如果你需要更大的硬盘用于存放数据，那么请留意「硬盘」这列「最大可扩容」大小。数据盘等的路径请参考<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/env/">文档</a></p>
+</blockquote>
+<p>创建完成后等待开机，今后主要用到的操作入口见截图中</p>
+<h2 id="上传数据"><a href="#上传数据" class="headerlink" title="上传数据"></a><strong>上传数据</strong></h2><p>开机后在这个正在运行中的实例上找到快捷工具：JupyterLab，点击打开，在下面的截图中找到上传按钮，即可上传数据。如需上传文件夹或更高级的上传方式等，请查阅<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/scp/">上传数据文档</a></p>
+<h2 id="终端训练"><a href="#终端训练" class="headerlink" title="终端训练"></a><strong>终端训练</strong></h2><p>在打开的 JupyterLab 页面中打开终端。如需使用其他 IDE 远程开发，请参考 <a target="_blank" rel="noopener" href="https://www.autodl.com/docs/vscode/">VSCode(推荐)</a> 和 <a target="_blank" rel="noopener" href="https://www.autodl.com/docs/pycharm/">PyCharm</a></p>
+<p>在终端中执行您的 Python 命令等完成训练</p>
+<h2 id="如何选择GPU"><a href="#如何选择GPU" class="headerlink" title="如何选择GPU"></a><strong>如何选择GPU</strong></h2><p>如何排查性能瓶颈参考<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/perf/">文档</a>。此外需注意3060、3090、3080Ti、A4000、A5000、A40、A100、A5000等安培架构的卡需要<strong>cuda11.1</strong>及以上才能使用（TitanXp、1080Ti、2080Ti、P40、V100没有要求），请使用较高版本的框架。</p>
+<p>AutoDL平台分配GPU、CPU、内存的机制为：按租用的GPU数量成比例分配CPU和内存，算力市场显示的CPU和内存均为每GPU分配的CPU和内存，如果租用两块GPU，那么CPU和内存就x2。此外GPU非共享，每个实例对GPU是独占的。</p>
+<h3 id="一-选择CPU"><a href="#一-选择CPU" class="headerlink" title="一. 选择CPU"></a><strong>一. 选择CPU</strong></h3><p>CPU非常重要！尽管CPU并不直接参与深度学习模型计算，但CPU需要提供大于模型训练吞吐的数据处理能力。比如，一台8卡NVIDIA V100的DGX服务器，训练ResNet-50 ImageNet图像分类的吞吐就达到8000张图像&#x2F;秒，而扩展到16卡V100的DGX2服务器却没达到2倍的吞吐，说明这台DGX2服务器的CPU已经成为性能瓶颈了。</p>
+<p>我们通常为每块GPU分配固定数量的CPU逻辑核心。理想情况下，模型计算吞吐随GPU数量线性增长，单GPU的合理CPU逻辑核心数分配可以直接线性扩展到多GPU上。AutoDL平台的算力实例提供了多种CPU分配规格。每块GPU应配备至少4~8核心的CPU，以满足多线程的异步数据读取。分配更多的核心通常不会再有很大的收益，此时的数据读取瓶颈通常源于Python的多进程切换与数据通信开销（如使用PyTorch DataLoader)。那么怎么省钱克服数据读取瓶颈呢，不妨在AutoDL平台试试C++和CUDA编写的NVIDIA DALI数据读取加速库吧。在我们的测试中，单核CPU实例的数据读取能力就超过了基于Python的八核心实例，真正做到了为模型训练保驾护航。</p>
+<p>AutoDL中高性能CPU的选择有：</p>
+<ol>
+<li><p>内蒙A区 A5000 &#x2F; 3090 &#x2F; A40用到的AMD EPYC 7543 CPU</p>
+</li>
+<li><p>内蒙A区 A100用到的AMD EPYC 7763 CPU</p>
+</li>
+<li><p>北京A区 3090用到的Intel(R) Xeon(R) Gold 6330 或 AMD EPYC 7642 CPU</p>
+</li>
+<li><p>深圳A区 3090用到的Intel(R) Xeon(R) Gold 6330</p>
+</li>
+</ol>
+<p>服务器的CPU一般不如桌面CPU的主频高，但是核心数量多。因此您从以前使用桌面CPU切换到服务器CPU上后，需要充分利用多核心的性能，否则无法发挥服务器CPU的性能。如何利用<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/perf/">请戳</a></p>
+<h3 id="二-选择GPU"><a href="#二-选择GPU" class="headerlink" title="二. 选择GPU"></a><strong>二. 选择GPU</strong></h3><p>AutoDL平台上提供的GPU型号很多。我们按照GPU架构大致分为五类：</p>
+<ol>
+<li><p>NVIDIA Pascal架构的GPU，如TitanXp，GTX 10系列等。 这类GPU缺乏低精度的硬件加速能力，但却具备中等的单精度算力。由于价格便宜，适合用来练习训练小模型(如Cifar10)或调试模型代码。</p>
+</li>
+<li><p>NVIDIA Volta&#x2F;Turing架构的GPU，如GTX 20系列, Tesla V100等。 这类GPU搭载专为低精度(int8&#x2F;float16)计算加速的TensorCore, 但单精度算力相较于上代提升不大。我们建议在实例上启用深度学习框架的混合精度训练来加速模型计算。 相较于单精度训练，混合精度训练通常能够提供2倍以上的训练加速。</p>
+</li>
+<li><p>NVIDIA Ampere架构的GPU，如GTX 30系列，Tesla A40&#x2F;A100等。 这类GPU搭载第三代TensorCore。相较于前一代，支持了TensorFloat32格式，可直接加速单精度训练 (PyTorch已默认开启)。但我们仍建议使用超高算力的float16半精度训练模型，可获得比上一代GPU更显著的性能提升。</p>
+</li>
+<li><p>寒武纪 MLU 200系列加速卡。 暂不支持模型训练。使用该系列加速卡进行模型推理需要量化为int8进行计算。 并且需要安装适配寒武纪MLU的深度学习框架。</p>
+</li>
+<li><p>华为 Ascend 系列加速卡。 支持模型训练及推理。但需安装MindSpore框架进行计算。</p>
+</li>
+</ol>
+<p>GPU型号的选择并不困难。对于常用的深度学习模型，根据GPU对应精度的算力可大致推算GPU训练模型的性能。AutoDL平台标注并排名了每种型号GPU的算力，方便大家选择适合自己的GPU。</p>
+<p>GPU的数量选择与训练任务有关。一般我们认为模型的一次训练应当在24小时内完成，这样隔天就能训练改进之后的模型。以下是选择多GPU的一些建议：</p>
+<ul>
+<li><p>1块GPU。适合一些数据集较小的训练任务，如Pascal VOC等。</p>
+</li>
+<li><p>2块GPU。同单块GPU，但是你可以一次跑两组参数或者把Batchsize扩大。</p>
+</li>
+<li><p>4块GPU。适合一些中等数据集的训练任务，如MS COCO等。</p>
+</li>
+<li><p>8块GPU。经典永流传的配置！适合各种训练任务，也非常方便复现论文结果。</p>
+</li>
+<li><p>我要更多！用于训练大参数模型、大规模调参或超快地完成模型训练。</p>
+</li>
+</ul>
+<h3 id="三-选择内存"><a href="#三-选择内存" class="headerlink" title="三. 选择内存"></a><strong>三. 选择内存</strong></h3><p>内存在充足的情况下一般不影响性能，但是由于AutoDL的实例相比本地电脑对内存的使用有更严格的上限限制（本地电脑内存不足会使用硬盘虚拟内存，影响是速度下降），比如租用的实例分配的内存是64GB，程序在训练时最后将要使用64.1GB，此时超过限制的这一时刻进程会被系统Kill导致程序中断，因此如果对内存的容量要求大，请选择分配内存更多的主机或者租用多GPU实例。如果不确定内存的使用，那么可以在实例监控中观察内存使用情况。</p>
+<h3 id="附GPU型号简介"><a href="#附GPU型号简介" class="headerlink" title="附GPU型号简介"></a><strong>附GPU型号简介</strong></h3><h2 id="JupyterLab"><a href="#JupyterLab" class="headerlink" title="JupyterLab"></a><strong>JupyterLab</strong></h2><p>⚠️JupyterLab的工作目录为<code>/root</code>目录，而非<code>/</code>系统根目录</p>
+<h3 id="基本功能介绍"><a href="#基本功能介绍" class="headerlink" title="基本功能介绍"></a><strong>基本功能介绍</strong></h3><p>JupyterLab界面说明</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_DiajbH7uHo2k3RxS08cckg9snfe_20250831_161425_810.png"></p>
+<p>上传文件</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Aa00bj11CoBEkpx5r5AcVse7nDb_20250831_161425_810.png"></p>
+<p>使用Notebook</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_H05ObUhnioD7wExguJkcWJj6nbb_20250831_161425_810.png"></p>
+<p>打开新终端</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_LiKtbE8W9oBCzXx7ivvc05M3nbf_20250831_161425_810.png"></p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_SgiBb73iCoGps1x8005ciYXGnne_20250831_161425_810.png"></p>
+<p>访问打开的终端或Notebook（JupyterLab在关闭终端&#x2F;Notebook选项卡后默认不会终止，仍然在运行）</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_ORHObWZ8PofgtkxCYNycPEX9neB_20250831_161425_810.png"></p>
+<p>文件管理</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_D2Z6bCS4WoslNfx8ZRDcLoRNnOe_20250831_161425_810.png"></p>
+<h3 id="附：使用常见问题"><a href="#附：使用常见问题" class="headerlink" title="附：使用常见问题"></a><strong>附：使用常见问题</strong></h3><p>如果用Notebook跑程序的同学会发现，隔了一段时间Notebook的日志不更新了。此时可以使用「日志控制台」的功能查看日志，演示一遍过程：</p>
+<p>如下一段程序执行起来后，刷新网页此时会发现日志不再更新</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_FKwmb30G2oBZnox9ullcaivFnch_20250831_161425_810.png"></p>
+<p>打开日志控制台：</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_UQ1EbDqGToG5WXxu9Zyc7RYfnBe_20250831_161425_810.png"></p>
+<h3 id="SSH远程连接"><a href="#SSH远程连接" class="headerlink" title="# SSH远程连接"></a><strong># SSH远程连接</strong></h3><p>如果您是Windows用户，可以使用系统自带的Powershell&#x2F;CMD登录，如果要更好的终端体验推荐下载使用<a target="_blank" rel="noopener" href="http://autodl-public.ks3-cn-beijing.ksyun.com/tool/cmder_mini.zip">Cmder</a>工具，免安装解压即用。或者使用<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/xshell/">XShell工具</a>更佳。</p>
+<p>如果是Mac用户，可以使用系统自带的Terminal完成SSH登录。</p>
+<h3 id="SSH登录"><a href="#SSH登录" class="headerlink" title="SSH登录"></a><strong>SSH登录</strong></h3><p>开机实例后，找到SSH登录指令</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_G0CRbi0Buor8uJxGnGvcS2MLnhh_20250831_161425_810.png"></p>
+<p>复制您的SSH登录指令，这里演示使用的是：<code>ssh -p 48332 root@region-3.autodl.com</code></p>
+<p>在<code>ssh -p 48332 root@region-3.autodl.com</code>命令中， 各个参数的含义为：</p>
+<p>用户名：root</p>
+<p>主机host： region-3.autodl.com</p>
+<p>端口号：48332</p>
+<p>在您的本地终端中输入该命令，输入密码进行登录。（<strong>注意：密码不会明文显示，正确输入后回车即可</strong>）</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_AG5abOgNNo8TGWx5ZXVc6RignSg_20250831_161425_810.png"></p>
+<p>⚠️如果通过SSH登录后执行训练程序，请使用screen&#x2F;tmux开守护进程，确保程序不受SSH连接中断影响程序执行！ 安装screen方法：apt-get update &amp;&amp; apt-get install -y screen， tmux已内置。</p>
+<h3 id="免密登录"><a href="#免密登录" class="headerlink" title="免密登录"></a><strong>免密登录</strong></h3><p>从我的实例-&gt;设置密钥登录入口进去配置SSH公钥。这样重启后或新创建的实例都能免密码登录，减少复制SSH登录密码的麻烦。密钥&#x2F;公钥生成方法，请参考<a target="_blank" rel="noopener" href="https://git-scm.com/book/zh/v2/%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8A%E7%9A%84-Git-%E7%94%9F%E6%88%90-SSH-%E5%85%AC%E9%92%A5">此链接</a></p>
+<h2 id="Miniconda"><a href="#Miniconda" class="headerlink" title="Miniconda"></a><strong>Miniconda</strong></h2><p>平台内置的所有镜像都安装了Miniconda，安装路径为&#x2F;root&#x2F;miniconda3&#x2F;。</p>
+<p>如果您需要使用其他版本的CUDA或cuDNN，那么可以通过Miniconda简单几步完成环境构建，推荐您租用实例时选择miniconda镜像（内部未安装任何深度学习框架，保持运行环境干净，避免不必要的问题）</p>
+<p>以下以构建TensorFlow 1.15.0版本的运行环境为例进行说明如何使用Conda构建需要的环境。</p>
+<p>如果需要将虚拟环境安装在数据盘，请参考文档最下方的方法</p>
+<h3 id="创建虚拟环境"><a href="#创建虚拟环境" class="headerlink" title="创建虚拟环境"></a><strong>创建虚拟环境</strong></h3><h3 id="安装软件依赖"><a href="#安装软件依赖" class="headerlink" title="安装软件依赖"></a><strong>安装软件依赖</strong></h3><p>这里以安装tensorflow&#x3D;&#x3D;1.15.0为例</p>
+<h3 id="Notebook环境切换"><a href="#Notebook环境切换" class="headerlink" title="Notebook环境切换"></a><strong>Notebook环境切换</strong></h3><p>如何在JupyterLab的Notebook中使用新的Conda环境</p>
+<p>执行以上命令后，如果创建新的Notebook，那么可以选择名为tf的Notebook</p>
+<p>如果是已有的Notebook</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_AnbnbQu0PoMOoAxiibHc28OynIc_20250831_161425_810.png"></p>
+<h3 id="清除Conda虚拟环境"><a href="#清除Conda虚拟环境" class="headerlink" title="清除Conda虚拟环境"></a><strong>清除Conda虚拟环境</strong></h3><h3 id="删除安装包和缓存"><a href="#删除安装包和缓存" class="headerlink" title="删除安装包和缓存"></a><strong>删除安装包和缓存</strong></h3><h3 id="安装虚拟环境到数据盘"><a href="#安装虚拟环境到数据盘" class="headerlink" title="安装虚拟环境到数据盘"></a><strong>安装虚拟环境到数据盘</strong></h3><p>执行以下命令设置将虚拟环境安装到<code>/root/autodl-tmp/conda/envs</code>， 包缓存到<code>/root/autodl-tmp/conda/pkgs</code></p>
+<p>验证是否生效</p>
+<p><strong>取消设置安装虚拟环境到数据盘</strong><br>编辑&#x2F;root&#x2F;.condarc文件，删除对应的路径所在行即可</p>
+<h2 id="PyCharm远程开发"><a href="#PyCharm远程开发" class="headerlink" title="PyCharm远程开发"></a><strong>PyCharm远程开发</strong></h2><p>警告：如果使用PyCharm直接执行或开终端执行训练程序，请在调试完成后最后通过screen&#x2F;tmux工具开守护进程（参考文档：<a target="_blank" rel="noopener" href="https://www.autodl.com/docs/daemon/">守护进程</a>），确保程序不受SSH连接中断影响程序执行！</p>
+<h3 id="远程项目开发"><a href="#远程项目开发" class="headerlink" title="远程项目开发"></a><strong>远程项目开发</strong></h3><p>官方文档：<a target="_blank" rel="noopener" href="https://www.jetbrains.com/help/pycharm/configuring-remote-interpreters-via-ssh.html">请戳</a></p>
+<p>AutoDL使用方法：</p>
+<p><strong>Step1</strong>：确认您安装的PyCharm是社区版还是专业版，只有<strong>专业版</strong>才支持远程开发功能。</p>
+<p><strong>Step2</strong>：开机实例</p>
+<p>复制自己实例的SSH指令，比如：<code>ssh -p 38076 root@region-1.autodl.com</code></p>
+<p>在<code>ssh -p 38076 root@region-1.autodl.com</code>命令中， 各个参数的含义为：</p>
+<p>用户名：root</p>
+<p>HOST： region-1.autodl.com</p>
+<p>端口号：38076</p>
+<p><strong>Step3</strong>：配置PyCharm</p>
+<p>[File] -&gt; [Settings]，打开以下设置弹窗，搜索interpreter找到[Python interpreter]设置项</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_GQN6bFYtsoFFKfx6qSBczxrbnBd_20250831_161425_810.png"></p>
+<p>点击Add Interpreter，选择On SSH并点击 (PyCharm社区版本无该选项)</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_MLW0bTMeBowyFLxrbDoc3YMdnuh_20250831_161425_810.png"></p>
+<p>将实例SSH指令中的Host、Port与Username进行匹配和填写（Username均为root，Host和Port查看自己实例的SSH指令)</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Hd8qbWljto18X0xlO2PcXoa1nWg_20250831_161425_810.png"></p>
+<p>下一步：输入SSH的密码</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_GNwEb1iApoapSax8HXLcErlPnbc_20250831_161426_834.png"></p>
+<p>继续下一步，直到看到下面的弹窗。选择System Interpreter，配置远程Python解释器地址为<code>/root/miniconda3/bin/python</code>（如果您在miniconda中安装了其他的虚拟环境，那么虚拟环境的python解释器路径在&#x2F;root&#x2F;miniconda3&#x2F;envs&#x2F;{对应的虚拟环境名称}&#x2F;bin&#x2F;python）</p>
+<p>配置同步目录，意思是本地项目和远程实例中的哪个目录进行关联，这里设置为实例的数据盘子目录：<code>/root/autodl-tmp/project/</code> （不建议使用默认的&#x2F;tmp目录）</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_TvxSb77rQoVkaExxeKvcZ9xenCc_20250831_161426_834.png"></p>
+<p>点击创建，如果配置均无误PyCharm会有小会配置过程，完成后即可远程开发。</p>
+<p>如果您在运行时找不到Python文件，可能是没有自动同步代码，那么可以选择手动同步：</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_Cy2ObNIoAoRvrBxTs36czS4bnee_20250831_161426_834.png"></p>
+<p><strong>打开远程终端</strong></p>
+<p>配置好PyCharm远程开发后，可以在PyCharm的终端中下拉找到远程服务器打开远程终端：</p>
+<h2 id="学术资源加速"><a href="#学术资源加速" class="headerlink" title="学术资源加速"></a><strong>学术资源加速</strong></h2><h3 id="公开服务"><a href="#公开服务" class="headerlink" title="公开服务"></a><strong>公开服务</strong></h3><p>Github: <a target="_blank" rel="noopener" href="https://ghp.ci/">https://ghp.ci/</a></p>
+<p>HuggingFace镜像站：<a target="_blank" rel="noopener" href="https://hf-mirror.com/">https://hf-mirror.com/</a></p>
+<h3 id="AutoDL内置服务"><a href="#AutoDL内置服务" class="headerlink" title="AutoDL内置服务"></a><strong>AutoDL内置服务</strong></h3><p>声明：限于学术使用github和huggingface网络速度慢的问题，以下为方便用户学术用途使用相关资源提供的加速代理，不承诺稳定性保证。此外如遭遇恶意攻击等，将随时停止该加速服务</p>
+<p>以下为可以加速访问的学术资源地址：</p>
+<ul>
+<li><p>github.com</p>
+</li>
+<li><p>githubusercontent.com</p>
+</li>
+<li><p>githubassets.com</p>
+</li>
+<li><p>huggingface.co</p>
+</li>
+</ul>
+<p>如果在终端中使用：</p>
+<p>如果是在Notebook中使用：</p>
+<p><strong>取消学术加速</strong>，如果不再需要建议关闭学术加速，因为该加速可能对正常网络造成一定影响</p>
+<h3 id="速度对比"><a href="#速度对比" class="headerlink" title="速度对比"></a><strong>速度对比</strong></h3><p>未使用加速：</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_JKrlbTijtoithExbFnTcNETtneg_20250831_161426_834.png"></p>
+<p>使用加速：</p>
+<p><img src="/images/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-Aut_L0nubgGaqoiXrSxaFktcA7hRn8f_20250831_161426_834.png"></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/02/15/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-AutoDL%EF%BC%88%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%89/" title="大模型介绍篇-AutoDL（云服务器）">http://mzfnai.com/2025/02/15/大模型介绍篇-AutoDL（云服务器）/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" rel="tag"># 深度学习</a>
+              <a href="/tags/AutoDL/" rel="tag"># AutoDL</a>
+              <a href="/tags/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag"># 云服务器</a>
+              <a href="/tags/GPU/" rel="tag"># GPU</a>
+              <a href="/tags/%E7%AE%97%E5%8A%9B%E5%B9%B3%E5%8F%B0/" rel="tag"># 算力平台</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/02/08/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-AI%E9%A2%86%E5%9F%9F%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5/" rel="prev" title="大模型介绍篇-AI领域核心概念">
+      <i class="fa fa-chevron-left"></i> 大模型介绍篇-AI领域核心概念
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/02/22/%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%BB%8B%E7%BB%8D%E7%AF%87-ChatGPT/" rel="next" title="大模型介绍篇-ChatGPT">
+      大模型介绍篇-ChatGPT <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#AutoDL%E5%8F%AF%E4%BB%A5%E6%96%B9%E4%BE%BF%E6%88%91%E4%BB%AC%E5%9C%A8%E6%B2%A1%E6%9C%89%E8%AE%A1%E7%AE%97%E8%B5%84%E6%BA%90%E6%88%96%E8%80%85%E8%AE%A1%E7%AE%97%E8%B5%84%E6%BA%90%E4%B8%8D%E8%B6%B3%E7%9A%84%E6%97%B6%E5%80%99%E5%AD%A6%E4%B9%A0%E6%9C%AC%E5%9C%B0%E9%83%A8%E7%BD%B2%E5%A4%A7%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.</span> <span class="nav-text">AutoDL可以方便我们在没有计算资源或者计算资源不足的时候学习本地部署大模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B"><span class="nav-number"></span> <span class="nav-text">快速开始</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%AE%9E%E4%BE%8B"><span class="nav-number"></span> <span class="nav-text">创建实例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8A%E4%BC%A0%E6%95%B0%E6%8D%AE"><span class="nav-number"></span> <span class="nav-text">上传数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%88%E7%AB%AF%E8%AE%AD%E7%BB%83"><span class="nav-number"></span> <span class="nav-text">终端训练</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9GPU"><span class="nav-number"></span> <span class="nav-text">如何选择GPU</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80-%E9%80%89%E6%8B%A9CPU"><span class="nav-number">1.</span> <span class="nav-text">一. 选择CPU</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C-%E9%80%89%E6%8B%A9GPU"><span class="nav-number">2.</span> <span class="nav-text">二. 选择GPU</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89-%E9%80%89%E6%8B%A9%E5%86%85%E5%AD%98"><span class="nav-number">3.</span> <span class="nav-text">三. 选择内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%84GPU%E5%9E%8B%E5%8F%B7%E7%AE%80%E4%BB%8B"><span class="nav-number">4.</span> <span class="nav-text">附GPU型号简介</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JupyterLab"><span class="nav-number"></span> <span class="nav-text">JupyterLab</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%8A%9F%E8%83%BD%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">基本功能介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%99%84%EF%BC%9A%E4%BD%BF%E7%94%A8%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="nav-number">2.</span> <span class="nav-text">附：使用常见问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SSH%E8%BF%9C%E7%A8%8B%E8%BF%9E%E6%8E%A5"><span class="nav-number">3.</span> <span class="nav-text"># SSH远程连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SSH%E7%99%BB%E5%BD%95"><span class="nav-number">4.</span> <span class="nav-text">SSH登录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95"><span class="nav-number">5.</span> <span class="nav-text">免密登录</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Miniconda"><span class="nav-number"></span> <span class="nav-text">Miniconda</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">创建虚拟环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E8%BD%AF%E4%BB%B6%E4%BE%9D%E8%B5%96"><span class="nav-number">2.</span> <span class="nav-text">安装软件依赖</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Notebook%E7%8E%AF%E5%A2%83%E5%88%87%E6%8D%A2"><span class="nav-number">3.</span> <span class="nav-text">Notebook环境切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B8%85%E9%99%A4Conda%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83"><span class="nav-number">4.</span> <span class="nav-text">清除Conda虚拟环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E5%AE%89%E8%A3%85%E5%8C%85%E5%92%8C%E7%BC%93%E5%AD%98"><span class="nav-number">5.</span> <span class="nav-text">删除安装包和缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E5%88%B0%E6%95%B0%E6%8D%AE%E7%9B%98"><span class="nav-number">6.</span> <span class="nav-text">安装虚拟环境到数据盘</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PyCharm%E8%BF%9C%E7%A8%8B%E5%BC%80%E5%8F%91"><span class="nav-number"></span> <span class="nav-text">PyCharm远程开发</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91"><span class="nav-number">1.</span> <span class="nav-text">远程项目开发</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%A6%E6%9C%AF%E8%B5%84%E6%BA%90%E5%8A%A0%E9%80%9F"><span class="nav-number"></span> <span class="nav-text">学术资源加速</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%AC%E5%BC%80%E6%9C%8D%E5%8A%A1"><span class="nav-number">1.</span> <span class="nav-text">公开服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AutoDL%E5%86%85%E7%BD%AE%E6%9C%8D%E5%8A%A1"><span class="nav-number">2.</span> <span class="nav-text">AutoDL内置服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94"><span class="nav-number">3.</span> <span class="nav-text">速度对比</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">206</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">72</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">503</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">1.9m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">29:15</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
