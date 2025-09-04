@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I&#x2F;O 到优雅熔断">
 <meta property="og:url" content="http://mzfnai.com/2022/03/26/130python-fastapi-latency-backlog-incident-postmortem/index.html">
-<meta property="og:site_name" content="梦中飞鸟AI longchao&#39;s Blog">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
 <meta property="og:description" content="一次 FastAPI 生产接口时延飙升与连接积压事故复盘，覆盖故障现象、排查、根因（阻塞 I&#x2F;O、连接池耗尽、超时误用、进程&#x2F;线程配置不当）、修复方案（全局连接池、并发限流、超时与取消、熔断降级）与关键代码。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-03-26T13:47:35.000Z">
@@ -54,7 +54,7 @@
   };
 </script>
 
-  <title>Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I/O 到优雅熔断 | 梦中飞鸟AI longchao's Blog</title>
+  <title>Python FastAPI 时延飙升与连接积压生产事故复盘：从阻塞 I/O 到优雅熔断 | 妙知赋能AI longchao's Blog</title>
   
 
 
@@ -105,12 +105,12 @@
 
     <a href="/" class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <h1 class="site-title">梦中飞鸟AI longchao's Blog</h1>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
       <span class="logo-line-after"><i></i></span>
     </a>
       <p class="site-subtitle" itemprop="description">A blog about life</p>
       <a>
-        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="梦中飞鸟AI longchao's Blog">
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
       </a>
   </div>
 
@@ -197,7 +197,7 @@
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="梦中飞鸟AI longchao's Blog">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
