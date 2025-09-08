@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="深入探讨LangChain中的提示词工程实践，包括提示词模板创建、聊天消息模板、Few-shot示例和语义相似性示例选择器的使用方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-提示词工程应用实践">
+<meta property="og:url" content="http://mzfnai.com/2025/06/02/172LangChain%E7%AF%87-%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="深入探讨LangChain中的提示词工程实践，包括提示词模板创建、聊天消息模板、Few-shot示例和语义相似性示例选择器的使用方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-06-02T02:45:17.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:32:08.672Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="提示工程">
+<meta property="article:tag" content="Prompt模板">
+<meta property="article:tag" content="Few-shot">
+<meta property="article:tag" content="示例选择器">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://mzfnai.com/2025/06/02/172LangChain%E7%AF%87-%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-提示词工程应用实践 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/06/02/172LangChain%E7%AF%87-%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-提示词工程应用实践
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-06-02 10:45:17" itemprop="dateCreated datePublished" datetime="2025-06-02T10:45:17+08:00">2025-06-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.6k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">深入探讨LangChain中的提示词工程实践，包括提示词模板创建、聊天消息模板、Few-shot示例和语义相似性示例选择器的使用方法。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、Prompt-templates（提示词模板）"><a href="#一、Prompt-templates（提示词模板）" class="headerlink" title="一、Prompt templates（提示词模板）"></a>一、Prompt templates（提示词模板）</h2><p>语言模型以文本作为输入，这个文本通常被称为提示词（prompt）。在开发过程中，对于提示词通常不能直接硬编码，不利于提示词管理，而是通过提示词模板进行维护，类似开发过程中遇到的短信模板、邮件模板等等。</p>
+<h3 id="1-什么是提示词模板？"><a href="#1-什么是提示词模板？" class="headerlink" title="1. 什么是提示词模板？"></a>1. 什么是提示词模板？</h3><p>提示词模板本质上跟平时大家使用的邮件模板、短信模板没什么区别，就是一个字符串模板，模板可以包含一组模板参数，通过模板参数值可以替换模板对应的参数。</p>
+<p>一个提示词模板可以包含下面内容：</p>
+<ul>
+<li><p>发给大语言模型（LLM）的指令。</p>
+</li>
+<li><p>一组问答示例，以提醒 AI 以什么格式返回请求。</p>
+</li>
+<li><p>发给语言模型的问题。</p>
+</li>
+</ul>
+<h3 id="2-创建一个提示词模板（prompt-template）"><a href="#2-创建一个提示词模板（prompt-template）" class="headerlink" title="2. 创建一个提示词模板（prompt template）"></a>2. 创建一个提示词模板（prompt template）</h3><p>可以使用 <code>PromptTemplate</code> 类创建简单的提示词。提示词模板可以内嵌任意数量的模板参数，然后通过参数值格式化模板内容。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line">prompt_template = PromptTemplate.from_template(</span><br><span class="line">    <span class="string">&quot;给我讲一个关于&#123;content&#125;的&#123;adjective&#125;笑话。&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">result = prompt_template.<span class="built_in">format</span>(adjective=<span class="string">&quot;冷&quot;</span>, content=<span class="string">&quot;猴子&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(result)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-聊天消息提示词模板（chat-prompt-template）"><a href="#3-聊天消息提示词模板（chat-prompt-template）" class="headerlink" title="3. 聊天消息提示词模板（chat prompt template）"></a>3. 聊天消息提示词模板（chat prompt template）</h3><p>聊天模型（Chat Model）以聊天消息列表作为输入，这个聊天消息列表的消息内容也可以通过提示词模板进行管理。这些聊天消息与原始字符串不同，因为每个消息都与“角色（role）”相关联。</p>
+<p>例如，在通义千问的框架下，聊天模型支持为聊天消息指定特定的角色类型，以便更好地指导对话流程和内容生成。具体来说，这些角色类型包括：</p>
+<ul>
+<li><p>系统（System）：这类消息通常用于设置 AI 的行为准则或者提供背景信息，帮助确定AI回复的风格、限制等。</p>
+</li>
+<li><p>用户（User）：代表由用户发出的消息内容，即输入给AI的问题或陈述。</p>
+</li>
+<li><p>助手（Assistant）：指当前消息是由 AI 助手生成的回答内容。</p>
+</li>
+</ul>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">from langchain_core.prompts import ChatPromptTemplate</span><br><span class="line"></span><br><span class="line">chat_template = ChatPromptTemplate.from_messages(</span><br><span class="line">    [</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;你是一位人工智能助手，你的名字是&#123;name&#125;。&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;你好&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;ai&quot;</span>, <span class="string">&quot;我很好，谢谢！&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;&#123;user_input&#125;&quot;</span>),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">messages = chat_template.format_messages(name=<span class="string">&quot;Bob&quot;</span>, user_input=<span class="string">&quot;你的名字叫什么？&quot;</span>)</span><br><span class="line">print(messages)</span><br></pre></td></tr></table></figure>
+
+<p>另外一种消息格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts <span class="keyword">import</span> HumanMessagePromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> SystemMessage</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"></span><br><span class="line">chat_template = ChatPromptTemplate.from_messages(</span><br><span class="line">    [</span><br><span class="line">        SystemMessage(</span><br><span class="line">            content=(<span class="string">&quot;你是一个乐于助人的助手，可以润色内容，使其看起来起来更简单易读。&quot;</span></span><br><span class="line">            )</span><br><span class="line">        ),</span><br><span class="line">        HumanMessagePromptTemplate.from_template(<span class="string">&quot;&#123;text&#125;&quot;</span>),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">messages = chat_template.format_messages(text=<span class="string">&quot;我不喜欢吃好吃的东西&quot;</span>)</span><br><span class="line"><span class="built_in">print</span>(messages)</span><br></pre></td></tr></table></figure>
+
+<p>通常我们不会直接使用 format_messages 函数格式化提示模板（prompt templae）内容, 而是交给 Langchain 框架自动处理。</p>
+<h3 id="4-MessagesPlaceholder"><a href="#4-MessagesPlaceholder" class="headerlink" title="4. MessagesPlaceholder"></a>4. MessagesPlaceholder</h3><p>这个提示模板负责在特定位置添加消息列表。如果希望将用户传入的一个消息列表插入到特定位置，可以使用 MessagesPlaceholder 的方式。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate, MessagesPlaceholder</span><br><span class="line"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage</span><br><span class="line"></span><br><span class="line">prompt_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;You are a helpful assistant&quot;</span>),</span><br><span class="line">    MessagesPlaceholder(<span class="string">&quot;msgs&quot;</span>)</span><br><span class="line">])</span><br><span class="line"></span><br><span class="line">messages = prompt_template.invoke(&#123;<span class="string">&quot;msgs&quot;</span>: [HumanMessage(content=<span class="string">&quot;hi!&quot;</span>)]&#125;)</span><br><span class="line"><span class="built_in">print</span>(messages)</span><br></pre></td></tr></table></figure>
+
+<p>&#x20;另一种实现相同效果的替代方法是，不直接使用 <code>MessagesPlaceholder</code> 类，而是：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">prompt_template = ChatPromptTemplate.from_messages([</span><br><span class="line">    (<span class="string">&quot;system&quot;</span>, <span class="string">&quot;You are a helpful assistant&quot;</span>),</span><br><span class="line">    (<span class="string">&quot;placeholder&quot;</span>, <span class="string">&quot;&#123;msgs&#125;&quot;</span>)</span><br><span class="line">])</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="二、提示词追加示例（Few-shot-prompt-templates）"><a href="#二、提示词追加示例（Few-shot-prompt-templates）" class="headerlink" title="二、提示词追加示例（Few-shot prompt templates）"></a>二、提示词追加示例（Few-shot prompt templates）</h2><p>在与大语言模型交互时，我们常常会遇到这样的问题：模型不能准确理解我们的任务意图，或者输出格式不一致。这时，我们可以在提示词中加入样本，帮助模型更好地理解用户的意图，从而更好地回答问题或执行任务。</p>
+<p>小样本提示模板是指使用一组少量的示例来指导模型处理新的输入。这些示例可以用来训练模型，以便模型可以更好地理解和回答类似的问题。</p>
+<p>例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Q: 什么是蝙蝠侠？</span><br><span class="line">A: 蝙蝠侠是一个虚构的漫画人物。</span><br><span class="line"></span><br><span class="line">Q: 什么是torsalplexity？</span><br><span class="line">A: 未知。</span><br><span class="line"></span><br><span class="line">Q: 什么是语言模型？</span><br><span class="line">A:</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-使用示例集"><a href="#1-使用示例集" class="headerlink" title="1. 使用示例集"></a>1. 使用示例集</h3><ul>
+<li><strong>创建示例集</strong></li>
+</ul>
+<p>定义一个 examples 示例数组，里面包含一组问答样例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts.few_shot <span class="keyword">import</span> FewShotPromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain.prompts.prompt <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line">examples = [</span><br><span class="line">  &#123;<span class="string">&quot;question&quot;</span>: <span class="string">&quot;谁的寿命更长，穆罕默德·阿里还是艾伦·图灵？&quot;</span>,<span class="string">&quot;answer&quot;</span>:</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">这里需要跟进问题吗：是的。</span></span><br><span class="line"><span class="string">跟进：穆罕默德·阿里去世时多大？</span></span><br><span class="line"><span class="string">中间答案：穆罕默德·阿里去世时74岁。</span></span><br><span class="line"><span class="string">跟进：艾伦·图灵去世时多大？</span></span><br><span class="line"><span class="string">中间答案：艾伦·图灵去世时41岁。</span></span><br><span class="line"><span class="string">所以最终答案是：穆罕默德·阿里</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;<span class="string">&quot;question&quot;</span>: <span class="string">&quot;craigslist的创始人是什么时候出生的？&quot;</span>,<span class="string">&quot;answer&quot;</span>:</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">这里需要跟进问题吗：是的。</span></span><br><span class="line"><span class="string">跟进：craigslist的创始人是谁？</span></span><br><span class="line"><span class="string">中间答案：craigslist由Craig Newmark创立。</span></span><br><span class="line"><span class="string">跟进：Craig Newmark是什么时候出生的？</span></span><br><span class="line"><span class="string">中间答案：Craig Newmark于1952年12月6日出生。</span></span><br><span class="line"><span class="string">所以最终答案是：1952年12月6日</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;<span class="string">&quot;question&quot;</span>: <span class="string">&quot;乔治·华盛顿的祖父母中的母亲是谁？&quot;</span>,<span class="string">&quot;answer&quot;</span>:</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">这里需要跟进问题吗：是的。</span></span><br><span class="line"><span class="string">跟进：乔治·华盛顿的母亲是谁？</span></span><br><span class="line"><span class="string">中间答案：乔治·华盛顿的母亲是Mary Ball Washington。</span></span><br><span class="line"><span class="string">跟进：Mary Ball Washington的父亲是谁？</span></span><br><span class="line"><span class="string">中间答案：Mary Ball Washington的父亲是Joseph Ball。</span></span><br><span class="line"><span class="string">所以最终答案是：Joseph Ball</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;<span class="string">&quot;question&quot;</span>: <span class="string">&quot;《大白鲨》和《皇家赌场》的导演都来自同一个国家吗？&quot;</span>,<span class="string">&quot;answer&quot;</span>:</span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">这里需要跟进问题吗：是的。</span></span><br><span class="line"><span class="string">跟进：《大白鲨》的导演是谁？</span></span><br><span class="line"><span class="string">中间答案：《大白鲨》的导演是Steven Spielberg。</span></span><br><span class="line"><span class="string">跟进：Steven Spielberg来自哪里？</span></span><br><span class="line"><span class="string">中间答案：美国。</span></span><br><span class="line"><span class="string">跟进：《皇家赌场》的导演是谁？</span></span><br><span class="line"><span class="string">中间答案：《皇家赌场》的导演是Martin Campbell。</span></span><br><span class="line"><span class="string">跟进：Martin Campbell来自哪里？</span></span><br><span class="line"><span class="string">中间答案：新西兰。</span></span><br><span class="line"><span class="string">所以最终答案是：不是</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>创建小样本示例的格式化程序</strong></li>
+</ul>
+<p>通过 <code>PromptTemplate</code> 对象，简单的在提示词模板中插入样例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">example_prompt = PromptTemplate(input_variables=[<span class="string">&quot;question&quot;</span>, <span class="string">&quot;answer&quot;</span>], template=<span class="string">&quot;问题：&#123;question&#125;\\n&#123;answer&#125;&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(example_prompt.<span class="built_in">format</span>(**examples[<span class="number">0</span>]))</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>将示例和格式化程序提供给 <code>FewShotPromptTemplate</code></strong></li>
+</ul>
+<p>通过 <code>FewShotPromptTemplate</code> 对象，批量插入示例内容。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">prompt = FewShotPromptTemplate(</span><br><span class="line">    examples=examples,</span><br><span class="line">    example_prompt=example_prompt,</span><br><span class="line">    suffix=<span class="string">&quot;问题：&#123;input&#125;&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;input&quot;</span>]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(prompt.<span class="built_in">format</span>(<span class="built_in">input</span>=<span class="string">&quot;乔治·华盛顿的父亲是谁？&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="2-使用示例选择器"><a href="#2-使用示例选择器" class="headerlink" title="2. 使用示例选择器"></a>2. 使用示例选择器</h3><ul>
+<li><strong>将示例提供给 <code>ExampleSelector</code></strong></li>
+</ul>
+<p>这里重用前一部分中的示例集和提示词模板，但是不会将示例直接提供给 <code>FewShotPromptTemplate</code> 对象，把全部示例插入到提示词中，而是将它们提供给一个 <code>ExampleSelector</code> 对象，插入部分示例。</p>
+<p>这里我们使用 <code>SemanticSimilarityExampleSelector</code> 类。该类根据与输入的相似性选择小样本示例。它使用嵌入模型计算输入和小样本示例之间的相似性，然后使用向量数据库执行相似搜索，获取跟输入相似的示例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain.prompts.example_selector <span class="keyword">import</span> SemanticSimilarityExampleSelector</span><br><span class="line"><span class="keyword">from</span> langchain_community.embeddings <span class="keyword">import</span> DashScopeEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"></span><br><span class="line">example_selector = SemanticSimilarityExampleSelector.from_examples(</span><br><span class="line">    <span class="comment"># 可供选择的示例列表</span></span><br><span class="line">    examples,</span><br><span class="line">    <span class="comment"># 用于生成向量的嵌入类，该向量用于衡量语义相似性</span></span><br><span class="line">    DashScopeEmbeddings(),</span><br><span class="line">    <span class="comment"># 用于存储向量和执行相似性搜索的VectorStore类</span></span><br><span class="line">    Chroma,</span><br><span class="line">    <span class="comment"># 要生成的示例数</span></span><br><span class="line">    k=<span class="number">1</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>将示例选择器提供给 <code>FewShotPromptTemplate</code></strong></li>
+</ul>
+<p>最后，创建一个 <code>FewShotPromptTemplate</code> 对象。根据前面的 example_selector 示例选择器，选择一个跟问题相似的例子。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">prompt = FewShotPromptTemplate(</span><br><span class="line">    example_selector=example_selector,</span><br><span class="line">    example_prompt=example_prompt,</span><br><span class="line">    suffix=<span class="string">&quot;问题：&#123;input&#125;&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;input&quot;</span>]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(prompt.<span class="built_in">format</span>(<span class="built_in">input</span>=<span class="string">&quot;乔治·华盛顿的父亲是谁？&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/06/02/172LangChain%E7%AF%87-%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/" title="LangChain篇-提示词工程应用实践">http://mzfnai.com/2025/06/02/172LangChain篇-提示词工程应用实践/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B/" rel="tag"># 提示工程</a>
+              <a href="/tags/Prompt%E6%A8%A1%E6%9D%BF/" rel="tag"># Prompt模板</a>
+              <a href="/tags/Few-shot/" rel="tag"># Few-shot</a>
+              <a href="/tags/%E7%A4%BA%E4%BE%8B%E9%80%89%E6%8B%A9%E5%99%A8/" rel="tag"># 示例选择器</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/05/26/171LangChain%E7%AF%87-%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8%E4%B8%8E%E5%BA%95%E5%B1%82%E9%80%BB%E8%BE%91/" rel="prev" title="LangChain篇-快速入门与底层逻辑">
+      <i class="fa fa-chevron-left"></i> LangChain篇-快速入门与底层逻辑
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/06/09/173LangChain%E7%AF%87-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/" rel="next" title="LangChain篇-工作流编排">
+      LangChain篇-工作流编排 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81Prompt-templates%EF%BC%88%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF%EF%BC%89"><span class="nav-number">1.</span> <span class="nav-text">一、Prompt templates（提示词模板）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">1. 什么是提示词模板？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF%EF%BC%88prompt-template%EF%BC%89"><span class="nav-number">1.2.</span> <span class="nav-text">2. 创建一个提示词模板（prompt template）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%81%8A%E5%A4%A9%E6%B6%88%E6%81%AF%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%A8%A1%E6%9D%BF%EF%BC%88chat-prompt-template%EF%BC%89"><span class="nav-number">1.3.</span> <span class="nav-text">3. 聊天消息提示词模板（chat prompt template）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-MessagesPlaceholder"><span class="nav-number">1.4.</span> <span class="nav-text">4. MessagesPlaceholder</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%8F%90%E7%A4%BA%E8%AF%8D%E8%BF%BD%E5%8A%A0%E7%A4%BA%E4%BE%8B%EF%BC%88Few-shot-prompt-templates%EF%BC%89"><span class="nav-number">2.</span> <span class="nav-text">二、提示词追加示例（Few-shot prompt templates）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E9%9B%86"><span class="nav-number">2.1.</span> <span class="nav-text">1. 使用示例集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B%E9%80%89%E6%8B%A9%E5%99%A8"><span class="nav-number">2.2.</span> <span class="nav-text">2. 使用示例选择器</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="深入探讨LangChain自定义会话管理和检索器实现，包括对话历史持久化、状态管理和检索链构建的最佳实践。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-自定义会话管理和Retriever">
+<meta property="og:url" content="http://mzfnai.com/2025/07/03/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E5%92%8CRetriever/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="深入探讨LangChain自定义会话管理和检索器实现，包括对话历史持久化、状态管理和检索链构建的最佳实践。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_OwEYbHXhUogjfBxmllmcMrT8nTf_20250908_112028_760.png">
+<meta property="article:published_time" content="2025-07-03T06:18:47.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:46:33.247Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="状态管理">
+<meta property="article:tag" content="会话管理">
+<meta property="article:tag" content="Retriever">
+<meta property="article:tag" content="BaseChatMessageHistory">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_OwEYbHXhUogjfBxmllmcMrT8nTf_20250908_112028_760.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/03/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E5%92%8CRetriever/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-自定义会话管理和Retriever | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/03/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E5%92%8CRetriever/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-自定义会话管理和Retriever
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-03 14:18:47" itemprop="dateCreated datePublished" datetime="2025-07-03T14:18:47+08:00">2025-07-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">深入探讨LangChain自定义会话管理和检索器实现，包括对话历史持久化、状态管理和检索链构建的最佳实践。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、如何自定义会话管理"><a href="#一、如何自定义会话管理" class="headerlink" title="一、如何自定义会话管理"></a>一、如何自定义会话管理</h2><p><img src="/images/LangChain%E7%AF%87_OwEYbHXhUogjfBxmllmcMrT8nTf_20250908_112028_760.png"></p>
+<p>之前我们已经介绍了如何添加会话历史记录，但我们仍在手动更新对话历史并将其插入到每个输入中。在真正的问答应用程序中，我们希望有一种持久化对话历史的方式，并且有一种自动插入和更新它的方式。 为此，我们可以使用：</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/langchain_api_reference.html#module-langchain.memory">BaseChatMessageHistory</a>: 存储对话历史。</p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/how_to/message_history/">RunnableWithMessageHistory</a>: LCEL 链和 <code>BaseChatMessageHistory</code> 的包装器，负责将对话历史注入输入并在每次调用后更新它。 要详细了解如何将这些类结合在一起创建有状态的对话链，请转到 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/how_to/message_history/">如何添加消息历史（内存）</a>LCEL 页面。 下面，我们实现了第二种选项的一个简单示例，其中对话历史存储在一个简单的字典中。<code>RunnableWithMessageHistory</code> 的实例会为您管理对话历史。它们接受一个带有键（默认为<code>&quot;session_id&quot;</code>）的配置，该键指定要获取和预置到输入中的对话历史，并将输出附加到相同的对话历史。以下是一个示例：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：custom_chat_session.py</span></span><br><span class="line"><span class="comment"># pip install --upgrade langchain langchain-community langchainhub langchain-chroma bs4import bs4</span></span><br><span class="line"><span class="keyword">from</span> langchain_chroma <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> WebBaseLoader</span><br><span class="line"><span class="keyword">from</span> langchain_core.chat_history <span class="keyword">import</span> BaseChatMessageHistory</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> MessagesPlaceholder</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> RecursiveCharacterTextSplitter</span><br><span class="line"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> AIMessage, HumanMessage</span><br><span class="line"><span class="keyword">from</span> langchain.<span class="built_in">globals</span> <span class="keyword">import</span> set_debug</span><br><span class="line"><span class="keyword">from</span> langchain_core.runnables.history <span class="keyword">import</span> RunnableWithMessageHistory</span><br><span class="line"><span class="keyword">from</span> langchain_community.chat_message_histories <span class="keyword">import</span> ChatMessageHistory</span><br><span class="line"><span class="keyword">from</span> langchain.chains.combine_documents <span class="keyword">import</span> create_stuff_documents_chain</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> create_history_aware_retriever</span><br><span class="line"><span class="keyword">from</span> langchain.chains <span class="keyword">import</span> create_retrieval_chain</span><br><span class="line"></span><br><span class="line"><span class="comment"># 打印调试日志</span></span><br><span class="line">set_debug(<span class="literal">False</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个 WebBaseLoader 对象，用于从指定网址加载文档</span></span><br><span class="line">loader = WebBaseLoader(</span><br><span class="line">    web_paths=(<span class="string">&quot;https://lilianweng.github.io/posts/2023-06-23-agent/&quot;</span>,),</span><br><span class="line">    bs_kwargs=<span class="built_in">dict</span>(</span><br><span class="line">        parse_only=bs4.SoupStrainer(</span><br><span class="line">            class_=(<span class="string">&quot;post-content&quot;</span>, <span class="string">&quot;post-title&quot;</span>, <span class="string">&quot;post-header&quot;</span>)</span><br><span class="line">        )</span><br><span class="line">    ),</span><br><span class="line">)</span><br><span class="line"><span class="comment"># 加载文档</span></span><br><span class="line">docs = loader.load()</span><br><span class="line"><span class="comment"># 创建一个 RecursiveCharacterTextSplitter 对象，用于将文档拆分成较小的文本块</span></span><br><span class="line">text_splitter = RecursiveCharacterTextSplitter(chunk_size=<span class="number">1000</span>, chunk_overlap=<span class="number">200</span>)</span><br><span class="line"><span class="comment"># 将文档拆分成文本块</span></span><br><span class="line">splits = text_splitter.split_documents(docs)</span><br><span class="line"><span class="comment"># 创建一个 Chroma 对象，用于存储文本块的向量表示</span></span><br><span class="line">vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())</span><br><span class="line"><span class="comment"># 将向量存储转换为检索器</span></span><br><span class="line">retriever = vectorstore.as_retriever()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义系统提示词模板</span></span><br><span class="line">system_prompt = (<span class="string">&quot;您是一个用于问答任务的助手。&quot;</span><span class="string">&quot;使用以下检索到的上下文片段来回答问题。&quot;</span><span class="string">&quot;如果您不知道答案，请说您不知道。&quot;</span><span class="string">&quot;最多使用三句话，保持回答简洁。&quot;</span><span class="string">&quot;\n\n&quot;</span><span class="string">&quot;&#123;context&#125;&quot;</span></span><br><span class="line">)</span><br><span class="line"><span class="comment"># 创建一个 ChatPromptTemplate 对象，用于生成提示词</span></span><br><span class="line">prompt = ChatPromptTemplate.from_messages(</span><br><span class="line">    [</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, system_prompt),</span><br><span class="line">        (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个带有聊天历史记录的提示词模板</span></span><br><span class="line">qa_prompt = ChatPromptTemplate.from_messages(</span><br><span class="line">    [</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, system_prompt),</span><br><span class="line">        MessagesPlaceholder(<span class="string">&quot;chat_history&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个 ChatOpenAI 对象，表示聊天模型</span></span><br><span class="line">llm = ChatOpenAI()</span><br><span class="line"><span class="comment"># 创建一个问答链</span></span><br><span class="line">question_answer_chain = create_stuff_documents_chain(llm, prompt)</span><br><span class="line"><span class="comment"># 创建一个检索链，将检索器和问答链结合</span></span><br><span class="line">rag_chain = create_retrieval_chain(retriever, question_answer_chain)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义上下文化问题的系统提示词</span></span><br><span class="line">contextualize_q_system_prompt = (<span class="string">&quot;给定聊天历史和最新的用户问题，&quot;</span><span class="string">&quot;该问题可能引用聊天历史中的上下文，&quot;</span><span class="string">&quot;重新构造一个可以在没有聊天历史的情况下理解的独立问题。&quot;</span><span class="string">&quot;如果需要，不要回答问题，只需重新构造问题并返回。&quot;</span></span><br><span class="line">)</span><br><span class="line"><span class="comment"># 创建一个上下文化问题提示词模板</span></span><br><span class="line">contextualize_q_prompt = ChatPromptTemplate.from_messages(</span><br><span class="line">    [</span><br><span class="line">        (<span class="string">&quot;system&quot;</span>, contextualize_q_system_prompt),</span><br><span class="line">        MessagesPlaceholder(<span class="string">&quot;chat_history&quot;</span>),</span><br><span class="line">        (<span class="string">&quot;human&quot;</span>, <span class="string">&quot;&#123;input&#125;&quot;</span>),</span><br><span class="line">    ]</span><br><span class="line">)</span><br><span class="line"><span class="comment"># 创建一个带有历史记录感知的检索器</span></span><br><span class="line">history_aware_retriever = create_history_aware_retriever(</span><br><span class="line">    llm, retriever, contextualize_q_prompt</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个带有聊天历史记录的问答链</span></span><br><span class="line">question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)</span><br><span class="line"><span class="comment"># 创建一个带有历史记录感知的检索链</span></span><br><span class="line">rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个字典，用于存储聊天历史记录</span></span><br><span class="line">store = &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义一个函数，用于获取指定会话的聊天历史记录def get_session_history(session_id: str) -&gt; BaseChatMessageHistory:if session_id not in store:</span></span><br><span class="line">        store[session_id] = ChatMessageHistory()<span class="keyword">return</span> store[session_id]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个 RunnableWithMessageHistory 对象，用于管理有状态的聊天历史记录</span></span><br><span class="line">conversational_rag_chain = RunnableWithMessageHistory(</span><br><span class="line">    rag_chain,</span><br><span class="line">    get_session_history,</span><br><span class="line">    input_messages_key=<span class="string">&quot;input&quot;</span>,</span><br><span class="line">    history_messages_key=<span class="string">&quot;chat_history&quot;</span>,</span><br><span class="line">    output_messages_key=<span class="string">&quot;answer&quot;</span>,</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 调用有状态的检索链，获取回答</span></span><br><span class="line">response = conversational_rag_chain.invoke(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;什么是任务分解?&quot;</span>&#125;,</span><br><span class="line">    config=&#123;<span class="string">&quot;configurable&quot;</span>: &#123;<span class="string">&quot;session_id&quot;</span>: <span class="string">&quot;abc123&quot;</span>&#125;</span><br><span class="line">    &#125;,  <span class="comment"># 在 `store` 中构建一个键为 &quot;abc123&quot; 的键。</span></span><br><span class="line">)[<span class="string">&quot;answer&quot;</span>]</span><br><span class="line"><span class="built_in">print</span>(response)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">任务分解是将复杂任务拆分成多个较小、简单的步骤的过程。通过任务分解，代理可以更好地理解任务的各个部分，并事先规划好执行顺序。这可以通过不同的方法实现，如使用提示或指令，或依靠人类输入。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 再次调用有状态的检索链，获取另一个回答</span></span><br><span class="line">response = conversational_rag_chain.invoke(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;我刚刚问了什么?&quot;</span>&#125;,</span><br><span class="line">    config=&#123;<span class="string">&quot;configurable&quot;</span>: &#123;<span class="string">&quot;session_id&quot;</span>: <span class="string">&quot;abc123&quot;</span>&#125;&#125;,</span><br><span class="line">)[<span class="string">&quot;answer&quot;</span>]</span><br><span class="line"><span class="built_in">print</span>(response)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">任务分解是将复杂任务拆分成多个较小、简单的步骤的过程。通过任务分解，代理可以更好地理解任务的各个部分，并事先规划好执行顺序。这可以通过不同的方法实现，如使用提示或指令，或依靠人类输入。</span><br></pre></td></tr></table></figure>
+
+<p>换一个session_id调用，会话不再共享</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 再次调用有状态的检索链，换一个session_id</span></span><br><span class="line">response = conversational_rag_chain.invoke(</span><br><span class="line">    &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;我刚刚问了什么?&quot;</span>&#125;,</span><br><span class="line">    config=&#123;<span class="string">&quot;configurable&quot;</span>: &#123;<span class="string">&quot;session_id&quot;</span>: <span class="string">&quot;abc456&quot;</span>&#125;&#125;,</span><br><span class="line">)[<span class="string">&quot;answer&quot;</span>]</span><br><span class="line"><span class="built_in">print</span>(response)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">您最近询问了有关一个经典平台游戏的信息，其中主角是名叫Mario的管道工，游戏共有10个关卡，主角可以行走和跳跃，需要避开障碍物和敌人的攻击。</span><br></pre></td></tr></table></figure>
+
+<p>对话历史可以在 <code>store</code> 字典中检查：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 打印存储在会话 &quot;abc123&quot; 中的所有消息</span></span><br><span class="line"><span class="keyword">for</span> message <span class="keyword">in</span> store[<span class="string">&quot;abc123&quot;</span>].messages:</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">isinstance</span>(message, AIMessage):</span><br><span class="line">        prefix = <span class="string">&quot;AI&quot;</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        prefix = <span class="string">&quot;User&quot;</span><span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;prefix&#125;</span>: <span class="subst">&#123;message.content&#125;</span>\n&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">User: 什么是任务分解?</span><br><span class="line"></span><br><span class="line">AI: 任务分解是将复杂任务拆分成多个较小、简单的步骤的过程。通过任务分解，代理可以更好地理解任务的各个部分，并事先规划好执行顺序。这可以通过不同的方法实现，如使用提示或指令，或依靠人类输入。</span><br><span class="line"></span><br><span class="line">User: 我刚刚问了什么?</span><br><span class="line"></span><br><span class="line">AI: 您刚刚问了关于任务分解的问题。任务分解是将复杂任务拆分成多个较小、简单的步骤的过程。这有助于代理更好地理解任务并规划执行顺序。</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="二、如何创建自定义Retriever"><a href="#二、如何创建自定义Retriever" class="headerlink" title="二、如何创建自定义Retriever"></a>二、如何创建自定义Retriever</h2><h3 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h3><p>许多LLM应用程序涉及使用 <code>Retriever</code> 从外部数据源检索信息。 检索器负责检索与给定用户 <code>query</code> 相关的 <code>Documents</code> 列表。 检索到的文档通常被格式化为提示，然后输入 LLM，使 LLM 能够使用其中的信息生成适当的响应（例如，基于知识库回答用户问题）。</p>
+<h3 id="2-接口"><a href="#2-接口" class="headerlink" title="2. 接口"></a>2. 接口</h3><p>要创建自己的检索器，您需要扩展 <code>BaseRetriever</code> 类并实现以下方法：</p>
+<p><code>_get_relevant_documents</code> 中的逻辑可以涉及对数据库或使用请求对网络进行任意调用。 通过从 <code>BaseRetriever</code> 继承，您的检索器将自动成为 LangChain <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#interface">Runnable</a>，并将获得标准的 <code>Runnable</code> 功能，您可以使用 <code>RunnableLambda</code> 或 <code>RunnableGenerator</code> 来实现检索器。 将检索器实现为 <code>BaseRetriever</code> 与将其实现为 <code>RunnableLambda</code>（自定义 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/how_to/functions/">runnable function</a>）相比的主要优点是，<code>BaseRetriever</code> 是一个众所周知的 LangChain 实体，因此一些监控工具可能会为检索器实现专门的行为。另一个区别是，在某些 API 中，<code>BaseRetriever</code> 与 <code>RunnableLambda</code> 的行为略有不同；例如，在 <code>astream_events</code> API中，<code>start</code> 事件将是 <code>on_retriever_start</code>，而不是 <code>on_chain_start</code>。</p>
+<h3 id="3-示例"><a href="#3-示例" class="headerlink" title="3. 示例"></a>3. 示例</h3><p>让我们实现一个动物检索器，它返回所有文档中包含用户查询文本的文档。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：retriever_animal.py</span></span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> Listfrom langchain_core.callbacks </span><br><span class="line"><span class="keyword">import</span> CallbackManagerForRetrieverRun, AsyncCallbackManagerForRetrieverRun</span><br><span class="line"><span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document</span><br><span class="line"><span class="keyword">from</span> langchain_core.retrievers <span class="keyword">import</span> BaseRetriever</span><br><span class="line"><span class="keyword">import</span> asyncio</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AnimalRetriever</span>(<span class="title class_ inherited__">BaseRetriever</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;包含用户查询的前k个文档的动物检索器。k从0开始</span></span><br><span class="line"><span class="string">    该检索器实现了同步方法`_get_relevant_documents`。</span></span><br><span class="line"><span class="string">    如果检索器涉及文件访问或网络访问，它可以受益于`_aget_relevant_documents`的本机异步实现。</span></span><br><span class="line"><span class="string">    与可运行对象一样，提供了默认的异步实现，该实现委托给在另一个线程上运行的同步实现。</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    documents: <span class="type">List</span>[Document]</span><br><span class="line">    <span class="string">&quot;&quot;&quot;要检索的文档列表。&quot;&quot;&quot;</span></span><br><span class="line">    k: <span class="built_in">int</span></span><br><span class="line">    <span class="string">&quot;&quot;&quot;要返回的前k个结果的数量&quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">_get_relevant_documents</span>(<span class="params"></span></span><br><span class="line"><span class="params">            self, query: <span class="built_in">str</span>, *, run_manager: CallbackManagerForRetrieverRun</span></span><br><span class="line"><span class="params">    </span>) -&gt; <span class="type">List</span>[Document]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;检索器的同步实现。&quot;&quot;&quot;</span></span><br><span class="line">        matching_documents = []</span><br><span class="line">        <span class="keyword">for</span> document <span class="keyword">in</span> <span class="variable language_">self</span>.documents:</span><br><span class="line">            <span class="keyword">if</span> <span class="built_in">len</span>(matching_documents) &gt;= <span class="variable language_">self</span>.k:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">if</span> query.lower() <span class="keyword">in</span> document.page_content.lower():</span><br><span class="line">                matching_documents.append(document)</span><br><span class="line">        <span class="keyword">return</span> matching_documents</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">_aget_relevant_documents</span>(<span class="params"></span></span><br><span class="line"><span class="params">            self, query: <span class="built_in">str</span>, *, run_manager: AsyncCallbackManagerForRetrieverRun</span></span><br><span class="line"><span class="params">        </span>) -&gt; <span class="type">List</span>[Document]:</span><br><span class="line">            <span class="string">&quot;&quot;&quot;异步获取与查询相关的文档。</span></span><br><span class="line"><span class="string">            Args:</span></span><br><span class="line"><span class="string">                query: 要查找相关文档的字符串</span></span><br><span class="line"><span class="string">                run_manager: 要使用的回调处理程序</span></span><br><span class="line"><span class="string">            Returns:</span></span><br><span class="line"><span class="string">                相关文档列表</span></span><br><span class="line"><span class="string">            &quot;&quot;&quot;</span></span><br><span class="line">            matching_documents = []</span><br><span class="line">            <span class="keyword">for</span> document <span class="keyword">in</span> <span class="variable language_">self</span>.documents:</span><br><span class="line">                <span class="keyword">if</span> <span class="built_in">len</span>(matching_documents) &gt;= <span class="variable language_">self</span>.k:</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">                <span class="keyword">if</span> query.lower() <span class="keyword">in</span> document.page_content.lower():</span><br><span class="line">                    matching_documents.append(document)</span><br><span class="line">            <span class="keyword">return</span> matching_documents</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-测试"><a href="#4-测试" class="headerlink" title="4. 测试"></a>4. 测试</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">documents = [</span><br><span class="line">    Document(</span><br><span class="line">        page_content=<span class="string">&quot;狗是很好的伴侣，以其忠诚和友好著称。&quot;</span>,</span><br><span class="line">        metadata=&#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;狗&quot;</span>, <span class="string">&quot;trait&quot;</span>: <span class="string">&quot;忠诚&quot;</span>&#125;,</span><br><span class="line">    ),</span><br><span class="line">    Document(</span><br><span class="line">        page_content=<span class="string">&quot;猫是独立的宠物，通常喜欢自己的空间。&quot;</span>,</span><br><span class="line">        metadata=&#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;猫&quot;</span>, <span class="string">&quot;trait&quot;</span>: <span class="string">&quot;独立&quot;</span>&#125;,</span><br><span class="line">    ),</span><br><span class="line">    Document(</span><br><span class="line">        page_content=<span class="string">&quot;金鱼是初学者的热门宠物，护理相对简单。&quot;</span>,</span><br><span class="line">        metadata=&#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;鱼&quot;</span>, <span class="string">&quot;trait&quot;</span>: <span class="string">&quot;低维护&quot;</span>&#125;,</span><br><span class="line">    ),</span><br><span class="line">    Document(</span><br><span class="line">        page_content=<span class="string">&quot;鹦鹉是聪明的鸟类，能够模仿人类的语言。&quot;</span>,</span><br><span class="line">        metadata=&#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;鸟&quot;</span>, <span class="string">&quot;trait&quot;</span>: <span class="string">&quot;聪明&quot;</span>&#125;,</span><br><span class="line">    ),</span><br><span class="line">    Document(</span><br><span class="line">        page_content=<span class="string">&quot;兔子是社交动物，需要足够的空间跳跃。&quot;</span>,</span><br><span class="line">        metadata=&#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;兔子&quot;</span>, <span class="string">&quot;trait&quot;</span>: <span class="string">&quot;社交&quot;</span>&#125;,</span><br><span class="line">    ),</span><br><span class="line">]</span><br><span class="line">retriever = ToyRetriever(documents=documents, k=<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">retriever.invoke(<span class="string">&quot;宠物&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;<span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;猫&#x27;</span>, <span class="string">&#x27;trait&#x27;</span>: <span class="string">&#x27;独立&#x27;</span>&#125;, page_content=<span class="string">&#x27;猫是独立的宠物，通常喜欢自己的空间。&#x27;</span>), Document(metadata=&#123;<span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;鱼&#x27;</span>, <span class="string">&#x27;trait&#x27;</span>: <span class="string">&#x27;低维护&#x27;</span>&#125;, page_content=<span class="string">&#x27;金鱼是初学者的热门宠物，护理相对简单。&#x27;</span>)]</span><br></pre></td></tr></table></figure>
+
+<p>这是一个<strong>可运行</strong>的示例，因此它将受益于标准的 Runnable 接口！🤩</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">await</span> retriever.ainvoke(<span class="string">&quot;狗&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;<span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;狗&#x27;</span>, <span class="string">&#x27;trait&#x27;</span>: <span class="string">&#x27;忠诚&#x27;</span>&#125;, page_content=<span class="string">&#x27;狗是很好的伴侣，以其忠诚和友好著称。&#x27;</span>)]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">retriever.batch([<span class="string">&quot;猫&quot;</span>, <span class="string">&quot;兔子&quot;</span>])</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;<span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;狗&#x27;</span>, <span class="string">&#x27;trait&#x27;</span>: <span class="string">&#x27;忠诚&#x27;</span>&#125;, page_content=<span class="string">&#x27;狗是很好的伴侣，以其忠诚和友好著称。&#x27;</span>)]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">for</span> event <span class="keyword">in</span> retriever.astream_events(<span class="string">&quot;猫&quot;</span>, version=<span class="string">&quot;v1&quot;</span>):<span class="built_in">print</span>(event)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">&#x27;event&#x27;:</span> <span class="string">&#x27;on_retriever_start&#x27;</span>, <span class="attr">&#x27;run_id&#x27;:</span> <span class="string">&#x27;c0101364-5ef3-4756-9ece-83845892cf59&#x27;</span>, <span class="attr">&#x27;name&#x27;:</span> <span class="string">&#x27;AnimalRetriever&#x27;</span>, <span class="attr">&#x27;tags&#x27;:</span> [], <span class="attr">&#x27;metadata&#x27;:</span> &#123;&#125;, <span class="attr">&#x27;data&#x27;:</span> &#123;<span class="attr">&#x27;input&#x27;:</span> <span class="string">&#x27;猫&#x27;</span>&#125;, <span class="attr">&#x27;parent_ids&#x27;:</span> []&#125;</span><br><span class="line">&#123;<span class="attr">&#x27;event&#x27;:</span> <span class="string">&#x27;on_retriever_stream&#x27;</span>, <span class="attr">&#x27;run_id&#x27;:</span> <span class="string">&#x27;c0101364-5ef3-4756-9ece-83845892cf59&#x27;</span>, <span class="attr">&#x27;tags&#x27;:</span> [], <span class="attr">&#x27;metadata&#x27;:</span> &#123;&#125;, <span class="attr">&#x27;name&#x27;:</span> <span class="string">&#x27;AnimalRetriever&#x27;</span>, <span class="attr">&#x27;data&#x27;:</span> &#123;<span class="attr">&#x27;chunk&#x27;:</span> [<span class="string">Document(metadata=</span>&#123;<span class="attr">&#x27;type&#x27;:</span> <span class="string">&#x27;猫&#x27;</span>, <span class="attr">&#x27;trait&#x27;:</span> <span class="string">&#x27;独立&#x27;</span>&#125;, <span class="string">page_content=&#x27;猫是独立的宠物，通常喜欢自己的空间。&#x27;)</span>]&#125;, <span class="attr">&#x27;parent_ids&#x27;:</span> []&#125;</span><br><span class="line">&#123;<span class="attr">&#x27;event&#x27;:</span> <span class="string">&#x27;on_retriever_end&#x27;</span>, <span class="attr">&#x27;name&#x27;:</span> <span class="string">&#x27;AnimalRetriever&#x27;</span>, <span class="attr">&#x27;run_id&#x27;:</span> <span class="string">&#x27;c0101364-5ef3-4756-9ece-83845892cf59&#x27;</span>, <span class="attr">&#x27;tags&#x27;:</span> [], <span class="attr">&#x27;metadata&#x27;:</span> &#123;&#125;, <span class="attr">&#x27;data&#x27;:</span> &#123;<span class="attr">&#x27;output&#x27;:</span> [<span class="string">Document(metadata=</span>&#123;<span class="attr">&#x27;type&#x27;:</span> <span class="string">&#x27;猫&#x27;</span>, <span class="attr">&#x27;trait&#x27;:</span> <span class="string">&#x27;独立&#x27;</span>&#125;, <span class="string">page_content=&#x27;猫是独立的宠物，通常喜欢自己的空间。&#x27;)</span>]&#125;, <span class="attr">&#x27;parent_ids&#x27;:</span> []&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/03/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E5%92%8CRetriever/" title="LangChain篇-自定义会话管理和Retriever">http://mzfnai.com/2025/07/03/178LangChain篇-自定义会话管理和Retriever/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E7%8A%B6%E6%80%81%E7%AE%A1%E7%90%86/" rel="tag"># 状态管理</a>
+              <a href="/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/" rel="tag"># 会话管理</a>
+              <a href="/tags/Retriever/" rel="tag"># Retriever</a>
+              <a href="/tags/BaseChatMessageHistory/" rel="tag"># BaseChatMessageHistory</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/" rel="prev" title="LangChain篇-多模态输入与自定义输出">
+      <i class="fa fa-chevron-left"></i> LangChain篇-多模态输入与自定义输出
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/04/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89Callback%E7%BB%84%E4%BB%B6/" rel="next" title="LangChain篇-自定义Callback组件">
+      LangChain篇-自定义Callback组件 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%A6%82%E4%BD%95%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">一、如何自定义会话管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%88%9B%E5%BB%BA%E8%87%AA%E5%AE%9A%E4%B9%89Retriever"><span class="nav-number">2.</span> <span class="nav-text">二、如何创建自定义Retriever</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%A6%82%E8%BF%B0"><span class="nav-number">2.1.</span> <span class="nav-text">1. 概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.2.</span> <span class="nav-text">2. 接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.3.</span> <span class="nav-text">3. 示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%B5%8B%E8%AF%95"><span class="nav-number">2.4.</span> <span class="nav-text">4. 测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link"><span class="nav-number">3.</span> <span class="nav-text"></span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

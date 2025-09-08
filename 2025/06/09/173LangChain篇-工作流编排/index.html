@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="深入解析LangChain Expression Language (LCEL)工作流编排功能，包括Runnable接口、流式处理、异步支持和并行执行等核心特性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-工作流编排">
+<meta property="og:url" content="http://mzfnai.com/2025/06/09/173LangChain%E7%AF%87-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="深入解析LangChain Expression Language (LCEL)工作流编排功能，包括Runnable接口、流式处理、异步支持和并行执行等核心特性。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-06-09T08:28:43.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:32:28.990Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="LCEL">
+<meta property="article:tag" content="工作流编排">
+<meta property="article:tag" content="链式调用">
+<meta property="article:tag" content="异步处理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://mzfnai.com/2025/06/09/173LangChain%E7%AF%87-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-工作流编排 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/06/09/173LangChain%E7%AF%87-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-工作流编排
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-06-09 16:28:43" itemprop="dateCreated datePublished" datetime="2025-06-09T16:28:43+08:00">2025-06-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>10 分钟</span>
+            </span>
+            <div class="post-description">深入解析LangChain Expression Language (LCEL)工作流编排功能，包括Runnable接口、流式处理、异步支持和并行执行等核心特性。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、LCEL介绍"><a href="#一、LCEL介绍" class="headerlink" title="一、LCEL介绍"></a>一、LCEL介绍</h2><p><a target="_blank" rel="noopener" href="https://python.langchain.com.cn/docs/expression_language/">LCEL</a>（LangChain Expression Language）是一种强大的工作流编排工具，可以从基本组件构建复杂任务链条（chain），并支持诸如流式处理、并行处理和日志记录等开箱即用的功能。</p>
+<p>LCEL 从第一天起就被设计为<strong>支持将原型投入生产，无需更改代码</strong>，从最简单的“提示 + LLM”链到最复杂的链（我们已经看到有人成功地在生产中运行了包含数百步的 LCEL 链）。以下是您可能想要使用 LCEL 的一些原因的几个亮点：</p>
+<ul>
+<li><p><strong>一流的流式支持</strong> 当您使用 LCEL 构建链时，您将获得可能的最佳时间到第一个标记（直到输出的第一块内容出现所经过的时间）。对于某些链，这意味着我们直接从 LLM 流式传输标记到流式输出解析器，您将以与 LLM 提供程序输出原始标记的速率相同的速度获得解析的增量输出块。</p>
+</li>
+<li><p><strong>异步支持</strong> 使用 LCEL 构建的任何链都可以使用同步 API（例如，在您的 Jupyter 笔记本中进行原型设计）以及异步 API（例如，在 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/langserve/">LangServe</a> 服务器中）进行调用。这使得可以在原型和生产中使用相同的代码，具有出色的性能，并且能够在同一服务器中处理许多并发请求。</p>
+</li>
+<li><p><strong>优化的并行执行</strong> 每当您的 LCEL 链具有可以并行执行的步骤时（例如，如果您从多个检索器中获取文档），我们会自动执行，无论是在同步接口还是异步接口中，以获得可能的最小延迟。</p>
+</li>
+<li><p><strong>重试和回退</strong> 为 LCEL 链的任何部分配置重试和回退。这是使您的链在规模上更可靠的好方法。我们目前正在努力为重试&#x2F;回退添加流式支持，这样您就可以获得额外的可靠性而无需任何延迟成本。</p>
+</li>
+<li><p><strong>访问中间结果</strong> 对于更复杂的链，访问中间步骤的结果通常非常有用，即使在生成最终输出之前。这可以用于让最终用户知道正在发生的事情，甚至只是用于调试您的链。您可以流式传输中间结果，并且在每个 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/langserve/">LangServe</a> 服务器上都可以使用。</p>
+</li>
+<li><p><strong>输入和输出模式</strong> 输入和输出模式为每个 LCEL 链提供了从链的结构推断出的 Pydantic 和 JSONSchema 模式。这可用于验证输入和输出，并且是 LangServe 的一个组成部分。</p>
+</li>
+</ul>
+<h2 id="二、Runable-interface"><a href="#二、Runable-interface" class="headerlink" title="二、Runable interface"></a>二、Runable interface</h2><p>为了尽可能简化创建自定义链的过程，我们实现了一个 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/stable/runnables/langchain_core.runnables.base.Runnable.html#langchain_core.runnables.base.Runnable">“Runnable”</a> 协议。许多 LangChain 组件都实现了 <code>Runnable</code> 协议，包括聊天模型、LLMs、输出解析器、检索器、提示模板等等。此外，还有一些有用的基本组件可用于处理可运行对象，您可以在下面了解更多。 这是一个标准接口，可以轻松定义自定义链，并以标准方式调用它们。 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#stream">标准接口</a>包括：</p>
+<ul>
+<li><p><code>stream</code>：返回响应的数据块</p>
+</li>
+<li><p><code>invoke</code>：对输入调用链</p>
+</li>
+<li><p><code>batch</code>：对输入列表调用链</p>
+</li>
+</ul>
+<p>这些还有相应的异步方法，应该与 <a target="_blank" rel="noopener" href="https://docs.python.org/3/library/asyncio.html">asyncio</a> 一起使用 <code>await</code> 语法以实现并发：</p>
+<ul>
+<li><p><code>astream</code>：异步返回响应的数据块</p>
+</li>
+<li><p><code>ainvoke</code>：异步对输入调用链</p>
+</li>
+<li><p><code>abatch</code>：异步对输入列表调用链</p>
+</li>
+<li><p><code>astream_log</code>：异步返回中间步骤，以及最终响应</p>
+</li>
+<li><p><code>astream_events</code>：<strong>beta</strong> 流式传输链中发生的事件（在 <code>langchain-core</code> 0.1.14 中引入）</p>
+</li>
+</ul>
+<p><strong>输入类型</strong> 和 <strong>输出类型</strong> 因组件而异：</p>
+<p>所有可运行对象都公开输入和输出 <strong>模式</strong> 以检查输入和输出：</p>
+<ul>
+<li><p><code>input_schema</code>：从可运行对象结构自动生成的输入 Pydantic 模型</p>
+</li>
+<li><p><code>output_schema</code>：从可运行对象结构自动生成的输出 Pydantic 模型</p>
+</li>
+</ul>
+<p>流式运行对于使基于 LLM 的应用程序对最终用户具有响应性至关重要。 重要的 LangChain 原语，如<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#chat-models">聊天模型</a>、<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#output-parsers">输出解析器</a>、<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#prompt-templates">提示模板</a>、<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#retrievers">检索器</a>和<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#agents">代理</a>都实现了 LangChain <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/concepts/#interface">Runnable 接口</a>。 该接口提供了两种通用的流式内容方法：</p>
+<ol>
+<li><p>同步 <code>stream</code> 和异步 <code>astream</code> ：流式传输链中的<strong>最终输出</strong>的<strong>默认实现</strong>。</p>
+</li>
+<li><p>异步 <code>astream_events</code> 和异步 <code>astream_log</code> ：这些方法提供了一种从链中流式传输<strong>中间步骤</strong>和<strong>最终输出</strong>的方式。 让我们看看这两种方法，并尝试理解如何使用它们。</p>
+</li>
+</ol>
+<h2 id="三、Stream（流）"><a href="#三、Stream（流）" class="headerlink" title="三、Stream（流）"></a>三、Stream（流）</h2><p>所有 <code>Runnable</code> 对象都实现了一个名为 <code>stream</code> 的同步方法和一个名为 <code>astream</code> 的异步变体。 这些方法旨在以块的形式流式传输最终输出，尽快返回每个块。 只有在程序中的所有步骤都知道如何处理输入流时，才能进行流式传输；即，逐个处理输入块，并产生相应的输出块。 这种处理的复杂性可以有所不同，从简单的任务，如发出 LLM 生成的令牌，到更具挑战性的任务，如在整个 JSON 完成之前流式传输 JSON 结果的部分。 开始探索流式传输的最佳方法是从 LLM 应用程序中最重要的组件开始——LLM 本身！</p>
+<h3 id="1-LLM-和聊天模型"><a href="#1-LLM-和聊天模型" class="headerlink" title="1. LLM 和聊天模型"></a>1. LLM 和聊天模型</h3><p>大型语言模型及其聊天变体是基于 LLM 的应用程序的主要瓶颈。 大型语言模型可能需要<strong>几秒钟</strong>才能对查询生成完整的响应。这比应用程序对最终用户具有响应性的<strong>约 200-300 毫秒</strong>的阈值要慢得多。 使应用程序具有更高的响应性的关键策略是显示中间进度；即，逐个令牌流式传输模型的输出。 我们将展示使用聊天模型进行流式传输的示例。从以下选项中选择一个：</p>
+<p>让我们从同步 <code>stream</code> API 开始：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#stream_llm.py</span></span><br><span class="line">chunks = []</span><br><span class="line"><span class="keyword">for</span> chunk <span class="keyword">in</span> model.stream(<span class="string">&quot;天空是什么颜色？&quot;</span>):</span><br><span class="line">    chunks.append(chunk)<span class="built_in">print</span>(chunk.content, end=<span class="string">&quot;|&quot;</span>, flush=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">天|空|是|什|么|颜|色|？|</span><br></pre></td></tr></table></figure>
+
+<p>或者，如果您在异步环境中工作，可以考虑使用异步 <code>astream</code> API：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#astream_llm.py</span></span><br><span class="line">chunks = []</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">for</span> chunk <span class="keyword">in</span> model.astream(<span class="string">&quot;天空是什么颜色？&quot;</span>):</span><br><span class="line">    chunks.append(chunk)<span class="built_in">print</span>(chunk.content, end=<span class="string">&quot;|&quot;</span>, flush=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">天|空|是|什|么|颜|色|？|</span><br></pre></td></tr></table></figure>
+
+<p>让我们检查其中一个块：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">chunks[<span class="number">1</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AIMessageChunk(content=&#x27;天&#x27;, id=&#x27;run-b36bea64-5511-4d7a-b6a3-a07b3db0c8e7&#x27;)</span><br></pre></td></tr></table></figure>
+
+<p>我们得到了一个称为 <code>AIMessageChunk</code> 的东西。该块表示 <code>AIMessage</code> 的一部分。 消息块是可叠加的——可以简单地将它们相加以获得到目前为止的响应状态！</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">chunks[<span class="number">0</span>] + chunks[<span class="number">1</span>] + chunks[<span class="number">2</span>] + chunks[<span class="number">3</span>] + chunks[<span class="number">4</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AIMessageChunk(content=&#x27;天空是什么颜色&#x27;, id=&#x27;run-b36bea64-5511-4d7a-b6a3-a07b3db0c8e7&#x27;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Chain（链）"><a href="#2-Chain（链）" class="headerlink" title="2. Chain（链）"></a>2. Chain（链）</h3><p>几乎所有的 LLM 应用程序都涉及不止一步的操作，而不仅仅是调用语言模型。 让我们使用 <code>LangChain 表达式语言</code>（<code>LCEL</code>）构建一个简单的链，该链结合了一个提示、模型和解析器，并验证流式传输是否正常工作。 我们将使用 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/output_parsers/langchain_core.output_parsers.string.StrOutputParser.html">StrOutputParser</a> 来解析模型的输出。这是一个简单的解析器，从 <code>AIMessageChunk</code> 中提取 <code>content</code> 字段，给出模型返回的 <code>token</code>。</p>
+<p>LCEL 是一种声明式的方式，通过将不同的 LangChain 原语链接在一起来指定一个“程序”。使用 LCEL 创建的链可以自动实现 <code>stream</code> 和 <code>astream</code>，从而实现对最终输出的流式传输。事实上，使用 LCEL 创建的链实现了整个标准 Runnable 接口。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#astream_chain.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> StrOutputParser</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> ChatPromptTemplate</span><br><span class="line">prompt = ChatPromptTemplate.from_template(<span class="string">&quot;给我讲一个关于&#123;topic&#125;的笑话&quot;</span>)</span><br><span class="line">parser = StrOutputParser()</span><br><span class="line">chain = prompt | model | parser</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">for</span> chunk <span class="keyword">in</span> chain.astream(&#123;<span class="string">&quot;topic&quot;</span>: <span class="string">&quot;鹦鹉&quot;</span>&#125;):<span class="built_in">print</span>(chunk, end=<span class="string">&quot;|&quot;</span>, flush=<span class="literal">True</span>)</span><br><span class="line">    </span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">|一个|人|去|宠|物|店|买|鹦|鹉|。|店|员|说|：“|这|只|鹦|鹉|会|说|话|。”|</span><br><span class="line">|买|回|家|后|，|那|人|发|现|鹦|鹉|只|会|说|一|句|话|：“|我|是|鹦|鹉|。”|</span><br><span class="line">|那|人|就|去|找|店|员|，|说|：“|你|不|是|说|这|只|鹦|鹉|会|说|话|吗|？|它|只|会|说|‘|我|是|鹦|鹉|’|。”|</span><br><span class="line">|店|员|回|答|：“|它|确|实|会|说|话|，|你|想|它|怎|么|可能|知|道|自|己|是|鹦|鹉|呢|？”||</span><br></pre></td></tr></table></figure>
+
+<p>请注意，即使我们在上面的链条末尾使用了 <code>parser</code>，我们仍然可以获得流式输出。<code>parser</code> 会对每个流式块进行操作。许多 LCEL 基元也支持这种转换式的流式传递，这在构建应用程序时非常方便。</p>
+<p>自定义函数可以被设计为返回生成器，这样就能够操作流。</p>
+<p>某些可运行实体，如提示模板和聊天模型，无法处理单个块，而是聚合所有先前的步骤。这些可运行实体可以中断流处理。</p>
+<p>LangChain 表达语言允许您将链的构建与使用模式（例如同步&#x2F;异步、批处理&#x2F;流式等）分开。如果这与您构建的内容无关，您也可以依赖于标准的命令式编程方法，通过在每个组件上调用 invoke、batch 或 stream，将结果分配给变量，然后根据需要在下游使用它们。</p>
+<p><strong>使用输入流</strong></p>
+<p>如果您想要在输出生成时从中流式传输 JSON，该怎么办呢？</p>
+<p>如果您依赖 <code>json.loads</code> 来解析部分 JSON，那么解析将失败，因为部分 JSON 不会是有效的 JSON。</p>
+<p>您可能会束手无策，声称无法流式传输 JSON。</p>
+<p>事实证明，有一种方法可以做到这一点——解析器需要在<strong>输入流</strong>上操作，并尝试将部分JSON“自动完成”为有效状态。</p>
+<p>让我们看看这样一个解析器的运行，以了解这意味着什么。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">model = ChatOpenAI(model=<span class="string">&quot;gpt-4&quot;</span>)</span><br><span class="line">parser = StrOutputParser()</span><br><span class="line">chain = (</span><br><span class="line">        model | JsonOutputParser()</span><br><span class="line">        <span class="comment"># 由于Langchain旧版本中的一个错误，JsonOutputParser未能从某些模型中流式传输结果</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">async_stream</span>():</span><br><span class="line">    <span class="keyword">async</span> <span class="keyword">for</span> text <span class="keyword">in</span> chain.astream(</span><br><span class="line">        <span class="string">&quot;以JSON 格式输出法国、西班牙和日本的国家及其人口列表。&quot;</span></span><br><span class="line">        <span class="string">&#x27;使用一个带有“countries”外部键的字典，其中包含国家列表。&#x27;</span></span><br><span class="line">        <span class="string">&quot;每个国家都应该有键`name`和`population`&quot;</span></span><br><span class="line">    ):</span><br><span class="line">        <span class="built_in">print</span>(text, flush=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">670</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">670810</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">467</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">467330</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Japan&#x27;<span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Japan&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">126</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Japan&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">126300</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#123;</span>&#x27;countries&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;France&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">67081000</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Spain&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">46733038</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="punctuation">&#123;</span>&#x27;name&#x27;<span class="punctuation">:</span> &#x27;Japan&#x27;<span class="punctuation">,</span> &#x27;population&#x27;<span class="punctuation">:</span> <span class="number">126300000</span><span class="punctuation">&#125;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="四、Stream-events（事件流）"><a href="#四、Stream-events（事件流）" class="headerlink" title="四、Stream events（事件流）"></a>四、Stream events（事件流）</h2><p>现在我们已经了解了 <code>stream</code> 和 <code>astream</code> 的工作原理，让我们进入事件流的世界。</p>
+<p>事件流是一个 <strong>beta</strong> API。这个 API 可能会根据反馈略微更改。</p>
+<p>本指南演示了 <code>V2</code> API，并且需要 langchain-core &gt;&#x3D; 0.2。对于与旧版本 LangChain 兼容的 <code>V1</code> API，请参阅<a target="_blank" rel="noopener" href="https://python.langchain.com/v0.1/docs/expression_language/streaming/#using-stream-events">这里</a>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> langchain_core</span><br><span class="line">langchain_core.__version__</span><br></pre></td></tr></table></figure>
+
+<p>为了使 <code>astream_events</code> API正常工作：</p>
+<ul>
+<li><p>在代码中尽可能使用 <code>async</code>（例如，异步工具等）</p>
+</li>
+<li><p>如果定义自定义函数&#x2F;可运行项，请传播回调</p>
+</li>
+<li><p>在没有 LCEL 的情况下使用可运行项时，请确保在 LLMs 上调用 <code>.astream()</code> 而不是 <code>.ainvoke</code> 以强制 LLM流式传输令牌</p>
+</li>
+</ul>
+<h3 id="1-事件参考"><a href="#1-事件参考" class="headerlink" title="1. 事件参考"></a>1. 事件参考</h3><p>下面是一个参考表，显示各种可运行对象可能发出的一些事件。</p>
+<p>当流式传输正确实现时，对于可运行项的输入直到输入流完全消耗后才会知道。这意味着 <code>inputs</code> 通常仅包括 <code>end</code> 事件，而不包括 <code>start</code> 事件。</p>
+<h3 id="2-聊天模型"><a href="#2-聊天模型" class="headerlink" title="2. 聊天模型"></a>2. 聊天模型</h3><p>让我们首先看一下聊天模型产生的事件。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#astream_event.py</span></span><br><span class="line">events = []</span><br><span class="line"><span class="keyword">async</span> <span class="keyword">for</span> event <span class="keyword">in</span> model.astream_events(<span class="string">&quot;hello&quot;</span>, version=<span class="string">&quot;v2&quot;</span>):</span><br><span class="line">    events.append(event)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/home/eugene/src/langchain/libs/core/langchain_core/_api/beta_decorator.py:87: LangChainBetaWarning: This API is in beta and may change in the future.</span><br><span class="line">  warn_beta(</span><br></pre></td></tr></table></figure>
+
+<p>嘿，API中那个有趣的 <code>version=&quot;v2&quot;</code> 参数是什么意思？这是一个 <strong>beta API</strong>，我们几乎肯定会对其进行一些更改（事实上，我们已经做了！）这个版本参数将允许我们最小化对您代码的破坏性更改。 简而言之，我们现在让您感到烦恼，这样以后就不必再烦恼了。 <code>v2</code> 仅适用于 langchain-core&gt;&#x3D;0.2.0。</p>
+<p>让我们看一下一些开始事件和一些结束事件。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">events[:<span class="number">3</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;event&#x27;<span class="punctuation">:</span> &#x27;on_chat_model_start&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;data&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span>&#x27;input&#x27;<span class="punctuation">:</span> &#x27;hello&#x27;<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;name&#x27;<span class="punctuation">:</span> &#x27;ChatAnthropic&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;tags&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;run_id&#x27;<span class="punctuation">:</span> &#x27;a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;metadata&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#123;</span>&#x27;event&#x27;<span class="punctuation">:</span> &#x27;on_chat_model_stream&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;data&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span>&#x27;chunk&#x27;<span class="punctuation">:</span> AIMessageChunk(content=&#x27;Hello&#x27;<span class="punctuation">,</span> id=&#x27;run-a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;)<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;run_id&#x27;<span class="punctuation">:</span> &#x27;a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;name&#x27;<span class="punctuation">:</span> &#x27;ChatAnthropic&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;tags&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;metadata&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#123;</span>&#x27;event&#x27;<span class="punctuation">:</span> &#x27;on_chat_model_stream&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;data&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span>&#x27;chunk&#x27;<span class="punctuation">:</span> AIMessageChunk(content=&#x27;!&#x27;<span class="punctuation">,</span> id=&#x27;run-a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;)<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;run_id&#x27;<span class="punctuation">:</span> &#x27;a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;name&#x27;<span class="punctuation">:</span> &#x27;ChatAnthropic&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;tags&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;metadata&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">events[-<span class="number">2</span>:]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span><span class="punctuation">&#123;</span>&#x27;event&#x27;<span class="punctuation">:</span> &#x27;on_chat_model_stream&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;data&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span>&#x27;chunk&#x27;<span class="punctuation">:</span> AIMessageChunk(content=&#x27;?&#x27;<span class="punctuation">,</span> id=&#x27;run-a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;)<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;run_id&#x27;<span class="punctuation">:</span> &#x27;a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;name&#x27;<span class="punctuation">:</span> &#x27;ChatAnthropic&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;tags&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;metadata&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#123;</span>&#x27;event&#x27;<span class="punctuation">:</span> &#x27;on_chat_model_end&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;data&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span>&#x27;output&#x27;<span class="punctuation">:</span> AIMessageChunk(content=&#x27;Hello! How can I assist you today?&#x27;<span class="punctuation">,</span> id=&#x27;run-a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;)<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;run_id&#x27;<span class="punctuation">:</span> &#x27;a81e4c0f-fc36<span class="number">-4</span>d33<span class="number">-93</span>bc<span class="number">-1</span>ac25b9bb2c3&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;name&#x27;<span class="punctuation">:</span> &#x27;ChatAnthropic&#x27;<span class="punctuation">,</span></span><br><span class="line">  &#x27;tags&#x27;<span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  &#x27;metadata&#x27;<span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/06/09/173LangChain%E7%AF%87-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/" title="LangChain篇-工作流编排">http://mzfnai.com/2025/06/09/173LangChain篇-工作流编排/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/LCEL/" rel="tag"># LCEL</a>
+              <a href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%BC%96%E6%8E%92/" rel="tag"># 工作流编排</a>
+              <a href="/tags/%E9%93%BE%E5%BC%8F%E8%B0%83%E7%94%A8/" rel="tag"># 链式调用</a>
+              <a href="/tags/%E5%BC%82%E6%AD%A5%E5%A4%84%E7%90%86/" rel="tag"># 异步处理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/06/02/172LangChain%E7%AF%87-%E6%8F%90%E7%A4%BA%E8%AF%8D%E5%B7%A5%E7%A8%8B%E5%BA%94%E7%94%A8%E5%AE%9E%E8%B7%B5/" rel="prev" title="LangChain篇-提示词工程应用实践">
+      <i class="fa fa-chevron-left"></i> LangChain篇-提示词工程应用实践
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/06/16/174LangChain%E7%AF%87-%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E4%B8%8E%E9%93%BE%E8%B7%AF%E7%9B%91%E6%8E%A7/" rel="next" title="LangChain篇-服务部署与链路监控">
+      LangChain篇-服务部署与链路监控 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81LCEL%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">一、LCEL介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Runable-interface"><span class="nav-number">2.</span> <span class="nav-text">二、Runable interface</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Stream%EF%BC%88%E6%B5%81%EF%BC%89"><span class="nav-number">3.</span> <span class="nav-text">三、Stream（流）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-LLM-%E5%92%8C%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.1.</span> <span class="nav-text">1. LLM 和聊天模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Chain%EF%BC%88%E9%93%BE%EF%BC%89"><span class="nav-number">3.2.</span> <span class="nav-text">2. Chain（链）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Stream-events%EF%BC%88%E4%BA%8B%E4%BB%B6%E6%B5%81%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">四、Stream events（事件流）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BA%8B%E4%BB%B6%E5%8F%82%E8%80%83"><span class="nav-number">4.1.</span> <span class="nav-text">1. 事件参考</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.2.</span> <span class="nav-text">2. 聊天模型</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

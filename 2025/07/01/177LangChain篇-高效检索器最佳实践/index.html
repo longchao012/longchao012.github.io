@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="全面介绍LangChain高效检索器的最佳实践，包括相似性搜索算法、K-Means聚类优化和搜索性能提升策略。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-高效检索器最佳实践">
+<meta property="og:url" content="http://mzfnai.com/2025/07/01/177LangChain%E7%AF%87-%E9%AB%98%E6%95%88%E6%A3%80%E7%B4%A2%E5%99%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="全面介绍LangChain高效检索器的最佳实践，包括相似性搜索算法、K-Means聚类优化和搜索性能提升策略。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_DinObO75AodUQcxIQvyc4Urwn2c_20250908_111831_710.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_Lq0ibwFXzoRg8exJ8t2cHWggnCf_20250908_111831_711.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_111831_711.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_M9lXbFfCRoTI1txyhFocFWeBnlr_20250908_111831_711.png">
+<meta property="article:published_time" content="2025-07-01T01:15:23.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:46:24.635Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="检索器">
+<meta property="article:tag" content="相似性搜索">
+<meta property="article:tag" content="K-Means">
+<meta property="article:tag" content="聚类算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_DinObO75AodUQcxIQvyc4Urwn2c_20250908_111831_710.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/01/177LangChain%E7%AF%87-%E9%AB%98%E6%95%88%E6%A3%80%E7%B4%A2%E5%99%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-高效检索器最佳实践 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/01/177LangChain%E7%AF%87-%E9%AB%98%E6%95%88%E6%A3%80%E7%B4%A2%E5%99%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-高效检索器最佳实践
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-01 09:15:23" itemprop="dateCreated datePublished" datetime="2025-07-01T09:15:23+08:00">2025-07-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>16k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+            <div class="post-description">全面介绍LangChain高效检索器的最佳实践，包括相似性搜索算法、K-Means聚类优化和搜索性能提升策略。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、相似性搜索-Similarity-Search"><a href="#一、相似性搜索-Similarity-Search" class="headerlink" title="一、相似性搜索 (Similarity Search)"></a>一、相似性搜索 (Similarity Search)</h2><p>既然我们知道了可以通过比较向量之间的距离来判断它们的相似度，那么如何将它应用到真实的场景中呢？如果想要在一个海量的数据中找到和某个向量最相似的向量，我们需要对数据库中的每个向量进行一次比较计算，但这样的计算量是非常巨大的，所以我们需要一种高效的算法来解决这个问题。</p>
+<p>高效的搜索算法有很多，其主要思想是通过两种方式提高搜索效率：</p>
+<ul>
+<li><p><strong>减少向量大小</strong>——通过降维或减少表示向量值的长度。</p>
+</li>
+<li><p><strong>缩小搜索范围</strong>——可以通过聚类或将向量组织成基于树形、图形结构来实现，并限制搜索范围仅在最接近的簇中进行，或者通过最相似的分支进行过滤。</p>
+</li>
+</ul>
+<p>我们首先来介绍一下大部分算法共有的核心概念，也就是聚类。</p>
+<h3 id="1-K-Means"><a href="#1-K-Means" class="headerlink" title="1. K-Means"></a>1. K-Means</h3><p>我们可以在保存向量数据后，先对向量数据先进行聚类。例如下图在二维坐标系中，划定了 4 个聚类中心，然后将每个向量分配到最近的聚类中心，经过聚类算法不断调整聚类中心位置，这样就可以将向量数据分成 4 个簇。每次搜索时，只需要先判断搜索向量属于哪个簇，然后再在这一个簇中进行搜索，这样就从 4 个簇的搜索范围减少到了 1 个簇，大大减少了搜索的范围。</p>
+<h4 id="1-1-工作原理"><a href="#1-1-工作原理" class="headerlink" title="1.1 工作原理"></a>1.1 <strong>工作原理</strong></h4><ul>
+<li><p><strong>初始化</strong>：选择 k<em>k</em> 个随机点作为初始聚类中心。</p>
+</li>
+<li><p><strong>分配</strong>：将每个向量分配给离它最近的聚类中心，形成 k<em>k</em> 个簇。</p>
+</li>
+<li><p><strong>更新</strong>：重新计算每个簇的聚类中心，即簇内所有向量的平均值。</p>
+</li>
+<li><p><strong>迭代</strong>：重复“分配”和“更新”步骤，直到聚类中心不再变化或达到最大迭代次数。</p>
+</li>
+</ul>
+<p><strong>举例说明</strong></p>
+<p>假设我们有一组二维向量（点），例如：[(1,2),(2,1),(4,5),(5,4),(8,9)][(1,2),(2,1),(4,5),(5,4),(8,9)]，我们希望将它们聚成四个簇（k&#x3D;4<em>k</em>&#x3D;4）。</p>
+<ol>
+<li><p>初始化：随机选择四个点作为初始聚类中心，比如 (1,2)(1,2)、(2,1)(2,1)、(4,5)(4,5) 和 (8,9)(8,9)。</p>
+</li>
+<li><p>分配：计算每个点到四个聚类中心的距离，将每个点分配给最近的聚类中心。</p>
+</li>
+</ol>
+<p>形成四个簇：[(1,2)][(1,2)]，[(2,1)][(2,1)]，[(4,5),(5,4)][(4,5),(5,4)]，[(8,9)][(8,9)]。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">- 点 $ (1, 2) $ 更接近 $ (1, 2) $。</span><br><span class="line">- 点 $ (2, 1) $ 更接近 $ (2, 1) $。</span><br><span class="line">- 点 $ (4, 5) $ 更接近 $ (4, 5) $。</span><br><span class="line">- 点 $ (5, 4) $ 更接近 $ (4, 5) $。</span><br><span class="line">- 点 $ (8, 9) $ 更接近 $ (8, 9) $。</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li><p>更新：计算每个簇的新聚类中心。</p>
+<ul>
+<li><p>第一个簇的聚类中心是 (1,2)(1,2)。</p>
+</li>
+<li><p>第二个簇的聚类中心是 (2,1)(2,1)。</p>
+</li>
+<li><p>第三个簇的新聚类中心是 ((4+5)&#x2F;2,(5+4)&#x2F;2)&#x3D;(4.5,4.5)((4+5)&#x2F;2,(5+4)&#x2F;2)&#x3D;(4.5,4.5)。</p>
+</li>
+<li><p>第四个簇的聚类中心是 (8,9)(8,9)。</p>
+</li>
+</ul>
+</li>
+<li><p>迭代：重复分配和更新步骤，直到聚类中心不再变化。</p>
+</li>
+</ol>
+<h4 id="1-2-优缺点"><a href="#1-2-优缺点" class="headerlink" title="1.2 优缺点"></a>1.2 <strong>优缺点</strong></h4><p><strong>优点：</strong>&#x901A;过将向量聚类，我们可以在进行相似性搜索时只需计算查询向量与每个聚类中心之间的距离，而不是与所有向量计算距离。这大大减少了计算量，提高了搜索效率。这种方法在处理大规模数据时尤其有效，可以显著加快搜索速度。</p>
+<p><strong>缺点：</strong>&#x4F8B;如在搜索的时候，如果搜索的内容正好处于两个分类区域的中间，就很有可能遗漏掉最相似的向量。</p>
+<h3 id="2-Hierarchical-Navigable-Small-Worlds-HNSW"><a href="#2-Hierarchical-Navigable-Small-Worlds-HNSW" class="headerlink" title="2. Hierarchical Navigable Small Worlds (HNSW)"></a>2. Hierarchical Navigable Small Worlds (HNSW)</h3><p>除了聚类以外，也可以通过构建树或者构建图的方式来实现近似最近邻搜索。这种方法的基本思想是每次将向量加到数据库中的时候，就先找到与它最相邻的向量，然后将它们连接起来，这样就构成了一个图。当需要搜索的时候，就可以从图中的某个节点开始，不断的进行最相邻搜索和最短路径计算，直到找到最相似的向量。</p>
+<p>这种算法能保证搜索的质量，但是如果图中所以的节点都以最短的路径相连，如图中最下面的一层，那么在搜索的时候，就同样需要遍历所有的节点。</p>
+<p><img src="/images/LangChain%E7%AF%87_DinObO75AodUQcxIQvyc4Urwn2c_20250908_111831_710.png"></p>
+<p>解决这个问题的思路与常见的跳表算法相似，如下图要搜索跳表，从最高层开始，沿着具有最长 “跳过” 的边向右移动。如果发现当前节点的值大于要搜索的值 - 我们知道已经超过了目标，因此我们会在下一级中向前一个节点。</p>
+<p><img src="/images/LangChain%E7%AF%87_Lq0ibwFXzoRg8exJ8t2cHWggnCf_20250908_111831_711.png"></p>
+<p><img src="/images/LangChain%E7%AF%87_image_20250908_111831_711.png"></p>
+<p>HNSW 继承了相同的分层格式，最高层具有更长的边缘（用于快速搜索），而较低层具有较短的边缘（用于准确搜索）。</p>
+<p>具体来说，可以将图分为多层，每一层都是一个小世界，图中的节点都是相互连接的。而且每一层的节点都会连接到上一层的节点，当需要搜索的时候，就可以从第一层开始，因为第一层的节点之间距离很长，可以减少搜索的时间，然后再逐层向下搜索，又因为最下层相似节点之间相互关联，所以可以保证搜索的质量，能够找到最相似的向量。</p>
+<p>HNSW 算法是一种经典的空间换时间的算法，它的搜索质量和搜索速度都比较高，但是它的内存开销也比较大，因为不仅需要将所有的向量都存储在内存中。还需要维护一个图的结构，也同样需要存储。所以这类算法需要根据实际的场景来选择。</p>
+<p><strong>通过一个简单的例子来说明 HNSW 的工作原理。</strong></p>
+<p>假设我们有以下五个二维向量：</p>
+<ul>
+<li><p>A&#x3D;(1,2)<em>A</em>&#x3D;(1,2)</p>
+</li>
+<li><p>B&#x3D;(2,3)<em>B</em>&#x3D;(2,3)</p>
+</li>
+<li><p>C&#x3D;(3,4)<em>C</em>&#x3D;(3,4)</p>
+</li>
+<li><p>D&#x3D;(8,9)<em>D</em>&#x3D;(8,9)</p>
+</li>
+<li><p>E&#x3D;(9,10)<em>E</em>&#x3D;(9,10)</p>
+</li>
+</ul>
+<p>我们要使用 HNSW 来找到与查询向量 Q&#x3D;(2,2)<em>Q</em>&#x3D;(2,2) 最相似的向量。</p>
+<p><strong>构建阶段</strong></p>
+<ol>
+<li><p><strong>初始化</strong>：</p>
+<ul>
+<li><p>首先，我们为每个向量随机选择其在 HNSW 中的层数。例如，假设：</p>
+<ul>
+<li><p>A<em>A</em> 在第2层和第1层</p>
+</li>
+<li><p>B<em>B</em> 在第1层</p>
+</li>
+<li><p>C<em>C</em> 在第1层</p>
+</li>
+<li><p>D<em>D</em> 在第1层</p>
+</li>
+<li><p>E<em>E</em> 在第1层</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>构建图</strong>：</p>
+<ul>
+<li><p>从最高层开始构建，A<em>A</em> 是第2层唯一的节点。</p>
+</li>
+<li><p>在第1层，所有节点都存在。我们通过计算欧氏距离来连接节点，确保每个节点只连接到几个最近的邻居。</p>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>搜索阶段</strong></p>
+<ol>
+<li><p><strong>从最高层开始搜索</strong>：</p>
+<ul>
+<li><p>从第2层的 A<em>A</em> 开始，计算 Q<em>Q</em> 与 A<em>A</em> 的距离：d(Q,A)&#x3D;(2−1)2+(2−2)2&#x3D;1<em>d</em>(<em>Q</em>,<em>A</em>)&#x3D;(2−1)2+(2−2)2&#x3D;1。</p>
+</li>
+<li><p>因为 A<em>A</em> 是唯一的节点，直接进入下一层。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>在第1层搜索</strong>：</p>
+<ul>
+<li><p>从 A<em>A</em> 开始，计算 Q<em>Q</em> 与 B<em>B</em>、C<em>C</em>、D<em>D</em>、E<em>E</em> 的距离：</p>
+<ul>
+<li><p>d(Q,B)&#x3D;(2−2)2+(2−3)2&#x3D;1<em>d</em>(<em>Q</em>,<em>B</em>)&#x3D;(2−2)2+(2−3)2&#x3D;1</p>
+</li>
+<li><p>d(Q,C)&#x3D;(2−3)2+(2−4)2&#x3D;5<em>d</em>(<em>Q</em>,<em>C</em>)&#x3D;(2−3)2+(2−4)2&#x3D;5</p>
+</li>
+<li><p>d(Q,D)&#x3D;(2−8)2+(2−9)2&#x3D;85<em>d</em>(<em>Q</em>,<em>D</em>)&#x3D;(2−8)2+(2−9)2&#x3D;85</p>
+</li>
+<li><p>d(Q,E)&#x3D;(2−9)2+(2−10)2&#x3D;113<em>d</em>(<em>Q</em>,<em>E</em>)&#x3D;(2−9)2+(2−10)2&#x3D;113</p>
+</li>
+</ul>
+</li>
+<li><p>B<em>B</em> 是最近的邻居。</p>
+</li>
+</ul>
+</li>
+<li><p><strong>返回结果</strong>：</p>
+<ul>
+<li>在第2层找到的最近邻是 A<em>A</em>，第1层找到的最近邻是 B<em>B</em>，即与查询向量 Q<em>Q</em> 最相似的向量。</li>
+</ul>
+</li>
+</ol>
+<p><strong>总结</strong></p>
+<p>通过这种层次化的搜索过程，HNSW 能够快速缩小搜索范围，在大规模数据中高效找到近似最近邻。</p>
+<h2 id="二、FAISS"><a href="#二、FAISS" class="headerlink" title="二、FAISS"></a>二、FAISS</h2><h3 id="1-Faiss-介绍"><a href="#1-Faiss-介绍" class="headerlink" title="1. Faiss 介绍"></a>1. Faiss 介绍</h3><p><a target="_blank" rel="noopener" href="https://engineering.fb.com/2017/03/29/data-infrastructure/faiss-a-library-for-efficient-similarity-search/">Facebook AI Similarity Search (Faiss &#x2F;Fez&#x2F;)</a> 是一个用于高效相似度搜索和密集向量聚类的库。它包含了在任意大小的向量集合中进行搜索的算法，甚至可以处理可能无法完全放入内存的向量集合。它还包含用于评估和参数调整的支持代码。</p>
+<p><a target="_blank" rel="noopener" href="https://faiss.ai/">Faiss </a>官方文档：<a target="_blank" rel="noopener" href="https://faiss.ai/">https://faiss.ai/</a></p>
+<p>下面展示如何使用与 <code>FAISS</code> 向量数据库相关的功能。它将展示特定于此集成的功能。在学习完这些内容后，探索<a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/how_to/#qa-with-rag">相关的用例页面</a>可能会很有帮助，以了解如何将这个向量存储作为更大链条的一部分来使用。</p>
+<h3 id="2-设置"><a href="#2-设置" class="headerlink" title="2. 设置"></a>2. 设置</h3><p>该集成位于 <code>langchain-community</code> 包中。我们还需要安装 <code>faiss</code> 包本身。我们还将使用 OpenAI 进行嵌入，因此需要安装这些要求。我们可以使用以下命令进行安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install -U langchain-community faiss-cpu langchain-openai tiktoken</span><br></pre></td></tr></table></figure>
+
+<p>请注意，如果您想使用启用了 GPU 的版本，也可以安装 <code>faiss-gpu</code>。</p>
+<p>设置 <a target="_blank" rel="noopener" href="https://smith.langchain.com/">LangSmith</a> 以获得最佳的可观测性也会很有帮助（但不是必需的）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># os.environ[&quot;LANGCHAIN_TRACING_V2&quot;] = &quot;true&quot;# os.environ[&quot;LANGCHAIN_API_KEY&quot;] = &quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-导入"><a href="#3-导入" class="headerlink" title="3. 导入"></a>3. 导入</h3><p>在这里，我们将文档导入到向量存储中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：faiss_search.py</span></span><br><span class="line"><span class="comment"># 如果您需要使用没有 AVX2 优化的 FAISS 进行初始化，请取消下面一行的注释</span></span><br><span class="line"><span class="comment"># os.environ[&#x27;FAISS_NO_AVX2&#x27;] = &#x27;1&#x27;</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> CharacterTextSplitter</span><br><span class="line">loader = TextLoader(<span class="string">&quot;../../resource/knowledge.txt&quot;</span>, encoding=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">documents = loader.load()</span><br><span class="line">text_splitter = CharacterTextSplitter(chunk_size=<span class="number">1500</span>, chunk_overlap=<span class="number">0</span>)</span><br><span class="line">docs = text_splitter.split_documents(documents)</span><br><span class="line">embeddings = OpenAIEmbeddings()</span><br><span class="line">db = FAISS.from_documents(docs, embeddings)</span><br><span class="line"><span class="built_in">print</span>(db.index.ntotal)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">16</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="4-查询"><a href="#4-查询" class="headerlink" title="4. 查询"></a>4. 查询</h3><p>现在，我们可以查询向量存储。有几种方法可以做到这一点。最常见的方法是使用 <code>similarity_search</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：faiss_search.py</span></span><br><span class="line">query = <span class="string">&quot;Pixar公司是做什么的?&quot;</span></span><br><span class="line">docs = db.similarity_search(query)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(docs[<span class="number">0</span>].page_content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.</span><br><span class="line">在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="5-作为检索器"><a href="#5-作为检索器" class="headerlink" title="5. 作为检索器"></a>5. 作为检索器</h3><p>我们还可以将向量存储转换为 <a target="_blank" rel="noopener" href="http://www.aidoczh.com/langchain/v0.2/docs/how_to/#retrievers">Retriever</a> 类。这使我们能够轻松地在其他 LangChain 方法中使用它，这些方法主要用于检索器。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：faiss_retriever.py</span></span><br><span class="line">retriever = db.as_retriever()</span><br><span class="line">docs = retriever.invoke(query)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(docs[<span class="number">0</span>].page_content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.</span><br><span class="line">在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="6-带分数的相似度搜索"><a href="#6-带分数的相似度搜索" class="headerlink" title="6. 带分数的相似度搜索"></a>6. 带分数的相似度搜索</h3><p>还有一些 FAISS 特定的方法。其中之一是 <code>similarity_search_with_score</code>，它允许您返回文档以及查询与它们之间的距离分数。返回的距离分数是 L2 距离。因此，得分越低越好。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：faiss_similarity.py</span></span><br><span class="line"><span class="comment"># 返回文档以及查询与它们之间的距离分数。返回的距离分数是 L2 距离。因此，得分越低越好。</span></span><br><span class="line">docs_and_scores = db.similarity_search_with_score(query)</span><br><span class="line"><span class="built_in">print</span>(docs_and_scores)</span><br><span class="line"><span class="comment"># 还可以使用`similarity_search_by_vector`来搜索与给定嵌入向量相似的文档，该函数接受一个嵌入向量作为参数，而不是字符串。</span></span><br><span class="line">embedding_vector = embeddings.embed_query(query)</span><br><span class="line">docs_and_scores = db.similarity_search_by_vector(embedding_vector)</span><br><span class="line"><span class="built_in">print</span>(docs_and_scores)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[(Document(metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/knowledge.txt&#x27;</span>&#125;, page_content=<span class="string">&quot;During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.\n在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。&quot;</span>), <span class="number">0.3155345</span>), (Document(metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/knowledge.txt&#x27;</span>&#125;, page_content=<span class="string">&#x27;I was lucky – I found what I loved to do early in life. Woz and I started Apple in my parents garage when I was 20. We worked hard, and in 10 years Apple had grown from just the two of us in a garage into a billion company with over 4000 employees. We had just released our finest creation - the Macintosh - a year earlier, and I had just turned 30. And then I got fired. How can you get fired from a company you started? Well, as Apple grew we hired someone who I thought was very talented to run the company with me, and for the first year or so things went well. But then our visions of the future began to diverge and eventually we had a falling out. When we did, our Board of Directors sided with him. So at 30 I was out. And very publicly out. What had been the focus of my entire adult life was gone, and it was devastating.\n我非常幸运，因为我在很早的时候就找到了我钟爱的东西。沃兹和我在二十岁的时候就在父母的车库里面开创了苹果公司。我们工作得很努力，十年之后，这个公司从那两个车库中的穷光蛋发展到了超过四千名的雇员、价值超过二十亿的大公司。在公司成立的第九年，我们刚刚发布了最好的产品，那就是 Macintosh。我也快要到三十岁了。在那一年，我被炒了鱿鱼。你怎么可能被你自己创立的公司炒了鱿鱼呢？嗯，在苹果快速成长的时候，我们雇用了一个很有天分的家伙和我一起管理这个公司，在最初的几年，公司运转的很好。但是后来我们对未来的看法发生了分歧, 最终我们吵了起来。当争吵不可开交的时候，董事会站在了他的那一边。所以在三十岁的时候，我被炒了。在这么多人的眼皮下我被炒了。在而立之年，我生命的全部支柱离自己远去，这真是毁灭性的打击。&#x27;</span>), <span class="number">0.44481623</span>), (Document(metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/knowledge.txt&#x27;</span>&#125;, page_content=<span class="string">&quot;I really didn&#x27;t know what to do for a few months. I felt that I had let the previous generation of entrepreneurs down - that I had dropped the baton as it was being passed to me. I met with David Packard and Bob Noyce and tried to apologize for screwing up so badly. I was a very public failure, and I even thought about running away from the valley. But something slowly began to dawn on me – I still loved what I did. The turn of events at Apple had not changed that one bit. I had been rejected, but I was still in love. And so I decided to start over.\n在最初的几个月里，我真是不知道该做些什么。我把从前的创业激情给丢了，我觉得自己让与我一同创业的人都很沮丧。我和 David Pack 和 Bob Boyce 见面，并试图向他们道歉。我把事情弄得糟糕透顶了。但是我渐渐发现了曙光，我仍然喜爱我从事的这些东西。苹果公司发生的这些事情丝毫的没有改变这些，一点也没有。我被驱逐了，但是我仍然钟爱它。所以我决定从头再来。\n\nI didn&#x27;t see it then, but it turned out that getting fired from Apple was the best thing that could have ever happened to me. The heaviness of being successful was replaced by the lightness of being a beginner again, less sure about everything. It freed me to enter one of the most creative periods of my life.\n我当时没有觉察，但是事后证明，从苹果公司被炒是我这辈子发生的最棒的事情。因为，作为一个成功者的极乐感觉被作为一个创业者的轻松感觉所重新代替：对任何事情都不那么特别看重。这让我觉得如此自由，进入了我生命中最有创造力的一个阶段。&quot;</span>), <span class="number">0.46826816</span>), (Document(metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/knowledge.txt&#x27;</span>&#125;, page_content=<span class="string">&quot;I&#x27;m pretty sure none of this would have happened if I hadn&#x27;t been fired from Apple. It was awful tasting medicine, but I guess the patient needed it. Sometimes life hits you in the head with a brick. Don&#x27;t lose faith. I&#x27;m convinced that the only thing that kept me going was that I loved what I did. You&#x27;ve got to find what you love. And that is as true for your work as it is for your lovers. Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work. And the only way to do great work is to love what you do. If you haven&#x27;t found it yet, keep looking. Don&#x27;t settle. As with all matters of the heart, you&#x27;ll know when you find it. And, like any great relationship, it just gets better and better as the years roll on. So keep looking until you find it. Don&#x27;t settle.\n我可以非常肯定,如果我不被苹果公司开除的话，这其中一件事情也不会发生的。这个良药的味道实在是太苦了，但是我想病人需要这个药。有些时候，生活会拿起一块砖头向你的脑袋上猛拍一下。不要失去信心，我很清楚唯一使我一直走下去的，就是我做的事情令我无比钟爱。你需要去找到你所爱的东西，对于工作是如此，对于你的爱人也是如此。你的工作将会占据生活中很大的一部分。你只有相信自己所做的是伟大的工作，你才能怡然自得。如果你现在还没有找到，那么继续找、不要停下来、全心全意的去找，当你找到的时候你就会知道的。就像任何真诚的关系，随着岁月的流逝只会越来越紧密。所以继续找，直到你找到它，不要停下来。\n\nMy third story is about death.\n我的第三个故事是关于死亡的。&quot;</span>), <span class="number">0.4740282</span>)]</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="7-保存和加载"><a href="#7-保存和加载" class="headerlink" title="7. 保存和加载"></a>7. 保存和加载</h3><p>您还可以保存和加载 FAISS 索引。这样做很有用，因为您不必每次使用时都重新创建它。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：faiss_save.py</span></span><br><span class="line"><span class="comment"># 保存索引</span></span><br><span class="line">db.save_local(<span class="string">&quot;faiss_index&quot;</span>)</span><br><span class="line"><span class="comment"># 读取索引</span></span><br><span class="line">new_db = FAISS.load_local(<span class="string">&quot;faiss_index&quot;</span>, embeddings,allow_dangerous_deserialization=<span class="literal">True</span>)</span><br><span class="line">docs = new_db.similarity_search(query)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docs[<span class="number">0</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.</span><br><span class="line">在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/knowledge.txt&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="三、Pinecone"><a href="#三、Pinecone" class="headerlink" title="三、Pinecone"></a>三、Pinecone</h2><h3 id="1-Pinecone-介绍"><a href="#1-Pinecone-介绍" class="headerlink" title="1. Pinecone 介绍"></a>1. Pinecone 介绍</h3><p><a target="_blank" rel="noopener" href="https://docs.pinecone.io/docs/overview">Pinecone</a> (&#x2F;ˈpaɪnˌkon&#x2F; n. 松果；松球)是一个功能广泛的向量数据库。</p>
+<p>官方文档：<a target="_blank" rel="noopener" href="https://docs.pinecone.io/guides/get-started/quickstart">https://docs.pinecone.io/guides/get-started/quickstart</a></p>
+<p>下面展示了如何使用与 <code>Pinecone</code> 向量数据库相关的功能。</p>
+<p>设置以下环境变量以便在本文档中进行操作：</p>
+<ul>
+<li><code>OPENAI_API_KEY</code>：您的 OpenAI API 密钥，用于使用 <code>OpenAIEmbeddings</code></li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">%pip install --upgrade --quiet  \</span><br><span class="line">    langchain-pinecone \</span><br><span class="line">    langchain-openai \</span><br><span class="line">    langchain \</span><br><span class="line">    pinecone-notebooks</span><br></pre></td></tr></table></figure>
+
+<p>配置 PINECONE_API_KEY 环境变量</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setx PINECONE_API_KEY <span class="string">&quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/LangChain%E7%AF%87_M9lXbFfCRoTI1txyhFocFWeBnlr_20250908_111831_711.png"></p>
+<p>首先，让我们将我们的文本库拆分成分块的 <code>docs</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：pinecone_search.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> CharacterTextSplitter</span><br><span class="line">loader = TextLoader(<span class="string">&quot;../../resource/knowledge.txt&quot;</span>,encoding=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">documents = loader.load()</span><br><span class="line">text_splitter = CharacterTextSplitter(chunk_size=<span class="number">1500</span>, chunk_overlap=<span class="number">0</span>)</span><br><span class="line">docs = text_splitter.split_documents(documents)</span><br><span class="line">embeddings = OpenAIEmbeddings()</span><br></pre></td></tr></table></figure>
+
+<p>新创建的 API 密钥已存储在 <code>PINECONE_API_KEY</code> 环境变量中。我们将使用它来设置 Pinecone 客户端。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line">pinecone_api_key = os.environ.get(<span class="string">&quot;PINECONE_API_KEY&quot;</span>)</span><br><span class="line">pinecone_api_key</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">from</span> pinecone <span class="keyword">import</span> Pinecone, ServerlessSpec</span><br><span class="line">pc = Pinecone(api_key=pinecone_api_key)</span><br></pre></td></tr></table></figure>
+
+<p>接下来，让我们连接到您的 Pinecone 索引。如果名为 <code>index_name</code> 的索引不存在，将会被创建。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line">index_name = <span class="string">&quot;langchain-index&quot;</span>  <span class="comment"># 如果需要，可以更改</span></span><br><span class="line">existing_indexes = [index_info[<span class="string">&quot;name&quot;</span>] <span class="keyword">for</span> index_info <span class="keyword">in</span> pc.list_indexes()]</span><br><span class="line"><span class="keyword">if</span> index_name <span class="keyword">not</span> <span class="keyword">in</span> existing_indexes:</span><br><span class="line">    pc.create_index(</span><br><span class="line">        name=index_name,</span><br><span class="line">        dimension=<span class="number">1536</span>,</span><br><span class="line">        metric=<span class="string">&quot;cosine&quot;</span>,</span><br><span class="line">        spec=ServerlessSpec(cloud=<span class="string">&quot;aws&quot;</span>, region=<span class="string">&quot;us-east-1&quot;</span>),</span><br><span class="line">    )<span class="keyword">while</span> <span class="keyword">not</span> pc.describe_index(index_name).status[<span class="string">&quot;ready&quot;</span>]:</span><br><span class="line">        time.sleep(<span class="number">1</span>)</span><br><span class="line">index = pc.Index(index_name)</span><br></pre></td></tr></table></figure>
+
+<p>现在我们的 Pinecone 索引已经设置好，我们可以使用 <code>PineconeVectorStore.from_documents</code> 将这些分块的文档作为内容进行更新。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_pinecone <span class="keyword">import</span> PineconeVectorStore</span><br><span class="line">docsearch = PineconeVectorStore.from_documents(docs, embeddings, index_name=index_name)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">query = <span class="string">&quot;Pixar&quot;</span></span><br><span class="line">docs = docsearch.similarity_search(query)</span><br><span class="line"><span class="built_in">print</span>(docs[<span class="number">0</span>].page_content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.</span><br><span class="line">在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。</span><br></pre></td></tr></table></figure>
+
+<p>查看index创建：<a target="_blank" rel="noopener" href="https://app.pinecone.io/organizations/-O3c52_oskiguJEqQubV/projects/f087a26f-d581-4af3-a628-2a13ead9fd7c/indexes">https://app.pinecone.io</a></p>
+<h2 id="四、Lance"><a href="#四、Lance" class="headerlink" title="四、Lance"></a>四、Lance</h2><h3 id="LanceDB-介绍"><a href="#LanceDB-介绍" class="headerlink" title="LanceDB 介绍"></a><a target="_blank" rel="noopener" href="https://lancedb.com/">LanceDB</a> 介绍</h3><p><a target="_blank" rel="noopener" href="https://lancedb.com/">Lance</a>（ &#x2F;læns&#x2F; 长矛；执矛战士；[医]柳叶刀）是一个基于持久存储构建的用于向量搜索的开源数据库，极大地简化了嵌入式的检索、过滤和管理。完全开源。</p>
+<p>官网：<a target="_blank" rel="noopener" href="https://lancedb.com/">https://lancedb.com/</a></p>
+<p>官方文档：<a target="_blank" rel="noopener" href="https://lancedb.github.io/lancedb/basic/">https://lancedb.github.io/lancedb/basic/</a></p>
+<p>下面展示如何使用与 <code>LanceDB</code> 向量数据库相关的功能，基于 Lance 数据格式。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">! pip install -U langchain-openai</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">! pip install lancedb</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：lance_search.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> TextLoader</span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> LanceDB</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_text_splitters <span class="keyword">import</span> CharacterTextSplitter</span><br><span class="line">loader = TextLoader(<span class="string">&quot;../../resource/knowledge.txt&quot;</span>, encoding=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">documents = loader.load()</span><br><span class="line">text_splitter = CharacterTextSplitter(chunk_size=<span class="number">1500</span>, chunk_overlap=<span class="number">0</span>)</span><br><span class="line">documents = text_splitter.split_documents(documents)</span><br><span class="line">embeddings = OpenAIEmbeddings()</span><br></pre></td></tr></table></figure>
+
+<h3 id="向量存储"><a href="#向量存储" class="headerlink" title="向量存储"></a>向量存储</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docsearch = LanceDB.from_documents(documents, embeddings)</span><br><span class="line">query = <span class="string">&quot;Pixar公司是做什么的?&quot;</span></span><br><span class="line">docs = docsearch.similarity_search(query)</span><br><span class="line"><span class="built_in">print</span>(docs[<span class="number">0</span>].page_content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">During the next five years, I started a company named NeXT, another company named Pixar, and fell in love with an amazing woman who would become my wife. Pixar went on to create the worlds first computer animated feature film, Toy Story, and is now the most successful animation studio in the world. In a remarkable turn of events, Apple bought NeXT, I retuned to Apple, and the technology we developed at NeXT is at the heart of Apple&#x27;s current renaissance. And Laurene and I have a wonderful family together.</span><br><span class="line">在接下来的五年里, 我创立了一个名叫 NeXT 的公司，还有一个叫Pixar的公司，然后和一个后来成为我妻子的优雅女人相识。Pixar 制作了世界上第一个用电脑制作的动画电影——“”玩具总动员”，Pixar 现在也是世界上最成功的电脑制作工作室。在后来的一系列运转中，Apple 收购了NeXT，然后我又回到了苹果公司。我们在NeXT 发展的技术在 Apple 的复兴之中发挥了关键的作用。我还和 Laurence 一起建立了一个幸福的家庭。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(docs[<span class="number">0</span>].metadata)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/knowledge.txt&#x27;</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>此外，要探索表格，可以将其加载到数据框中或将其保存在 csv 文件中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tbl = docsearch.get_table()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;tbl:&quot;</span>, tbl)</span><br><span class="line">pd_df = tbl.to_pandas()</span><br><span class="line">pd_df.to_csv(<span class="string">&quot;docsearch.csv&quot;</span>, index=<span class="literal">False</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tbl: LanceTable(connection=LanceDBConnection(D:\tmp\lancedb), name=<span class="string">&quot;vectorstore&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="五、总结"><a href="#五、总结" class="headerlink" title="五、总结"></a>五、总结</h2><p>下面是 Pinecone、FAISS 和 Lance 三个向量数据库的功能对比表格：</p>
+<p>这些数据库在功能和特性上各有优势，选择合适的数据库应根据具体的应用需求和技术栈来决定。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/01/177LangChain%E7%AF%87-%E9%AB%98%E6%95%88%E6%A3%80%E7%B4%A2%E5%99%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" title="LangChain篇-高效检索器最佳实践">http://mzfnai.com/2025/07/01/177LangChain篇-高效检索器最佳实践/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E6%A3%80%E7%B4%A2%E5%99%A8/" rel="tag"># 检索器</a>
+              <a href="/tags/%E7%9B%B8%E4%BC%BC%E6%80%A7%E6%90%9C%E7%B4%A2/" rel="tag"># 相似性搜索</a>
+              <a href="/tags/K-Means/" rel="tag"># K-Means</a>
+              <a href="/tags/%E8%81%9A%E7%B1%BB%E7%AE%97%E6%B3%95/" rel="tag"># 聚类算法</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/06/30/176LangChain%E7%AF%87-%E5%90%91%E9%87%8F%E7%AE%A1%E7%90%86%E9%AB%98%E9%98%B6%E6%8C%87%E5%8D%97/" rel="prev" title="LangChain篇-向量管理高阶指南">
+      <i class="fa fa-chevron-left"></i> LangChain篇-向量管理高阶指南
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/" rel="next" title="LangChain篇-多模态输入与自定义输出">
+      LangChain篇-多模态输入与自定义输出 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E7%9B%B8%E4%BC%BC%E6%80%A7%E6%90%9C%E7%B4%A2-Similarity-Search"><span class="nav-number">1.</span> <span class="nav-text">一、相似性搜索 (Similarity Search)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-K-Means"><span class="nav-number">1.1.</span> <span class="nav-text">1. K-Means</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 工作原理</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 优缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Hierarchical-Navigable-Small-Worlds-HNSW"><span class="nav-number">1.2.</span> <span class="nav-text">2. Hierarchical Navigable Small Worlds (HNSW)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81FAISS"><span class="nav-number">2.</span> <span class="nav-text">二、FAISS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Faiss-%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.1.</span> <span class="nav-text">1. Faiss 介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.2.</span> <span class="nav-text">2. 设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%AF%BC%E5%85%A5"><span class="nav-number">2.3.</span> <span class="nav-text">3. 导入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.4.</span> <span class="nav-text">4. 查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E4%BD%9C%E4%B8%BA%E6%A3%80%E7%B4%A2%E5%99%A8"><span class="nav-number">2.5.</span> <span class="nav-text">5. 作为检索器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%B8%A6%E5%88%86%E6%95%B0%E7%9A%84%E7%9B%B8%E4%BC%BC%E5%BA%A6%E6%90%9C%E7%B4%A2"><span class="nav-number">2.6.</span> <span class="nav-text">6. 带分数的相似度搜索</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E4%BF%9D%E5%AD%98%E5%92%8C%E5%8A%A0%E8%BD%BD"><span class="nav-number">2.7.</span> <span class="nav-text">7. 保存和加载</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Pinecone"><span class="nav-number">3.</span> <span class="nav-text">三、Pinecone</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Pinecone-%E4%BB%8B%E7%BB%8D"><span class="nav-number">3.1.</span> <span class="nav-text">1. Pinecone 介绍</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81Lance"><span class="nav-number">4.</span> <span class="nav-text">四、Lance</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LanceDB-%E4%BB%8B%E7%BB%8D"><span class="nav-number">4.1.</span> <span class="nav-text">LanceDB 介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%91%E9%87%8F%E5%AD%98%E5%82%A8"><span class="nav-number">4.2.</span> <span class="nav-text">向量存储</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">五、总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

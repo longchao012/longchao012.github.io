@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="深入讲解LangChain自定义RAG加载器的开发，包括BaseLoader子类化、文档解析和数据提取的实现方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-自定义RAG加载器">
+<meta property="og:url" content="http://mzfnai.com/2025/07/06/180LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89RAG%E5%8A%A0%E8%BD%BD%E5%99%A8/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="深入讲解LangChain自定义RAG加载器的开发，包括BaseLoader子类化、文档解析和数据提取的实现方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-07-06T05:29:41.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:46:51.298Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="数据处理">
+<meta property="article:tag" content="文档加载器">
+<meta property="article:tag" content="BaseLoader">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/06/180LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89RAG%E5%8A%A0%E8%BD%BD%E5%99%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-自定义RAG加载器 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/06/180LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89RAG%E5%8A%A0%E8%BD%BD%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-自定义RAG加载器
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-06 13:29:41" itemprop="dateCreated datePublished" datetime="2025-07-06T13:29:41+08:00">2025-07-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>10k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+            <div class="post-description">深入讲解LangChain自定义RAG加载器的开发，包括BaseLoader子类化、文档解析和数据提取的实现方法。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h2><p>基于 LLM 的应用程序通常涉及从数据库或文件（如 PDF）中提取数据，并将其转换为LLM可以利用的格式。在 LangChain 中，这通常涉及创建Document对象，该对象封装了提取的文本（<code>page_content</code>）以及元数据 - 包含有关文档的详细信息的字典，例如作者姓名或出版日期。<code>Document</code> 对象通常被格式化为提示，然后输入 LLM，以便 LLM 可以使用 <code>Document</code> 中的信息生成所需的响应（例如，对文档进行摘要）。<code>Documents</code> 可以立即使用，也可以索引到向量存储中以供将来检索和使用。 文档加载的主要抽象为：</p>
+<p>下面将演示如何编写自定义文档加载和文件解析逻辑；具体而言，我们将看到如何：</p>
+<ol>
+<li><p>通过从 <code>BaseLoader</code> 进行子类化来创建标准文档加载器。</p>
+</li>
+<li><p>使用 <code>BaseBlobParser</code> 创建解析器，并将其与 <code>Blob</code> 和 <code>BlobLoaders</code> 结合使用。这在处理文件时非常有用。</p>
+</li>
+</ol>
+<h2 id="二、标准文档加载器"><a href="#二、标准文档加载器" class="headerlink" title="二、标准文档加载器"></a>二、标准文档加载器</h2><p>可以通过从 <code>BaseLoader</code> 进行子类化来实现文档加载器，<code>BaseLoader</code> 提供了用于加载文档的标准接口。</p>
+<h3 id="1-接口"><a href="#1-接口" class="headerlink" title="1. 接口"></a>1. 接口</h3><ul>
+<li><p><code>load</code> 方法是一个方便的方法，仅用于交互式工作 - 它只是调用 <code>list(self.lazy_load())</code>。</p>
+</li>
+<li><p><code>alazy_load</code> 具有默认实现，将委托给 <code>lazy_load</code>。如果您使用异步操作，建议覆盖默认实现并提供本机异步实现。 {.callout-important} 在实现文档加载器时，<strong>不要</strong>通过 <code>lazy_load</code> 或 <code>alazy_load</code> 方法传递参数。 所有配置都应通过初始化器（<strong>init</strong>）传递。这是 LangChain 的设计选择，以确保一旦实例化了文档加载器，它就具有加载文档所需的所有信息。</p>
+</li>
+</ul>
+<h3 id="2-实现"><a href="#2-实现" class="headerlink" title="2. 实现"></a>2. 实现</h3><p>让我们创建一个标准文档加载器的示例，该加载器从文件中加载数据，并从文件的每一行创建一个文档。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#示例：doc_loader_custom.py</span></span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> AsyncIterator, Iterator</span><br><span class="line"><span class="keyword">from</span> langchain_core.document_loaders <span class="keyword">import</span> BaseLoader</span><br><span class="line"><span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">CustomDocumentLoader</span>(<span class="title class_ inherited__">BaseLoader</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;一个从文件逐行读取的示例文档加载器。&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">init</span>(<span class="params">self, file_path: <span class="built_in">str</span></span>) -&gt; <span class="literal">None</span>:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;使用文件路径初始化加载器。</span></span><br><span class="line"><span class="string">        Args:</span></span><br><span class="line"><span class="string">            file_path: 要加载的文件的路径。</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="variable language_">self</span>.file_path = file_path</span><br><span class="line">   </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">lazy_load</span>(<span class="params">self</span>) -&gt; Iterator[Document]:  <span class="comment"># &lt;-- 不接受任何参数</span></span><br><span class="line">        <span class="string">&quot;&quot;&quot;逐行读取文件的惰性加载器。</span></span><br><span class="line"><span class="string">        当您实现惰性加载方法时，应使用生成器逐个生成文档。</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">with</span> <span class="built_in">open</span>(<span class="variable language_">self</span>.file_path, encoding=<span class="string">&quot;utf-8&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            line_number = <span class="number">0</span><span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">                <span class="keyword">yield</span> Document(</span><br><span class="line">                    page_content=line,</span><br><span class="line">                    metadata=&#123;<span class="string">&quot;line_number&quot;</span>: line_number, <span class="string">&quot;source&quot;</span>: <span class="variable language_">self</span>.file_path&#125;,</span><br><span class="line">                )</span><br><span class="line">                line_number += <span class="number">1</span>          </span><br><span class="line">   <span class="comment"># alazy_load是可选的。</span></span><br><span class="line">   <span class="comment"># 如果您省略了实现，将使用默认实现，该实现将委托给lazy_load！</span></span><br><span class="line">   <span class="keyword">async</span> <span class="keyword">def</span> <span class="title function_">alazy_load</span>(<span class="params"></span></span><br><span class="line"><span class="params">        self,</span></span><br><span class="line"><span class="params">   </span>) -&gt; AsyncIterator[Document]:  <span class="comment"># &lt;-- 不接受任何参数</span></span><br><span class="line">       <span class="string">&quot;&quot;&quot;逐行读取文件的异步惰性加载器。&quot;&quot;&quot;</span></span><br><span class="line">       <span class="comment"># 需要aiofiles</span></span><br><span class="line">       <span class="comment"># 使用`pip install aiofiles`安装</span></span><br><span class="line">       <span class="comment"># https://github.com/Tinche/aiofiles</span></span><br><span class="line">       <span class="keyword">import</span> aiofiles</span><br><span class="line">       <span class="keyword">async</span> <span class="keyword">with</span> aiofiles.<span class="built_in">open</span>(<span class="variable language_">self</span>.file_path, encoding=<span class="string">&quot;utf-8&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">            line_number = <span class="number">0</span></span><br><span class="line">            <span class="keyword">async</span> <span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">                <span class="keyword">yield</span> Document(</span><br><span class="line">                    page_content=line,</span><br><span class="line">                    metadata=&#123;<span class="string">&quot;line_number&quot;</span>: line_number, <span class="string">&quot;source&quot;</span>: <span class="variable language_">self</span>.file_path&#125;,</span><br><span class="line">                )</span><br><span class="line">                line_number += <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-测试"><a href="#3-测试" class="headerlink" title="3. 测试"></a>3. 测试</h3><p>为了测试文档加载器，我们需要一个包含一些优质内容的文件。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&quot;./meow.txt&quot;</span>, <span class="string">&quot;w&quot;</span>, encoding=<span class="string">&quot;utf-8&quot;</span>) <span class="keyword">as</span> f:</span><br><span class="line">    quality_content = <span class="string">&quot;喵喵🐱 \n 喵喵🐱 \n 喵😻😻&quot;</span></span><br><span class="line">    f.write(quality_content)</span><br><span class="line">loader = CustomDocumentLoader(<span class="string">&quot;./meow.txt&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测试延迟加载接口</span></span><br><span class="line"><span class="keyword">for</span> doc <span class="keyword">in</span> loader.lazy_load():</span><br><span class="line">    <span class="built_in">print</span>()</span><br><span class="line">    <span class="built_in">print</span>(<span class="built_in">type</span>(doc))</span><br><span class="line">    <span class="built_in">print</span>(doc)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27;喵喵🐱 </span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 0, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br><span class="line"></span><br><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27; 喵喵🐱 </span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br><span class="line"></span><br><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27; 喵😻😻&#x27; metadata=&#123;&#x27;line_number&#x27;: 2, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 测试异步实现</span></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">for</span> doc <span class="keyword">in</span> loader.alazy_load():</span><br><span class="line">    <span class="built_in">print</span>()</span><br><span class="line">    <span class="built_in">print</span>(<span class="built_in">type</span>(doc))</span><br><span class="line">    <span class="built_in">print</span>(doc)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27;喵喵🐱 </span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 0, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br><span class="line"></span><br><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27; 喵喵🐱 </span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br><span class="line"></span><br><span class="line">&lt;class &#x27;langchain_core.documents.base.Document&#x27;&gt;</span><br><span class="line">page_content=&#x27; 喵😻😻&#x27; metadata=&#123;&#x27;line_number&#x27;: 2, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>{.callout-tip} <code>load()</code> 在诸如 Jupyter Notebook 之类的交互式环境中很有用。 在生产代码中避免使用它，因为急切加载假定所有内容都可以放入内存中，而这并不总是成立，特别是对于企业数据而言。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">loader.load()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;&#x27;line_number&#x27;: 0, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;, page_content=&#x27;喵喵🐱 \n&#x27;), Document(metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;, page_content=&#x27; 喵喵🐱 \n&#x27;), Document(metadata=&#123;&#x27;line_number&#x27;: 2, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;, page_content=&#x27; 喵😻😻&#x27;)]</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="三、文件处理"><a href="#三、文件处理" class="headerlink" title="三、文件处理"></a>三、文件处理</h2><p>许多文档加载器涉及解析文件。这些加载器之间的区别通常在于文件的解析方式，而不是文件的加载方式。例如，您可以使用 <code>&lt;font style=&quot;color:rgb(28, 30, 33);&quot;&gt;open&lt;/font&gt;</code> 来读取 PDF 或 markdown 文件的二进制内容，但您需要不同的解析逻辑来将该二进制数据转换为文本。 因此，将解析逻辑与加载逻辑分离可能会很有帮助，这样无论数据如何加载，都更容易重用给定的解析器。</p>
+<h3 id="1-BaseBlobParser"><a href="#1-BaseBlobParser" class="headerlink" title="1. BaseBlobParser"></a>1. BaseBlobParser</h3><p><code>BaseBlobParser</code> 是一个接口，接受一个 <code>blob</code> 并输出一个 <code>Document</code> 对象列表。<code>blob</code> 是一个表示数据的对象，可以存在于内存中或文件中。LangChain Python 具有受 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Web/API/Blob">Blob WebAPI 规范</a> 启发的 <code>Blob</code> 原语。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_parser.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.document_loaders <span class="keyword">import</span> BaseBlobParser, Blob</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyParser</span>(<span class="title class_ inherited__">BaseBlobParser</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;一个简单的解析器，每行创建一个文档。&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">lazy_parse</span>(<span class="params">self, blob: Blob</span>) -&gt; Iterator[Document]:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;逐行将 blob 解析为文档。&quot;&quot;&quot;</span></span><br><span class="line">        line_number = <span class="number">0</span></span><br><span class="line">        <span class="keyword">with</span> blob.as_bytes_io() <span class="keyword">as</span> f:</span><br><span class="line">            <span class="keyword">for</span> line <span class="keyword">in</span> f:</span><br><span class="line">                line_number += <span class="number">1</span><span class="keyword">yield</span> Document(</span><br><span class="line">                    page_content=line,</span><br><span class="line">                    metadata=&#123;<span class="string">&quot;line_number&quot;</span>: line_number, <span class="string">&quot;source&quot;</span>: blob.source&#125;,</span><br><span class="line">                )</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">blob = Blob.from_path(<span class="string">&quot;./meow.txt&quot;</span>)</span><br><span class="line">parser = MyParser()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">list</span>(parser.lazy_parse(blob))</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[Document(page_content=&#x27;喵喵🐱 \n&#x27;, metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;),</span><br><span class="line"> Document(page_content=&#x27; 喵喵🐱 \n&#x27;, metadata=&#123;&#x27;line_number&#x27;: 2, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;),</span><br><span class="line"> Document(page_content=&#x27; 喵😻😻&#x27;, metadata=&#123;&#x27;line_number&#x27;: 3, &#x27;source&#x27;: &#x27;./meow.txt&#x27;&#125;)]</span><br></pre></td></tr></table></figure>
+
+<p>使用 <strong>blob</strong> API 还允许直接从内存加载内容，而无需从文件中读取！</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_parser.py</span></span><br><span class="line">blob = Blob(data=<span class="string">b&quot;来自内存的一些数据\n喵&quot;</span>)</span><br><span class="line"><span class="built_in">list</span>(parser.lazy_parse(blob))</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[Document(page_content=&#x27;来自内存的一些数据\n&#x27;, metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: None&#125;),</span><br><span class="line"> Document(page_content=&#x27;喵&#x27;, metadata=&#123;&#x27;line_number&#x27;: 2, &#x27;source&#x27;: None&#125;)]</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="2-Blob"><a href="#2-Blob" class="headerlink" title="2. Blob"></a>2. Blob</h3><p>让我们快速浏览一下 Blob API 的一些内容。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_api.py</span></span><br><span class="line">blob = Blob.from_path(<span class="string">&quot;./meow.txt&quot;</span>, metadata=&#123;<span class="string">&quot;foo&quot;</span>: <span class="string">&quot;bar&quot;</span>&#125;)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.encoding</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x27;utf-8&#x27;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.as_bytes()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">b&#x27;\xe5\x96\xb5\xe5\x96\xb5\xf0\x9f\x90\xb1 \r\n \xe5\x96\xb5\xe5\x96\xb5\xf0\x9f\x90\xb1 \r\n \xe5\x96\xb5\xf0\x9f\x98\xbb\xf0\x9f\x98\xbb&#x27;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.as_string()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">喵喵🐱</span><br><span class="line"> 喵喵🐱</span><br><span class="line"> 喵😻😻</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.as_bytes_io()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;contextlib._GeneratorContextManager object at 0x0000012E064CC2F0&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-Blob-元数据"><a href="#3-Blob-元数据" class="headerlink" title="3. Blob 元数据"></a>3. Blob 元数据</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.metadata</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;foo&#x27;: &#x27;bar&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">blob.source</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./meow.txt</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="4-Blob-加载器"><a href="#4-Blob-加载器" class="headerlink" title="4. Blob 加载器"></a>4. Blob 加载器</h3><p>在解析器中封装了将二进制数据解析为文档所需的逻辑，blob 加载器封装了从给定存储位置加载 blob 所需的逻辑。 目前，<code>LangChain</code> 仅支持 <code>FileSystemBlobLoader</code>。 您可以使用 <code>FileSystemBlobLoader</code> 加载 blob，然后使用解析器对其进行解析。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_loader.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders.blob_loaders <span class="keyword">import</span> FileSystemBlobLoader</span><br><span class="line">blob_loader = FileSystemBlobLoader(path=<span class="string">&quot;.&quot;</span>, glob=<span class="string">&quot;*.mdx&quot;</span>, show_progress=<span class="literal">True</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">parser = MyParser()</span><br><span class="line"><span class="keyword">for</span> blob <span class="keyword">in</span> blob_loader.yield_blobs():<span class="keyword">for</span> doc <span class="keyword">in</span> parser.lazy_parse(blob):<span class="built_in">print</span>(doc)<span class="keyword">break</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">100%|██████████| 8/8 [00:00&lt;00:00, 8087.35it/s]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;# CSV</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\csv.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# File Directory</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\file_directory.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# HTML</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\html.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;---</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\index.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# JSON</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\json.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# Markdown</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\markdown.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# Microsoft Office</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\office_file.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;---</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\pdf.mdx&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="5-通用加载器"><a href="#5-通用加载器" class="headerlink" title="5. 通用加载器"></a>5. 通用加载器</h3><p>LangChain 拥有一个 <code>GenericLoader</code> 抽象，它将 <code>BlobLoader</code> 与 <code>BaseBlobParser</code> 结合在一起。<code>GenericLoader</code> 旨在提供标准化的类方法，使现有的 <code>BlobLoader</code> 实现易于使用。目前，仅支持 <code>FileSystemBlobLoader</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_loader_generic.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders.generic <span class="keyword">import</span> GenericLoader</span><br><span class="line">loader = GenericLoader.from_filesystem(</span><br><span class="line">    path=<span class="string">&quot;.&quot;</span>, glob=<span class="string">&quot;*.mdx&quot;</span>, show_progress=<span class="literal">True</span>, parser=MyParser()</span><br><span class="line">)</span><br><span class="line"><span class="keyword">for</span> idx, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(loader.lazy_load()):<span class="keyword">if</span> idx &lt; <span class="number">5</span>:<span class="built_in">print</span>(doc)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;... output truncated for demo purposes&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">100%|██████████| 8/8 [00:00&lt;00:00, 78.69it/s]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;# CSV</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\csv.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# File Directory</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\file_directory.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# HTML</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\html.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;---</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\index.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# JSON</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\json.mdx&#x27;&#125;</span><br><span class="line">... output truncated for demo purposes</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="6-自定义通用加载器"><a href="#6-自定义通用加载器" class="headerlink" title="6. 自定义通用加载器"></a>6. 自定义通用加载器</h3><p>如果您喜欢创建类，您可以子类化并创建一个类来封装逻辑。 您可以从这个类中子类化以使用现有的加载器加载内容。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：doc_blob_loader_generic_custom.py</span></span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">Any</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyCustomLoader</span>(<span class="title class_ inherited__">GenericLoader</span>):</span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_parser</span>(<span class="params">**kwargs: <span class="type">Any</span></span>) -&gt; BaseBlobParser:</span><br><span class="line">        <span class="string">&quot;&quot;&quot;Override this method to associate a default parser with the class.&quot;&quot;&quot;</span></span><br><span class="line">        <span class="keyword">return</span> MyParser()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">loader = MyCustomLoader.from_filesystem(path=<span class="string">&quot;.&quot;</span>, glob=<span class="string">&quot;*.mdx&quot;</span>, show_progress=<span class="literal">True</span>)</span><br><span class="line"><span class="keyword">for</span> idx, doc <span class="keyword">in</span> <span class="built_in">enumerate</span>(loader.lazy_load()):<span class="keyword">if</span> idx &lt; <span class="number">5</span>:<span class="built_in">print</span>(doc)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;... output truncated for demo purposes&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">100%|██████████| 8/8 [00:00&lt;00:00, 80.28it/s]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;# CSV</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\csv.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# File Directory</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\file_directory.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# HTML</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\html.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;---</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\index.mdx&#x27;&#125;</span><br><span class="line">page_content=&#x27;# JSON</span><br><span class="line">&#x27; metadata=&#123;&#x27;line_number&#x27;: 1, &#x27;source&#x27;: &#x27;..\\resource\\json.mdx&#x27;&#125;</span><br><span class="line">... output truncated for demo purposes</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/06/180LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89RAG%E5%8A%A0%E8%BD%BD%E5%99%A8/" title="LangChain篇-自定义RAG加载器">http://mzfnai.com/2025/07/06/180LangChain篇-自定义RAG加载器/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86/" rel="tag"># 数据处理</a>
+              <a href="/tags/%E6%96%87%E6%A1%A3%E5%8A%A0%E8%BD%BD%E5%99%A8/" rel="tag"># 文档加载器</a>
+              <a href="/tags/BaseLoader/" rel="tag"># BaseLoader</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/05/179LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8/" rel="prev" title="LangChain篇-自定义工具调用">
+      <i class="fa fa-chevron-left"></i> LangChain篇-自定义工具调用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/07/181LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9A%84%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/" rel="next" title="LangChain篇-基于RAG的文档问答">
+      LangChain篇-基于RAG的文档问答 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">一、概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%A0%87%E5%87%86%E6%96%87%E6%A1%A3%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">二、标准文档加载器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%8E%A5%E5%8F%A3"><span class="nav-number">2.1.</span> <span class="nav-text">1. 接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">2. 实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%B5%8B%E8%AF%95"><span class="nav-number">2.3.</span> <span class="nav-text">3. 测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">三、文件处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-BaseBlobParser"><span class="nav-number">3.1.</span> <span class="nav-text">1. BaseBlobParser</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Blob"><span class="nav-number">3.2.</span> <span class="nav-text">2. Blob</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Blob-%E5%85%83%E6%95%B0%E6%8D%AE"><span class="nav-number">3.3.</span> <span class="nav-text">3. Blob 元数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Blob-%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">3.4.</span> <span class="nav-text">4. Blob 加载器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E9%80%9A%E7%94%A8%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">3.5.</span> <span class="nav-text">5. 通用加载器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E8%87%AA%E5%AE%9A%E4%B9%89%E9%80%9A%E7%94%A8%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">3.6.</span> <span class="nav-text">6. 自定义通用加载器</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

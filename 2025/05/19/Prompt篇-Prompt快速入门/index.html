@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="全面介绍Prompt工程的基础概念、最佳实践和核心技术，包括Zero-shot、Few-shot、CoT等方法，以及在各种应用场景中的实践指南。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Prompt篇-Prompt快速入门">
+<meta property="og:url" content="http://mzfnai.com/2025/05/19/Prompt%E7%AF%87-Prompt%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="全面介绍Prompt工程的基础概念、最佳实践和核心技术，包括Zero-shot、Few-shot、CoT等方法，以及在各种应用场景中的实践指南。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/Prompt%E7%AF%87-Pr_TC8tbzXC2ofj0AxP0jXccrtLndk_20250908_105301_149.png">
+<meta property="og:image" content="http://mzfnai.com/images/Prompt%E7%AF%87-Pr_1423484-20230605211355881-6245_20250908_105301_150.png">
+<meta property="article:published_time" content="2025-05-19T03:34:52.000Z">
+<meta property="article:modified_time" content="2025-09-08T02:58:34.672Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="最佳实践">
+<meta property="article:tag" content="提示工程">
+<meta property="article:tag" content="Prompt">
+<meta property="article:tag" content="AI交互">
+<meta property="article:tag" content="技术指南">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/Prompt%E7%AF%87-Pr_TC8tbzXC2ofj0AxP0jXccrtLndk_20250908_105301_149.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/05/19/Prompt%E7%AF%87-Prompt%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Prompt篇-Prompt快速入门 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/05/19/Prompt%E7%AF%87-Prompt%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Prompt篇-Prompt快速入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-05-19 11:34:52" itemprop="dateCreated datePublished" datetime="2025-05-19T11:34:52+08:00">2025-05-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/Prompt%E5%B7%A5%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">Prompt工程</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>6.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+            <div class="post-description">全面介绍Prompt工程的基础概念、最佳实践和核心技术，包括Zero-shot、Few-shot、CoT等方法，以及在各种应用场景中的实践指南。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Prompt"><a href="#Prompt" class="headerlink" title="Prompt"></a><strong>Prompt</strong></h2><h3 id="Prompt-是什么？"><a href="#Prompt-是什么？" class="headerlink" title="Prompt 是什么？"></a><strong>Prompt 是什么？</strong></h3><p>Prompt 是一种人为构造的输入序列，用于引导 GPT 模型根据先前输入的内容生成相关的输出。简单来说，就是你向模型提供的 “提示词”。</p>
+<p>在 ChatGpt 中，我们可以通过设计不同的 prompt，让模型生成与之相关的文本。例如，假设我们想让 ChatGpt 担任英语翻译。我们可以给模型提供以下 prompt：</p>
+<p>这样，我们就可以期待模型生成一段文本了。</p>
+<h3 id="Prompt-如何生成？"><a href="#Prompt-如何生成？" class="headerlink" title="Prompt 如何生成？"></a><strong>Prompt 如何生成？</strong></h3><p>prompt 如此重要，我们应该怎么去写一个好的 prompt 呢？github 上有位大佬 Matt Nigh。</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/mattnigh/ChatGPT3-Free-Prompt-List">https://github.com/mattnigh/ChatGPT3-Free-Prompt-List</a></p>
+<p><img src="/images/Prompt%E7%AF%87-Pr_TC8tbzXC2ofj0AxP0jXccrtLndk_20250908_105301_149.png"></p>
+<p>CRISPE Prompt Framework，CRISPE 是首字母的缩写，分别代表以下含义：</p>
+<p>CR：Capacity and Role（能力与角色），你希望 ChatGPT 扮演怎样的角色。</p>
+<p>I：Insight（洞察），背景信息和上下文。</p>
+<p>S：Statement（陈述），你希望 ChatGPT 做什么。</p>
+<p>P：Personality（个性），你希望 ChatGPT 以什么风格或方式回答你。</p>
+<p>E：Experiment（实验），要求 ChatGPT 为你提供多个答案。</p>
+<p>github 上的那 prompt 角色大全基本都是 CRISPE 框架。</p>
+<p><img src="/images/Prompt%E7%AF%87-Pr_1423484-20230605211355881-6245_20250908_105301_150.png"></p>
+<p>先定角色，后说背景，再提要求，最后定风格。是否生成多个例子可以看自己喜好。</p>
+<h3 id="Prompt-的重要性"><a href="#Prompt-的重要性" class="headerlink" title="Prompt 的重要性"></a><strong>Prompt 的重要性</strong></h3><p>合理使用 prompt 可以为 ChatGpt 带来很多好处。以下是一些例子：</p>
+<ul>
+<li><p>提高生成准确性：通过正确的 prompt 引导，模型能够更好地理解用户的意图，从而生成更加准确的文本。</p>
+</li>
+<li><p>增强自由度：通过多种不同的 prompt，我们可以让模型生成各种各样的文本，增强了模型的表现力和自由度。</p>
+</li>
+<li><p>提高效率：如果我们已经知道要生成的文本大致内容，通过正确的 prompt 可以让模型更快地生成出我们想要的结果。</p>
+</li>
+</ul>
+<h2 id="Prompt-Engineering定义"><a href="#Prompt-Engineering定义" class="headerlink" title="Prompt Engineering定义"></a><strong>Prompt Engineering定义</strong></h2><p><strong>定义</strong>：Prompt Engineering 是设计和优化输入提示（prompt）以获得预期输出的过程。在与大型语言模型（如 GPT-4）交互时，如何构造提示会显著影响模型的回答质量。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>简单提示</strong>：<code>&quot;告诉我关于猫的事情。&quot;</code></p>
+</li>
+<li><p><strong>优化提示</strong>：<code>&quot;请详细描述猫的生物学特征、行为习惯以及它们在不同文化中的象征意义。&quot;</code></p>
+</li>
+</ul>
+<p>通过优化提示，用户可以引导模型生成更详细和有用的回答。</p>
+<p>Prompt Engineering 是设计和优化输入提示以获得预期输出的过程。为了在使用大型语言模型（如 GPT-4）时获得最佳结果，以下是一些最佳实践：</p>
+<h2 id="Prompt-Engineering最佳实践"><a href="#Prompt-Engineering最佳实践" class="headerlink" title="Prompt Engineering最佳实践"></a><strong>Prompt Engineering最佳实践</strong></h2><h3 id="1-明确目标"><a href="#1-明确目标" class="headerlink" title="1. 明确目标"></a><strong>1. 明确目标</strong></h3><p><strong>最佳实践</strong>：明确你希望模型完成的任务或回答的问题。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>目标不明确</strong>：<code>&quot;告诉我关于气候变化的事情。&quot;</code></p>
+</li>
+<li><p><strong>目标明确</strong>：<code>&quot;请简要描述气候变化的主要原因及其对农业的影响。&quot;</code></p>
+</li>
+</ul>
+<h3 id="2-提供上下文"><a href="#2-提供上下文" class="headerlink" title="2. 提供上下文"></a><strong>2. 提供上下文</strong></h3><p><strong>最佳实践</strong>：为模型提供必要的背景信息或上下文，以帮助其理解任务。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>无上下文</strong>：<code>&quot;解释一下微积分。&quot;</code></p>
+</li>
+<li><p><strong>有上下文</strong>：<code>&quot;作为一名高中生，我正在学习微积分。请用简单的语言解释一下微积分的基本概念。&quot;</code></p>
+</li>
+</ul>
+<h3 id="3-使用具体的指示"><a href="#3-使用具体的指示" class="headerlink" title="3. 使用具体的指示"></a><strong>3. 使用具体的指示</strong></h3><p><strong>最佳实践</strong>：使用明确的指示和要求，避免模糊不清的提示。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>模糊指示</strong>：<code>&quot;写一篇关于技术的文章。&quot;</code></p>
+</li>
+<li><p><strong>具体指示</strong>：<code>&quot;请写一篇关于人工智能在医疗领域应用的文章，包含以下几点：应用场景、优势和挑战。&quot;</code></p>
+</li>
+</ul>
+<h3 id="4-提供示例"><a href="#4-提供示例" class="headerlink" title="4. 提供示例"></a><strong>4. 提供示例</strong></h3><p><strong>最佳实践</strong>：通过提供示例来展示你期望的输出格式或内容。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>无示例</strong>：<code>&quot;生成一个关于产品的报告。&quot;</code></p>
+</li>
+<li><p><strong>有示例</strong>：<code>&quot;生成一个关于产品的报告，格式如下：\n\n- 产品名称：\n- 价格：\n- 特点：\n- 优点：\n- 缺点：&quot;</code></p>
+</li>
+</ul>
+<h3 id="5-使用分步指示"><a href="#5-使用分步指示" class="headerlink" title="5. 使用分步指示"></a><strong>5. 使用分步指示</strong></h3><p><strong>最佳实践</strong>：对于复杂任务，分解为多个步骤，逐步引导模型完成。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>一步完成</strong>：<code>&quot;解释并解决这个数学问题：2x + 3 = 7。&quot;</code></p>
+</li>
+<li><p><strong>分步指示</strong>：<code>&quot;首先，解释如何解方程。然后，解方程2x + 3 = 7。&quot;</code></p>
+</li>
+</ul>
+<h3 id="6-控制输出长度"><a href="#6-控制输出长度" class="headerlink" title="6. 控制输出长度"></a><strong>6. 控制输出长度</strong></h3><p><strong>最佳实践</strong>：通过提示控制输出的长度，确保内容简洁或详细。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>无长度控制</strong>：<code>&quot;解释一下量子力学。&quot;</code></p>
+</li>
+<li><p><strong>有长度控制</strong>：<code>&quot;用不超过100字解释量子力学的基本概念。&quot;</code></p>
+</li>
+</ul>
+<h3 id="7-使用占位符和模板"><a href="#7-使用占位符和模板" class="headerlink" title="7. 使用占位符和模板"></a><strong>7. 使用占位符和模板</strong></h3><p><strong>最佳实践</strong>：使用占位符和模板来指示需要填充的内容或格式。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>无模板</strong>：<code>&quot;生成一个用户注册表单。&quot;</code></p>
+</li>
+<li><p><strong>有模板</strong>：<code>&quot;生成一个用户注册表单，包含以下字段：用户名、密码、邮箱、电话号码。&quot;</code></p>
+</li>
+</ul>
+<h3 id="8-反复试验和调整"><a href="#8-反复试验和调整" class="headerlink" title="8. 反复试验和调整"></a><strong>8. 反复试验和调整</strong></h3><p><strong>最佳实践</strong>：不断试验和调整提示，观察模型的输出，并根据需要进行优化。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>初始提示</strong>：<code>&quot;描述一下Python编程语言。&quot;</code></p>
+</li>
+<li><p><strong>调整提示</strong>：<code>&quot;描述一下Python编程语言的主要特点和常见应用场景。&quot;</code></p>
+</li>
+</ul>
+<h3 id="9-指定输出格式"><a href="#9-指定输出格式" class="headerlink" title="9. 指定输出格式"></a><strong>9. 指定输出格式</strong></h3><p><strong>最佳实践</strong>：明确指定输出格式，确保生成内容符合预期。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>无格式指定</strong>：<code>&quot;生成一个关于公司财务状况的报告。&quot;</code></p>
+</li>
+<li><p><strong>有格式指定</strong>：<code>&quot;生成一个关于公司财务状况的报告，格式如下：\n\n1. 收入：\n2. 支出：\n3. 净利润：\n4. 财务分析：&quot;</code></p>
+</li>
+</ul>
+<h3 id="10-使用多轮对话"><a href="#10-使用多轮对话" class="headerlink" title="10. 使用多轮对话"></a><strong>10. 使用多轮对话</strong></h3><p><strong>最佳实践</strong>：在需要时，通过多轮对话逐步引导模型生成所需内容。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>单轮对话</strong>：<code>&quot;告诉我关于Python编程的所有信息。&quot;</code></p>
+</li>
+<li><p><strong>多轮对话</strong>：</p>
+<ul>
+<li><p>用户：<code>&quot;告诉我Python编程的主要特点。&quot;</code></p>
+</li>
+<li><p>模型：<code>&quot;Python是一种高级编程语言，具有易读性、广泛的库支持和跨平台兼容性。&quot;</code></p>
+</li>
+<li><p>用户：<code>&quot;请详细描述Python的常见应用场景。&quot;</code></p>
+</li>
+<li><p>模型：<code>&quot;Python常用于Web开发、数据科学、人工智能、自动化脚本和软件开发。&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="11-使用反思和迭代"><a href="#11-使用反思和迭代" class="headerlink" title="11. 使用反思和迭代"></a><strong>11. 使用反思和迭代</strong></h3><p><strong>最佳实践</strong>：在生成初步答案后，反思并可能修改其回答，以提高准确性和质量。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>初步回答</strong>：<code>&quot;Python是一种编程语言。&quot;</code></p>
+</li>
+<li><p><strong>反思和修改</strong>：<code>&quot;Python是一种高级编程语言，广泛用于Web开发、数据科学、人工智能等领域，因其易读性和丰富的库支持而受到欢迎。&quot;</code></p>
+</li>
+</ul>
+<p>通过遵循这些最佳实践，可以更有效地引导大型语言模型生成高质量的输出，满足各种任务需求。</p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h2 id="提示技术"><a href="#提示技术" class="headerlink" title="提示技术"></a><strong>提示技术</strong></h2><h3 id="1-Zero-shot"><a href="#1-Zero-shot" class="headerlink" title="1. Zero-shot"></a><strong>1. Zero-shot</strong></h3><p><strong>定义</strong>：Zero-shot 是指模型在没有任何示例的情况下完成任务。模型必须依靠其预训练知识和提示来生成答案。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;翻译这句话：&#39;The cat is on the roof.&#39;&quot;</code></p>
+</li>
+<li><p><strong>回答</strong>：<code>&quot;猫在屋顶上。&quot;</code></p>
+</li>
+</ul>
+<p>模型没有看到过具体的翻译示例，但仍然能够正确翻译句子。</p>
+<h3 id="2-Few-shot"><a href="#2-Few-shot" class="headerlink" title="2. Few-shot"></a><strong>2. Few-shot</strong></h3><p><strong>定义</strong>：Few-shot 是指模型在完成任务之前，先提供几个示例来帮助模型理解任务。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;翻译以下句子：&#39;The dog is in the garden.&#39; -&gt; &#39;狗在花园里。&#39; &#39;The bird is in the tree.&#39; -&gt; &#39;鸟在树上。&#39; &#39;The cat is on the roof.&#39; -&gt;&quot;</code></p>
+</li>
+<li><p><strong>回答</strong>：<code>&quot;猫在屋顶上。&quot;</code></p>
+</li>
+</ul>
+<p>通过提供几个翻译示例，模型可以更准确地完成翻译任务。</p>
+<h3 id="3-Chain-of-Thought-CoT"><a href="#3-Chain-of-Thought-CoT" class="headerlink" title="3. Chain-of-Thought (CoT)"></a><strong>3. Chain-of-Thought (CoT)</strong></h3><p><strong>定义</strong>：Chain-of-Thought 是一种提示技术，通过展示模型思考过程的步骤来解决复杂问题。这种方法可以帮助模型更好地推理和生成答案。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;如果一个苹果和一个香蕉的总价是3美元，一个苹果的价格是2美元，那么一个香蕉的价格是多少？请展示你的思考过程。&quot;</code></p>
+</li>
+<li><p><strong>回答</strong>：<code>&quot;首先，苹果的价格是2美元。总价是3美元，所以香蕉的价格是3美元减去2美元，等于1美元。&quot;</code></p>
+</li>
+</ul>
+<p>通过展示思考过程，模型可以更清晰地推理出正确答案。</p>
+<h3 id="4-ReAct"><a href="#4-ReAct" class="headerlink" title="4. ReAct"></a><strong>4. ReAct</strong></h3><p><strong>定义</strong>：ReAct 是一种结合反应（Reaction）和行动（Action）的提示技术，通常用于交互式任务或复杂决策。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;你是一个虚拟助手。用户问：&#39;我今天应该穿什么衣服？&#39; 你需要根据天气情况给出建议。步骤1：查询天气。步骤2：根据天气给出建议。&quot;</code></p>
+</li>
+<li><p><strong>回答</strong>：</p>
+<ul>
+<li><p><strong>步骤1</strong>：<code>&quot;查询天气：今天的天气是晴天，温度在25-30度之间。&quot;</code></p>
+</li>
+<li><p><strong>步骤2</strong>：<code>&quot;建议：今天适合穿轻便的夏装，比如T恤和短裤。&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<p>通过分步骤反应和行动，模型可以更有效地完成复杂任务。</p>
+<h3 id="5-Reflexion"><a href="#5-Reflexion" class="headerlink" title="5. Reflexion"></a><strong>5. Reflexion</strong></h3><p><strong>定义</strong>：Reflexion 是一种提示技术，模型在生成初步答案后，反思并可能修改其回答。这个过程可以提高答案的准确性和质量。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;解释为什么天空是蓝色的。&quot;</code></p>
+</li>
+<li><p><strong>初步回答</strong>：<code>&quot;因为大气中的氧气和氮气散射阳光中的蓝色光。&quot;</code></p>
+</li>
+<li><p><strong>反思</strong>：<code>&quot;这解释不够准确。实际上，蓝色光被散射得更多是因为瑞利散射效应。&quot;</code></p>
+</li>
+<li><p><strong>修改回答</strong>：<code>&quot;天空是蓝色的，因为阳光穿过大气层时，短波长的蓝色光比其他颜色的光被空气分子散射得更多，这种现象被称为瑞利散射。&quot;</code></p>
+</li>
+</ul>
+<p>通过反思和修改，模型可以提供更准确和详细的回答。</p>
+<h3 id="6-Prompt-Chaining"><a href="#6-Prompt-Chaining" class="headerlink" title="6. Prompt Chaining"></a><strong>6. Prompt Chaining</strong></h3><p><strong>定义</strong>：Prompt Chaining 是将多个提示串联起来，以分步解决复杂问题或完成多步骤任务。</p>
+<p><strong>例子</strong>：</p>
+<ul>
+<li><p><strong>任务</strong>：写一篇关于气候变化的文章。</p>
+</li>
+<li><p><strong>提示链</strong>：</p>
+<ol>
+<li><p><code>“首先，简要介绍什么是气候变化。”</code></p>
+</li>
+<li><p><code>“接下来，描述气候变化的主要原因。”</code></p>
+</li>
+<li><p><code>“然后，讨论气候变化的影响。”</code></p>
+</li>
+<li><p><code>“最后，提出应对气候变化的建议。”</code></p>
+</li>
+</ol>
+</li>
+</ul>
+<p>通过将任务分解为多个步骤，模型可以更系统和有条理地完成复杂任务。</p>
+<p>这些技术和方法帮助用户更有效地与大型语言模型互动，获得更高质量的输出。</p>
+<h2 id="结构化输出"><a href="#结构化输出" class="headerlink" title="结构化输出"></a><strong>结构化输出</strong></h2><p>结构化输出在 Prompt Engineering 中是指通过设计特定的提示，引导语言模型生成具有明确格式或结构的输出。这在需要处理数据表格、生成代码、创建报告等任务中尤为重要。通过结构化输出，可以确保生成的内容符合预期的格式，便于后续处理和使用。</p>
+<h3 id="结构化输出的常见形式"><a href="#结构化输出的常见形式" class="headerlink" title="结构化输出的常见形式"></a><strong>结构化输出的常见形式</strong></h3><ol>
+<li><p><strong>JSON 格式</strong>：适用于需要生成或处理数据对象的任务。</p>
+</li>
+<li><p><strong>Markdown 格式</strong>：用于生成文档或报告，便于阅读和展示。</p>
+</li>
+<li><p><strong>表格格式</strong>：适用于数据展示和分析。</p>
+</li>
+<li><p><strong>代码格式</strong>：用于生成特定编程语言的代码片段。</p>
+</li>
+</ol>
+<h3 id="设计结构化输出提示的技巧"><a href="#设计结构化输出提示的技巧" class="headerlink" title="设计结构化输出提示的技巧"></a><strong>设计结构化输出提示的技巧</strong></h3><ol>
+<li><p><strong>明确格式要求</strong>：在提示中清晰地说明输出的格式。</p>
+</li>
+<li><p><strong>提供示例</strong>：通过示例展示期望的输出格式。</p>
+</li>
+<li><p><strong>使用占位符</strong>：在提示中使用占位符来指示需要填充的内容。</p>
+</li>
+</ol>
+<h3 id="结构化输出的示例"><a href="#结构化输出的示例" class="headerlink" title="结构化输出的示例"></a><strong>结构化输出的示例</strong></h3><h4 id="示例-1：生成-JSON-格式的数据"><a href="#示例-1：生成-JSON-格式的数据" class="headerlink" title="示例 1：生成 JSON 格式的数据"></a><strong>示例 1：生成 JSON 格式的数据</strong></h4><p><strong>提示</strong>：</p>
+<p><strong>输出</strong>：</p>
+<h4 id="示例-2：生成-Markdown-格式的报告"><a href="#示例-2：生成-Markdown-格式的报告" class="headerlink" title="示例 2：生成 Markdown 格式的报告"></a><strong>示例 2：生成 Markdown 格式的报告</strong></h4><p><strong>提示</strong>：</p>
+<p><strong>输出</strong>：</p>
+<h4 id="示例-3：生成表格格式的数据"><a href="#示例-3：生成表格格式的数据" class="headerlink" title="示例 3：生成表格格式的数据"></a><strong>示例 3：生成表格格式的数据</strong></h4><p><strong>提示</strong>：</p>
+<p><strong>输出</strong>：</p>
+<h4 id="示例-4：生成代码格式"><a href="#示例-4：生成代码格式" class="headerlink" title="示例 4：生成代码格式"></a><strong>示例 4：生成代码格式</strong></h4><p><strong>提示</strong>：</p>
+<p>通过设计结构化输出的提示，可以有效地引导模型生成符合预期格式的内容，方便后续处理和使用。</p>
+<h2 id="Prompt-应用"><a href="#Prompt-应用" class="headerlink" title="Prompt 应用"></a><strong>Prompt 应用</strong></h2><p>在不同应用场景中使用 Prompt Engineering 可以显著提升大型语言模型的表现。以下是一些具体的应用场景及其最佳实践，包括数据处理、代码生成、函数定义、分类任务、创意生成、内容生成、汇总信息，以及风险与安全管理。</p>
+<h3 id="1-数据处理"><a href="#1-数据处理" class="headerlink" title="1. 数据处理"></a><strong>1. 数据处理</strong></h3><p><strong>应用场景</strong>：数据清理、转换和分析。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>数据清理</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请将以下数据转换为标准日期格式：&#39;12/31/2023&#39;, &#39;01-01-2024&#39;, &#39;2024.02.28&#39;。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;2023-12-31, 2024-01-01, 2024-02-28&quot;</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>数据转换</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请将以下CSV数据转换为JSON格式：\nName, Age, City\nAlice, 30, New York\nBob, 25, Los Angeles&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-代码生成"><a href="#2-代码生成" class="headerlink" title="2. 代码生成"></a><strong>2. 代码生成</strong></h3><p><strong>应用场景</strong>：生成和优化代码片段。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>代码生成</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请用Python编写一个函数，计算一个列表中所有数字的平均值。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：</p>
+</li>
+</ul>
+</li>
+<li><p><strong>代码优化</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请优化以下Python代码以提高性能：\n\n```\nfor i in range(1000000):\n result.append(i * 2)\n```&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-函数定义"><a href="#3-函数定义" class="headerlink" title="3. 函数定义"></a><strong>3. 函数定义</strong></h3><p><strong>应用场景</strong>：定义特定功能的函数。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请定义一个Python函数，接受两个字符串参数，返回它们的拼接结果。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：</p>
+</li>
+</ul>
+<h3 id="4-分类任务"><a href="#4-分类任务" class="headerlink" title="4. 分类任务"></a><strong>4. 分类任务</strong></h3><p><strong>应用场景</strong>：文本分类、情感分析等。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>文本分类</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请将以下句子分类为&#39;正面&#39;或&#39;负面&#39;：&#39;我今天很开心。&#39; &#39;这个产品真糟糕。&#39;&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;正面：&#39;我今天很开心。&#39; 负面：&#39;这个产品真糟糕。&#39;&quot;</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>情感分析</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请分析以下评论的情感：&#39;这部电影非常棒！&#39; &#39;我对这次服务很失望。&#39;&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;正面：&#39;这部电影非常棒！&#39; 负面：&#39;我对这次服务很失望。&#39;&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="5-创意生成"><a href="#5-创意生成" class="headerlink" title="5. 创意生成"></a><strong>5. 创意生成</strong></h3><p><strong>应用场景</strong>：生成创意内容，如故事、广告文案等。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>故事生成</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请编写一个关于勇敢小狗冒险的短篇故事。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;从前有一只勇敢的小狗，它每天都在森林里冒险。有一天，它遇到了一个迷路的小女孩，决定帮助她找到回家的路……&quot;</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>广告文案</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请为一款新型智能手表编写一段广告文案。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;体验未来科技，掌握健康生活。我们的新型智能手表不仅时尚，还能实时监测你的健康数据，助你轻松掌控每一天。&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-内容生成"><a href="#6-内容生成" class="headerlink" title="6. 内容生成"></a><strong>6. 内容生成</strong></h3><p><strong>应用场景</strong>：生成文章、报告等。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>文章生成</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请写一篇关于人工智能在医疗领域应用的文章。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;人工智能在医疗领域的应用正在迅速发展，从辅助诊断到个性化治疗，AI技术正在改变医疗行业的面貌……&quot;</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>报告生成</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请生成一份关于2023年公司财务状况的报告，包含收入、支出和净利润分析。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="7-汇总信息"><a href="#7-汇总信息" class="headerlink" title="7. 汇总信息"></a><strong>7. 汇总信息</strong></h3><p><strong>应用场景</strong>：汇总和总结信息。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>信息汇总</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请总结以下文章的主要观点：&#39;文章内容：AI对社会的影响&#39;&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;主要观点：1. 气候变化是全球性问题。2. 需要全球合作应对。3. 可再生能源是解决方案之一。&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="8-风险与安全管理"><a href="#8-风险与安全管理" class="headerlink" title="8. 风险与安全管理"></a><strong>8. 风险与安全管理</strong></h3><p><strong>应用场景</strong>：识别和管理潜在风险与安全问题。</p>
+<p><strong>示例</strong>：</p>
+<ul>
+<li><p><strong>风险评估</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请评估以下项目的潜在风险：&#39;项目描述：AI技术医疗项目&#39;&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;潜在风险：1. 项目延期。2. 预算超支。3. 技术实现难度大。&quot;</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>安全建议</strong>：</p>
+<ul>
+<li><p><strong>提示</strong>：<code>&quot;请提供关于数据隐私保护的安全建议。&quot;</code></p>
+</li>
+<li><p><strong>输出</strong>：<code>&quot;1. 使用强密码和双因素认证。2. 定期更新和补丁系统。3. 加密敏感数据。4. 进行定期安全审计。&quot;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+<p>通过这些应用场景的最佳实践，可以更有效地利用 Prompt Engineering 来实现各种任务，提高模型输出的质量和效率。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/05/19/Prompt%E7%AF%87-Prompt%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" title="Prompt篇-Prompt快速入门">http://mzfnai.com/2025/05/19/Prompt篇-Prompt快速入门/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" rel="tag"># 最佳实践</a>
+              <a href="/tags/%E6%8F%90%E7%A4%BA%E5%B7%A5%E7%A8%8B/" rel="tag"># 提示工程</a>
+              <a href="/tags/Prompt/" rel="tag"># Prompt</a>
+              <a href="/tags/AI%E4%BA%A4%E4%BA%92/" rel="tag"># AI交互</a>
+              <a href="/tags/%E6%8A%80%E6%9C%AF%E6%8C%87%E5%8D%97/" rel="tag"># 技术指南</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/05/12/Prompt%E7%AF%87-Prompt%E6%A1%88%E4%BE%8B%E5%88%86%E4%BA%AB/" rel="prev" title="Prompt篇-Prompt案例分享">
+      <i class="fa fa-chevron-left"></i> Prompt篇-Prompt案例分享
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/05/26/171LangChain%E7%AF%87-%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8%E4%B8%8E%E5%BA%95%E5%B1%82%E9%80%BB%E8%BE%91/" rel="next" title="LangChain篇-快速入门与底层逻辑">
+      LangChain篇-快速入门与底层逻辑 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompt"><span class="nav-number">1.</span> <span class="nav-text">Prompt</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Prompt-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">Prompt 是什么？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Prompt-%E5%A6%82%E4%BD%95%E7%94%9F%E6%88%90%EF%BC%9F"><span class="nav-number">1.2.</span> <span class="nav-text">Prompt 如何生成？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Prompt-%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-number">1.3.</span> <span class="nav-text">Prompt 的重要性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompt-Engineering%E5%AE%9A%E4%B9%89"><span class="nav-number">2.</span> <span class="nav-text">Prompt Engineering定义</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompt-Engineering%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">3.</span> <span class="nav-text">Prompt Engineering最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%98%8E%E7%A1%AE%E7%9B%AE%E6%A0%87"><span class="nav-number">3.1.</span> <span class="nav-text">1. 明确目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8F%90%E4%BE%9B%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="nav-number">3.2.</span> <span class="nav-text">2. 提供上下文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%BD%BF%E7%94%A8%E5%85%B7%E4%BD%93%E7%9A%84%E6%8C%87%E7%A4%BA"><span class="nav-number">3.3.</span> <span class="nav-text">3. 使用具体的指示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%8F%90%E4%BE%9B%E7%A4%BA%E4%BE%8B"><span class="nav-number">3.4.</span> <span class="nav-text">4. 提供示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E4%BD%BF%E7%94%A8%E5%88%86%E6%AD%A5%E6%8C%87%E7%A4%BA"><span class="nav-number">3.5.</span> <span class="nav-text">5. 使用分步指示</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E6%8E%A7%E5%88%B6%E8%BE%93%E5%87%BA%E9%95%BF%E5%BA%A6"><span class="nav-number">3.6.</span> <span class="nav-text">6. 控制输出长度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E4%BD%BF%E7%94%A8%E5%8D%A0%E4%BD%8D%E7%AC%A6%E5%92%8C%E6%A8%A1%E6%9D%BF"><span class="nav-number">3.7.</span> <span class="nav-text">7. 使用占位符和模板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-%E5%8F%8D%E5%A4%8D%E8%AF%95%E9%AA%8C%E5%92%8C%E8%B0%83%E6%95%B4"><span class="nav-number">3.8.</span> <span class="nav-text">8. 反复试验和调整</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-%E6%8C%87%E5%AE%9A%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F"><span class="nav-number">3.9.</span> <span class="nav-text">9. 指定输出格式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#10-%E4%BD%BF%E7%94%A8%E5%A4%9A%E8%BD%AE%E5%AF%B9%E8%AF%9D"><span class="nav-number">3.10.</span> <span class="nav-text">10. 使用多轮对话</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#11-%E4%BD%BF%E7%94%A8%E5%8F%8D%E6%80%9D%E5%92%8C%E8%BF%AD%E4%BB%A3"><span class="nav-number">3.11.</span> <span class="nav-text">11. 使用反思和迭代</span></a></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">3.12.</span> <span class="nav-text"></span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%90%E7%A4%BA%E6%8A%80%E6%9C%AF"><span class="nav-number">4.</span> <span class="nav-text">提示技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Zero-shot"><span class="nav-number">4.1.</span> <span class="nav-text">1. Zero-shot</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Few-shot"><span class="nav-number">4.2.</span> <span class="nav-text">2. Few-shot</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Chain-of-Thought-CoT"><span class="nav-number">4.3.</span> <span class="nav-text">3. Chain-of-Thought (CoT)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-ReAct"><span class="nav-number">4.4.</span> <span class="nav-text">4. ReAct</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Reflexion"><span class="nav-number">4.5.</span> <span class="nav-text">5. Reflexion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-Prompt-Chaining"><span class="nav-number">4.6.</span> <span class="nav-text">6. Prompt Chaining</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA"><span class="nav-number">5.</span> <span class="nav-text">结构化输出</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E7%9A%84%E5%B8%B8%E8%A7%81%E5%BD%A2%E5%BC%8F"><span class="nav-number">5.1.</span> <span class="nav-text">结构化输出的常见形式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E6%8F%90%E7%A4%BA%E7%9A%84%E6%8A%80%E5%B7%A7"><span class="nav-number">5.2.</span> <span class="nav-text">设计结构化输出提示的技巧</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E8%BE%93%E5%87%BA%E7%9A%84%E7%A4%BA%E4%BE%8B"><span class="nav-number">5.3.</span> <span class="nav-text">结构化输出的示例</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-1%EF%BC%9A%E7%94%9F%E6%88%90-JSON-%E6%A0%BC%E5%BC%8F%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">5.3.1.</span> <span class="nav-text">示例 1：生成 JSON 格式的数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-2%EF%BC%9A%E7%94%9F%E6%88%90-Markdown-%E6%A0%BC%E5%BC%8F%E7%9A%84%E6%8A%A5%E5%91%8A"><span class="nav-number">5.3.2.</span> <span class="nav-text">示例 2：生成 Markdown 格式的报告</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-3%EF%BC%9A%E7%94%9F%E6%88%90%E8%A1%A8%E6%A0%BC%E6%A0%BC%E5%BC%8F%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">5.3.3.</span> <span class="nav-text">示例 3：生成表格格式的数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B-4%EF%BC%9A%E7%94%9F%E6%88%90%E4%BB%A3%E7%A0%81%E6%A0%BC%E5%BC%8F"><span class="nav-number">5.3.4.</span> <span class="nav-text">示例 4：生成代码格式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prompt-%E5%BA%94%E7%94%A8"><span class="nav-number">6.</span> <span class="nav-text">Prompt 应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86"><span class="nav-number">6.1.</span> <span class="nav-text">1. 数据处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BB%A3%E7%A0%81%E7%94%9F%E6%88%90"><span class="nav-number">6.2.</span> <span class="nav-text">2. 代码生成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%87%BD%E6%95%B0%E5%AE%9A%E4%B9%89"><span class="nav-number">6.3.</span> <span class="nav-text">3. 函数定义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%88%86%E7%B1%BB%E4%BB%BB%E5%8A%A1"><span class="nav-number">6.4.</span> <span class="nav-text">4. 分类任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%88%9B%E6%84%8F%E7%94%9F%E6%88%90"><span class="nav-number">6.5.</span> <span class="nav-text">5. 创意生成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%86%85%E5%AE%B9%E7%94%9F%E6%88%90"><span class="nav-number">6.6.</span> <span class="nav-text">6. 内容生成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E6%B1%87%E6%80%BB%E4%BF%A1%E6%81%AF"><span class="nav-number">6.7.</span> <span class="nav-text">7. 汇总信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-%E9%A3%8E%E9%99%A9%E4%B8%8E%E5%AE%89%E5%85%A8%E7%AE%A1%E7%90%86"><span class="nav-number">6.8.</span> <span class="nav-text">8. 风险与安全管理</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

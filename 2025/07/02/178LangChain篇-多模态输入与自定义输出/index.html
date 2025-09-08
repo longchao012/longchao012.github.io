@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍LangChain中多模态数据输入处理和自定义输出格式化，包括图像输入、视觉模型调用和输出解析的实现方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-多模态输入与自定义输出">
+<meta property="og:url" content="http://mzfnai.com/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍LangChain中多模态数据输入处理和自定义输出格式化，包括图像输入、视觉模型调用和输出解析的实现方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-07-02T02:32:15.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:46:28.968Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="图像处理">
+<meta property="article:tag" content="多模态">
+<meta property="article:tag" content="自定义输出">
+<meta property="article:tag" content="GPT-4V">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-多模态输入与自定义输出 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-多模态输入与自定义输出
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-02 10:32:15" itemprop="dateCreated datePublished" datetime="2025-07-02T10:32:15+08:00">2025-07-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>18k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>16 分钟</span>
+            </span>
+            <div class="post-description">详细介绍LangChain中多模态数据输入处理和自定义输出格式化，包括图像输入、视觉模型调用和输出解析的实现方法。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、多模态数据输入"><a href="#一、多模态数据输入" class="headerlink" title="一、多模态数据输入"></a>一、多模态数据输入</h2><p>这里我们演示如何将多模态输入直接传递给模型。我们目前期望所有输入都以与 <a target="_blank" rel="noopener" href="https://platform.openai.com/docs/guides/vision">OpenAI</a> 期望的格式相同的格式传递。对于支持多模态输入的其他模型提供者，我们在类中添加了逻辑以转换为预期格式。</p>
+<p>在这个例子中，我们将要求模型描述一幅图像。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">image_url = <span class="string">&quot;https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.messages <span class="keyword">import</span> HumanMessage</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"></span><br><span class="line">model = ChatOpenAI(model=<span class="string">&quot;gpt-4o&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>API 参考：</strong><a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/messages/langchain_core.messages.human.HumanMessage.html">HumanMessage</a> | <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/chat_models/langchain_openai.chat_models.base.ChatOpenAI.html">ChatOpenAI</a></p>
+<p>最常支持的传入图像的方式是将其作为字节字符串传入。这应该适用于大多数模型集成。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> base64</span><br><span class="line"><span class="keyword">import</span> httpx</span><br><span class="line"></span><br><span class="line">image_data = base64.b64encode(httpx.get(image_url).content).decode(<span class="string">&quot;utf-8&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">message = HumanMessage(</span><br><span class="line">    content=[</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>, <span class="string">&quot;text&quot;</span>: <span class="string">&quot;用中文描述这张图片中的天气&quot;</span>&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>,<span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: <span class="string">f&quot;data:image/jpeg;base64,<span class="subst">&#123;image_data&#125;</span>&quot;</span>&#125;,</span><br><span class="line">        &#125;,</span><br><span class="line">    ],</span><br><span class="line">)</span><br><span class="line">response = model.invoke([message])</span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这张图片展示了一个晴朗的天气。天空中有一些淡淡的云，阳光明媚，照亮了图中的草地和木板路。天空呈现出明亮的蓝色，与绿色的草地形成了鲜明的对比。整体感觉是非常清新和舒适的，适合户外活动和散步。</span><br></pre></td></tr></table></figure>
+
+<p>我们可以在“image_url”类型的内容块中直接提供图像 URL。请注意，只有部分模型提供商支持此功能。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">message = HumanMessage(</span><br><span class="line">    content=[</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>, <span class="string">&quot;text&quot;</span>: <span class="string">&quot;用中文描述这张图片中的天气&quot;</span>&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>, <span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: image_url&#125;&#125;,</span><br><span class="line">    ],</span><br><span class="line">)</span><br><span class="line">response = model.invoke([message])</span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">图片中的天气晴朗，天空中有一些稀薄的白云，整体呈现出蓝色。阳光明媚，光线充足，草地和树木显得非常绿意盎然。这种天气非常适合户外活动，比如散步或野餐。总的来说，天气非常舒适宜人。</span><br></pre></td></tr></table></figure>
+
+<p>我们还可以传入多幅图像。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">message = HumanMessage(</span><br><span class="line">    content=[</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>, <span class="string">&quot;text&quot;</span>: <span class="string">&quot;这两张图片是一样的吗？&quot;</span>&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>, <span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: image_url&#125;&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>, <span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: image_url&#125;&#125;,</span><br><span class="line">    ],</span><br><span class="line">)</span><br><span class="line">response = model.invoke([message])</span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">这两张图片不一样。第一张是一个晴天的草地景色，有一条木板小路通向远方；第二张是一个覆盖着雪的村庄，有多栋房屋和一些红色灯笼。两张图片显示的是完全不同的场景。</span><br></pre></td></tr></table></figure>
+
+<h3 id="工具调用"><a href="#工具调用" class="headerlink" title="工具调用"></a><a target="_blank" rel="noopener" href="https://python.langchain.com/v0.2/docs/how_to/multimodal_inputs/#tool-calls">工具调用</a></h3><p>一些多模态模型也支持<a target="_blank" rel="noopener" href="https://python.langchain.com/v0.2/docs/concepts/#functiontool-calling">工具调用功能。要使用此类模型调用工具，只需以</a><a target="_blank" rel="noopener" href="https://python.langchain.com/v0.2/docs/how_to/tool_calling/">通常的方式</a>将工具绑定到它们，然后使用所需类型的内容块（例如，包含图像数据）调用模型。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> Literalfrom langchain_core.messages <span class="keyword">import</span> HumanMessage</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> tool</span><br><span class="line"></span><br><span class="line"><span class="meta">@tool</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">weather_tool</span>(<span class="params">weather: <span class="type">Literal</span>[<span class="string">&quot;晴朗的&quot;</span>, <span class="string">&quot;多云的&quot;</span>, <span class="string">&quot;多雨的&quot;</span>,<span class="string">&quot;下雪的&quot;</span>]</span>) -&gt; <span class="literal">None</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Describe the weather&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">pass</span></span><br><span class="line">    </span><br><span class="line">model = ChatOpenAI(model=<span class="string">&quot;gpt-4o&quot;</span>)</span><br><span class="line">model_with_tools = model.bind_tools([weather_tool])</span><br><span class="line">image_url_1 = <span class="string">&quot;https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg&quot;</span></span><br><span class="line">image_url_2 = <span class="string">&quot;https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Morning_in_China_Snow_Town.jpg/1280px-Morning_in_China_Snow_Town.jpg&quot;</span></span><br><span class="line"></span><br><span class="line">message = HumanMessage(</span><br><span class="line">    content=[</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>, <span class="string">&quot;text&quot;</span>: <span class="string">&quot;用中文描述两张图片中的天气&quot;</span>&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>, <span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: image_url_1&#125;&#125;,</span><br><span class="line">        &#123;<span class="string">&quot;type&quot;</span>: <span class="string">&quot;image_url&quot;</span>, <span class="string">&quot;image_url&quot;</span>: &#123;<span class="string">&quot;url&quot;</span>: image_url_2&#125;&#125;,</span><br><span class="line">    ],</span><br><span class="line">)</span><br><span class="line">response = model_with_tools.invoke([message])</span><br><span class="line"><span class="built_in">print</span>(response.tool_calls)</span><br></pre></td></tr></table></figure>
+
+<p><strong>API 参考：</strong><a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/tools/langchain_core.tools.tool.html">工具</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;weather_tool&#x27;</span>, <span class="string">&#x27;args&#x27;</span>: &#123;<span class="string">&#x27;weather&#x27;</span>: <span class="string">&#x27;晴朗的&#x27;</span>&#125;, <span class="string">&#x27;id&#x27;</span>: <span class="string">&#x27;call_7vbVxf7xnHvBqpO5SkVCt5xq&#x27;</span>, <span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;tool_call&#x27;</span>&#125;, &#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;weather_tool&#x27;</span>, <span class="string">&#x27;args&#x27;</span>: &#123;<span class="string">&#x27;weather&#x27;</span>: <span class="string">&#x27;下雪的&#x27;</span>&#125;, <span class="string">&#x27;id&#x27;</span>: <span class="string">&#x27;call_zm5zOZgSTd8R57N23aBbIfwX&#x27;</span>, <span class="string">&#x27;type&#x27;</span>: <span class="string">&#x27;tool_call&#x27;</span>&#125;]</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="二、自定义输出-JSON-XML-YAML"><a href="#二、自定义输出-JSON-XML-YAML" class="headerlink" title="二、自定义输出: JSON, XML, YAML"></a>二、自定义输出: JSON, XML, YAML</h2><h3 id="1-如何解析-JSON-输出"><a href="#1-如何解析-JSON-输出" class="headerlink" title="1. 如何解析 JSON 输出"></a>1. 如何解析 JSON 输出</h3><p>虽然一些模型提供商支持内置的方法返回结构化输出，但并非所有都支持。我们可以使用输出解析器来帮助用户通过提示指定任意的 JSON 模式，查询符合该模式的模型输出，最后将该模式解析为 JSON。</p>
+<p>请记住，大型语言模型是有泄漏的抽象！您必须使用具有足够容量的大型语言模型来生成格式良好的 JSON。</p>
+<p>JsonOutputParser 是一个内置选项，用于提示并解析 JSON 输出。虽然它在功能上类似于 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/output_parsers/langchain_core.output_parsers.pydantic.PydanticOutputParser.html">PydanticOutputParser</a>，但它还支持流式返回部分 JSON 对象。</p>
+<p>以下是如何将其与 <a target="_blank" rel="noopener" href="https://docs.pydantic.dev/">Pydantic</a> 一起使用以方便地声明预期模式的示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%pip install -qU langchain langchain-openai</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#json_output_parser.pyfrom langchain_core.output_parsers import JsonOutputParser</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_core.pydantic_v1 <span class="keyword">import</span> BaseModel, Field</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line">model = ChatOpenAI(temperature=<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 定义您期望的数据结构。class Joke(BaseModel):</span></span><br><span class="line">    setup: <span class="built_in">str</span> = Field(description=<span class="string">&quot;设置笑话的问题&quot;</span>)</span><br><span class="line">    punchline: <span class="built_in">str</span> = Field(description=<span class="string">&quot;解决笑话的答案&quot;</span>)</span><br><span class="line"><span class="comment"># 还有一个用于提示语言模型填充数据结构的查询意图。</span></span><br><span class="line">joke_query = <span class="string">&quot;告诉我一个笑话。&quot;</span><span class="comment"># 设置解析器 + 将指令注入提示模板。</span></span><br><span class="line">parser = JsonOutputParser(pydantic_object=Joke)</span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=<span class="string">&quot;回答用户的查询。\n&#123;format_instructions&#125;\n&#123;query&#125;\n&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;query&quot;</span>],</span><br><span class="line">    partial_variables=&#123;<span class="string">&quot;format_instructions&quot;</span>: parser.get_format_instructions()&#125;,</span><br><span class="line">)</span><br><span class="line">chain = prompt | model | parser</span><br><span class="line">chain.invoke(&#123;<span class="string">&quot;query&quot;</span>: joke_query&#125;)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的防火墙！&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，我们将解析器中的 <code>format_instructions</code> 直接传递到提示中。您可以并且应该尝试在提示的其他部分中添加自己的格式提示，以增强或替换默认指令：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">parser.get_format_instructions()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x27;输出应格式化为符合以下 JSON 模式的 JSON 实例。\n\n例如，对于模式 <span class="punctuation">&#123;</span><span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;foo&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;title&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Foo&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;字符串列表&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;array&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;items&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;string&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="attr">&quot;required&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;foo&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span>，对象 <span class="punctuation">&#123;</span><span class="attr">&quot;foo&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;bar&quot;</span><span class="punctuation">,</span> <span class="string">&quot;baz&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span> 是该模式的格式良好实例。对象 <span class="punctuation">&#123;</span><span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;foo&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;bar&quot;</span><span class="punctuation">,</span> <span class="string">&quot;baz&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span> 不是格式良好的。\n\n这是输出模式：\n```\n<span class="punctuation">&#123;</span><span class="attr">&quot;properties&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;setup&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;title&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Setup&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;设置笑话的问题&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;string&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="attr">&quot;punchline&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;title&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Punchline&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;解决笑话的答案&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;string&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span> <span class="attr">&quot;required&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;setup&quot;</span><span class="punctuation">,</span> <span class="string">&quot;punchline&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span>\n```&#x27;</span><br></pre></td></tr></table></figure>
+
+<h4 id="流式处理"><a href="#流式处理" class="headerlink" title="流式处理"></a>流式处理</h4><p>如上所述，<code>JsonOutputParser</code> 和 <code>PydanticOutputParser</code> 之间的一个关键区别是 <code>JsonOutputParser</code> 输出解析器支持流式处理部分块。以下是其示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#json_output_parser_stream.py</span></span><br><span class="line"><span class="keyword">for</span> s <span class="keyword">in</span> chain.stream(&#123;<span class="string">&quot;query&quot;</span>: joke_query&#125;):</span><br><span class="line">    <span class="built_in">print</span>(s)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的防&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的防火&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的防火墙&#x27;&#125;</span><br><span class="line">&#123;&#x27;setup&#x27;: &#x27;为什么计算机不能得感冒？&#x27;, &#x27;punchline&#x27;: &#x27;因为它们有很好的防火墙！&#x27;&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>你也可以在没有 Pydantic 的情况下使用 <code>JsonOutputParser</code>。这将提示模型返回 JSON，但不提供关于模式应该是什么的具体信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#json_output_parser_no_pydantic.py</span><br><span class="line">joke_query = &quot;Tell me a joke.&quot;</span><br><span class="line">parser = JsonOutputParser()</span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=&quot;Answer the user query.\n&#123;format_instructions&#125;\n&#123;query&#125;\n&quot;,</span><br><span class="line">    input_variables=[&quot;query&quot;],</span><br><span class="line">    partial_variables=&#123;&quot;format_instructions&quot;: parser.get_format_instructions()&#125;,</span><br><span class="line">)</span><br><span class="line">chain = prompt | model | parser</span><br><span class="line">chain.invoke(&#123;&quot;query&quot;: joke_query&#125;)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;joke&#x27;: &#x27;为什么数学书总是很难过？因为它有太多的问题！&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="2-如何解析-XML-输出"><a href="#2-如何解析-XML-输出" class="headerlink" title="2. 如何解析 XML 输出"></a>2. 如何解析 XML 输出</h3><p>下面使用 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/output_parsers/langchain_core.output_parsers.xml.XMLOutputParser.html">XMLOutputParser</a> 来提示模型生成 XML 输出，然后将该输出解析为可用的格式。</p>
+<p>我们可以使用 <code>XMLOutputParser</code> 将默认的格式指令添加到提示中，并将输出的 XML 解析为字典：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#xml_output_parser.py</span></span><br><span class="line">parser = XMLOutputParser()</span><br><span class="line"><span class="comment"># 我们将在下面的提示中添加这些指令</span></span><br><span class="line">parser.get_format_instructions()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">The output should be formatted as a XML file.</span><br><span class="line">1.Output should conform to the tags below. </span><br><span class="line">2.If tags are not given, make them on your own.</span><br><span class="line">3.Remember to always open and close all the tags.</span><br><span class="line"></span><br><span class="line">As an example, for the tags [&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]:</span><br><span class="line">1.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;bar&gt;</span><br><span class="line">    &lt;baz&gt;&lt;/baz&gt;</span><br><span class="line">  &lt;/bar&gt;</span><br><span class="line">&lt;/foo&gt;&quot; is a well-formatted instance of the schema. </span><br><span class="line">2.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;bar&gt;</span><br><span class="line">  &lt;/foo&gt;&quot; is a badly-formatted instance.</span><br><span class="line">3.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;tag&gt;</span><br><span class="line">  &lt;/tag&gt;</span><br><span class="line">&lt;/foo&gt;&quot; is a badly-formatted instance.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"><span class="comment"># pip install -qU langchain langchain-openaifrom langchain_core.prompts import PromptTemplate</span></span><br><span class="line"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> XMLOutputParser</span><br><span class="line"><span class="comment"># pip install defusedxml</span></span><br><span class="line"></span><br><span class="line">model = ChatOpenAI(model=<span class="string">&quot;gpt-4o&quot;</span>, temperature=<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 还有一个用于提示语言模型填充数据结构的查询意图。</span></span><br><span class="line">actor_query = <span class="string">&quot;生成周星驰的简化电影作品列表，按照最新的时间降序&quot;</span><span class="comment"># 设置解析器 + 将指令注入提示模板。</span></span><br><span class="line">parser = XMLOutputParser()</span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=<span class="string">&quot;回答用户的查询。\n&#123;format_instructions&#125;\n&#123;query&#125;\n&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;query&quot;</span>],</span><br><span class="line">    partial_variables=&#123;<span class="string">&quot;format_instructions&quot;</span>: parser.get_format_instructions()&#125;,</span><br><span class="line">)</span><br><span class="line"><span class="comment"># print(parser.get_format_instructions())</span></span><br><span class="line">chain = prompt | model</span><br><span class="line">response = chain.invoke(&#123;<span class="string">&quot;query&quot;</span>: actor_query&#125;)</span><br><span class="line">xml_output = parser.parse(response.content)</span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">movies</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>美人鱼<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>2016<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>西游降魔篇<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>2013<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>长江七号<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>2008<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>功夫<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>2004<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>少林足球<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>2001<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>喜剧之王<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>1999<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>大话西游之大圣娶亲<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>1995<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>大话西游之月光宝盒<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>1995<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>唐伯虎点秋香<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>1993<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">movie</span>&gt;</span><span class="tag">&lt;<span class="name">title</span>&gt;</span>逃学威龙<span class="tag">&lt;/<span class="name">title</span>&gt;</span><span class="tag">&lt;<span class="name">year</span>&gt;</span>1991<span class="tag">&lt;/<span class="name">year</span>&gt;</span><span class="tag">&lt;/<span class="name">movie</span>&gt;</span><span class="tag">&lt;/<span class="name">movies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>我们还可以添加一些标签以根据我们的需求定制输出。您可以在提示的其他部分中尝试添加自己的格式提示，以增强或替换默认指令：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#xml_output_parser_enhance.py</span></span><br><span class="line">parser = XMLOutputParser(tags=[<span class="string">&quot;movies&quot;</span>, <span class="string">&quot;actor&quot;</span>, <span class="string">&quot;film&quot;</span>, <span class="string">&quot;name&quot;</span>, <span class="string">&quot;genre&quot;</span>])</span><br><span class="line"><span class="comment"># 我们将在下面的提示中添加这些指令</span></span><br><span class="line">parser.get_format_instructions()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">The output should be formatted as a XML file.</span><br><span class="line">1.Output should conform to the tags below. </span><br><span class="line">2.If tags are not given, make them on your own.</span><br><span class="line">3.Remember to always open and close all the tags.</span><br><span class="line"></span><br><span class="line">As an example, for the tags [&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]:</span><br><span class="line">1.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;bar&gt;</span><br><span class="line">      &lt;baz&gt;&lt;/baz&gt;</span><br><span class="line">  &lt;/bar&gt;</span><br><span class="line">&lt;/foo&gt;&quot; is a well-formatted instance of the schema. </span><br><span class="line">2.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;bar&gt;</span><br><span class="line">  &lt;/foo&gt;&quot; is a badly-formatted instance.</span><br><span class="line">3.String &quot;&lt;foo&gt;</span><br><span class="line">  &lt;tag&gt;</span><br><span class="line">  &lt;/tag&gt;</span><br><span class="line">&lt;/foo&gt;&quot; is a badly-formatted instance.</span><br><span class="line"></span><br><span class="line">Here are the output tags:</span><br><span class="line">[&#x27;movies&#x27;, &#x27;actor&#x27;, &#x27;film&#x27;, &#x27;name&#x27;, &#x27;genre&#x27;]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=&quot;&quot;&quot;&#123;query&#125;\n&#123;format_instructions&#125;&quot;&quot;&quot;,</span><br><span class="line">    input_variables=[&quot;query&quot;],</span><br><span class="line">    partial_variables=&#123;&quot;format_instructions&quot;: parser.get_format_instructions()&#125;,</span><br><span class="line">)</span><br><span class="line">chain = prompt | model | parser</span><br><span class="line">output = chain.invoke(&#123;&quot;query&quot;: actor_query&#125;)</span><br><span class="line">print(output)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">movies</span>&gt;</span><span class="tag">&lt;<span class="name">actor</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>周星驰<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>美人鱼<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">genre</span>&gt;</span>喜剧, 奇幻<span class="tag">&lt;/<span class="name">genre</span>&gt;</span><span class="tag">&lt;/<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>西游降魔篇<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">genre</span>&gt;</span>喜剧, 奇幻<span class="tag">&lt;/<span class="name">genre</span>&gt;</span><span class="tag">&lt;/<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>长江七号<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">genre</span>&gt;</span>喜剧, 科幻<span class="tag">&lt;/<span class="name">genre</span>&gt;</span><span class="tag">&lt;/<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>功夫<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">genre</span>&gt;</span>喜剧, 动作<span class="tag">&lt;/<span class="name">genre</span>&gt;</span><span class="tag">&lt;/<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">film</span>&gt;</span><span class="tag">&lt;<span class="name">name</span>&gt;</span>少林足球<span class="tag">&lt;/<span class="name">name</span>&gt;</span><span class="tag">&lt;<span class="name">genre</span>&gt;</span>喜剧, 运动<span class="tag">&lt;/<span class="name">genre</span>&gt;</span><span class="tag">&lt;/<span class="name">film</span>&gt;</span><span class="tag">&lt;/<span class="name">actor</span>&gt;</span><span class="tag">&lt;/<span class="name">movies</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这个输出解析器还支持部分数据流的处理。以下是一个示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#xml_output_parser_stream.py</span></span><br><span class="line"><span class="keyword">for</span> s <span class="keyword">in</span> chain.stream(&#123;<span class="string">&quot;query&quot;</span>: actor_query&#125;):<span class="built_in">print</span>(s)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;name&#x27;: &#x27;周星驰&#x27;&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;美人鱼&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 奇幻&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;西游·降魔篇&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 奇幻&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;长江七号&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 科幻&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;功夫&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 动作&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;少林足球&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 运动&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;喜剧之王&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 剧情&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;大话西游之大圣娶亲&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 奇幻&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;name&#x27;: &#x27;大话西游之月光宝盒&#x27;&#125;]&#125;]&#125;]&#125;</span><br><span class="line">&#123;&#x27;movies&#x27;: [&#123;&#x27;actor&#x27;: [&#123;&#x27;film&#x27;: [&#123;&#x27;genre&#x27;: &#x27;喜剧, 奇幻&#x27;&#125;]&#125;]&#125;]&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-如何解析-YAML-输出"><a href="#3-如何解析-YAML-输出" class="headerlink" title="3. 如何解析 YAML 输出"></a>3. 如何解析 YAML 输出</h3><p>来自不同提供商的大型语言模型（LLMs）通常根据它们训练的具体数据具有不同的优势。这也意味着有些模型在生成 JSON 以外的格式输出方面可能更“优秀”和可靠。</p>
+<p>这个输出解析器允许用户指定任意模式，并查询符合该模式的 LLMS 输出，使用 YAML 格式化他们的响应。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%pip install -qU langchain langchain-openai</span><br></pre></td></tr></table></figure>
+
+<p>我们使用 <a target="_blank" rel="noopener" href="https://docs.pydantic.dev/">Pydantic</a> 与 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/output_parsers/langchain.output_parsers.yaml.YamlOutputParser.html#langchain.output_parsers.yaml.YamlOutputParser">YamlOutputParser</a> 来声明我们的数据模型，并为模型提供更多关于应生成何种类型 YAML 的上下文信息：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#yaml_output_parser.py</span></span><br><span class="line"><span class="comment"># pip install -qU langchain langchain-openai</span></span><br><span class="line"><span class="keyword">from</span> langchain.output_parsers <span class="keyword">import</span> YamlOutputParser</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_core.pydantic_v1 <span class="keyword">import</span> BaseModel, Field</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义您期望的数据结构。class Joke(BaseModel):</span></span><br><span class="line">    setup: <span class="built_in">str</span> = Field(description=<span class="string">&quot;设置笑话的问题&quot;</span>)</span><br><span class="line">    punchline: <span class="built_in">str</span> = Field(description=<span class="string">&quot;解答笑话的答案&quot;</span>)</span><br><span class="line">    </span><br><span class="line">model = ChatOpenAI(temperature=<span class="number">0</span>)</span><br><span class="line"><span class="comment"># 创建一个查询，旨在提示语言模型填充数据结构。</span></span><br><span class="line">joke_query = <span class="string">&quot;告诉我一个笑话。&quot;</span><span class="comment"># 设置一个解析器 + 将指令注入到提示模板中。</span></span><br><span class="line">parser = YamlOutputParser(pydantic_object=Joke)</span><br><span class="line">prompt = PromptTemplate(</span><br><span class="line">    template=<span class="string">&quot;回答用户的查询。\n&#123;format_instructions&#125;\n&#123;query&#125;\n&quot;</span>,</span><br><span class="line">    input_variables=[<span class="string">&quot;query&quot;</span>],</span><br><span class="line">    partial_variables=&#123;<span class="string">&quot;format_instructions&quot;</span>: parser.get_format_instructions()&#125;,</span><br><span class="line">)</span><br><span class="line">chain = prompt | model</span><br><span class="line"><span class="built_in">print</span>(parser.get_format_instructions())</span><br><span class="line">response = chain.invoke(&#123;<span class="string">&quot;query&quot;</span>: joke_query&#125;)</span><br><span class="line"><span class="built_in">print</span>(response.content)</span><br><span class="line"><span class="comment">#print(parser.parse(response))</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">setup:</span> <span class="string">为什么程序员总是在深夜工作？</span></span><br><span class="line"><span class="attr">punchline:</span> <span class="string">因为那时候比较安静，没有人会打扰他们的思绪。</span></span><br></pre></td></tr></table></figure>
+
+<p>解析器将自动解析输出的 YAML，并创建一个带有数据的 Pydantic 模型。我们可以看到解析器的 <code>format_instructions</code>，这些指令被添加到提示中：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">parser.get_format_instructions()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Examples</span></span><br><span class="line"><span class="section">## Schema</span></span><br></pre></td></tr></table></figure>
+
+<p>{“title”: “Players”, “description”: “A list of players”, “type”: “array”, “items”: {“$ref”: “#&#x2F;definitions&#x2F;Player”}, “definitions”: {“Player”: {“title”: “Player”, “type”: “object”, “properties”: {“name”: {“title”: “Name”, “description”: “Player name”, “type”: “string”}, “avg”: {“title”: “Avg”, “description”: “Batting average”, “type”: “number”}}, “required”: [“name”, “avg”]}}}</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">## Well formatted instance</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>name: John Doe avg: 0.3</p>
+</li>
+<li><p>name: Jane Maxfield avg: 1.4</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">## Schema</span><br></pre></td></tr></table></figure>
+
+<p>{“properties”: {“habit”: { “description”: “A common daily habit”, “type”: “string” }, “sustainable_alternative”: { “description”: “An environmentally friendly alternative to the habit”, “type”: “string”}}, “required”: [“habit”, “sustainable_alternative”]}</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">## Well formatted instance</span><br></pre></td></tr></table></figure>
+
+<p>habit: Using disposable water bottles for daily hydration. sustainable_alternative: Switch to a reusable water bottle to reduce plastic waste and decrease your environmental footprint.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Please follow the standard YAML formatting conventions with an indent of 2 spaces and make sure that the data types adhere strictly to the following JSON schema: </span><br></pre></td></tr></table></figure>
+
+<p>{“properties”: {“setup”: {“title”: “Setup”, “description”: “\u8bbe\u7f6e\u7b11\u8bdd\u7684\u95ee\u9898”, “type”: “string”}, “punchline”: {“title”: “Punchline”, “description”: “\u89e3\u7b54\u7b11\u8bdd\u7684\u7b54\u6848”, “type”: “string”}}, “required”: [“setup”, “punchline”]}</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Make sure to always enclose the YAML output in triple backticks (```). Please do not add anything other than valid YAML output!</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">可以尝试在提示的其他部分中添加自己的格式提示，以增强或替换默认指令。</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/02/178LangChain%E7%AF%87-%E5%A4%9A%E6%A8%A1%E6%80%81%E8%BE%93%E5%85%A5%E4%B8%8E%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/" title="LangChain篇-多模态输入与自定义输出">http://mzfnai.com/2025/07/02/178LangChain篇-多模态输入与自定义输出/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E5%9B%BE%E5%83%8F%E5%A4%84%E7%90%86/" rel="tag"># 图像处理</a>
+              <a href="/tags/%E5%A4%9A%E6%A8%A1%E6%80%81/" rel="tag"># 多模态</a>
+              <a href="/tags/%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA/" rel="tag"># 自定义输出</a>
+              <a href="/tags/GPT-4V/" rel="tag"># GPT-4V</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/01/177LangChain%E7%AF%87-%E9%AB%98%E6%95%88%E6%A3%80%E7%B4%A2%E5%99%A8%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" rel="prev" title="LangChain篇-高效检索器最佳实践">
+      <i class="fa fa-chevron-left"></i> LangChain篇-高效检索器最佳实践
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/03/178LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86%E5%92%8CRetriever/" rel="next" title="LangChain篇-自定义会话管理和Retriever">
+      LangChain篇-自定义会话管理和Retriever <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%A4%9A%E6%A8%A1%E6%80%81%E6%95%B0%E6%8D%AE%E8%BE%93%E5%85%A5"><span class="nav-number">1.</span> <span class="nav-text">一、多模态数据输入</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">工具调用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BE%93%E5%87%BA-JSON-XML-YAML"><span class="nav-number">2.</span> <span class="nav-text">二、自定义输出: JSON, XML, YAML</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90-JSON-%E8%BE%93%E5%87%BA"><span class="nav-number">2.1.</span> <span class="nav-text">1. 如何解析 JSON 输出</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%81%E5%BC%8F%E5%A4%84%E7%90%86"><span class="nav-number">2.1.1.</span> <span class="nav-text">流式处理</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90-XML-%E8%BE%93%E5%87%BA"><span class="nav-number">2.2.</span> <span class="nav-text">2. 如何解析 XML 输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90-YAML-%E8%BE%93%E5%87%BA"><span class="nav-number">2.3.</span> <span class="nav-text">3. 如何解析 YAML 输出</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

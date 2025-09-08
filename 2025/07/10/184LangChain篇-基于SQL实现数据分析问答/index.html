@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="深入讲解基于SQL的智能数据分析问答系统构建，包括自然语言到SQL转换、数据库交互和结果展示的完整实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-基于SQL实现数据分析问答">
+<meta property="og:url" content="http://mzfnai.com/2025/07/10/184LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ESQL%E5%AE%9E%E7%8E%B0%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E9%97%AE%E7%AD%94/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="深入讲解基于SQL的智能数据分析问答系统构建，包括自然语言到SQL转换、数据库交互和结果展示的完整实现。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_112253_147.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_112253_147_qhmu.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_TW0jbonAjo3n4Xxd4J0c6mIan2d_20250908_112253_147.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_112253_147_2viz.png">
+<meta property="article:published_time" content="2025-07-10T06:21:45.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:47:08.458Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="SQL问答">
+<meta property="article:tag" content="数据分析">
+<meta property="article:tag" content="SQLite">
+<meta property="article:tag" content="自然语言查询">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_112253_147.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/10/184LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ESQL%E5%AE%9E%E7%8E%B0%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E9%97%AE%E7%AD%94/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-基于SQL实现数据分析问答 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/10/184LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ESQL%E5%AE%9E%E7%8E%B0%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E9%97%AE%E7%AD%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-基于SQL实现数据分析问答
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-10 14:21:45" itemprop="dateCreated datePublished" datetime="2025-07-10T14:21:45+08:00">2025-07-10</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>7.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>6 分钟</span>
+            </span>
+            <div class="post-description">深入讲解基于SQL的智能数据分析问答系统构建，包括自然语言到SQL转换、数据库交互和结果展示的完整实现。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、需求"><a href="#一、需求" class="headerlink" title="一、需求"></a>一、需求</h2><p>基于 LangChain 和 Streamlit 的 Web 应用，用于使用 LLM 和嵌入从 SQLite 数据库中搜索相关的 offer。用户可以输入与品牌、类别或零售商相关的搜索查询，也支持通过 SQL 语句进行搜索，应用程序将从数据库中检索并显示相关的 offer。该应用使用 OpenAI API 进行自然语言处理和嵌入生成。</p>
+<p>SQLite 官网：<a target="_blank" rel="noopener" href="https://www.sqlite.org/pragma.html#toc">https://www.sqlite.org/pragma.html#toc</a></p>
+<p>SQLite 使用手册：<a target="_blank" rel="noopener" href="https://www.runoob.com/sqlite/sqlite-select.html">https://www.runoob.com/sqlite/sqlite-select.html</a></p>
+<h2 id="二、方法"><a href="#二、方法" class="headerlink" title="二、方法"></a>二、方法</h2><ul>
+<li><p><strong>目标</strong>：该方法的目标是基于产品类别、品牌或零售商查询从 <code>offer_retailer</code> 表中提取相关的offer。鉴于所需数据分散在 <code>data</code> 目录中的多个表中，采用了语言模型（LLM）来促进智能数据库查询。</p>
+</li>
+<li><p><strong>数据库准备</strong>：最初，使用存储在 <code>data</code> 目录中的 <code>.csv</code> 文件构建了一个本地 SQLite 数据库。这是通过 <code>sqlite3</code> 和 <code>pandas</code> 库实现的。</p>
+</li>
+<li><p><strong>LLM 集成</strong>：通过 <code>langchain_experimental.sql.SQLDatabaseChain</code> 实现了语言模型（LLM）与本地 SQLite 数据库的有效交互。</p>
+</li>
+<li><p><strong>提示工程</strong>：该方法的一个重要方面是制定合适的提示，以指导 LLM 最佳地检索和格式化数据库条目。通过多次迭代和实验来微调这个提示。</p>
+</li>
+<li><p><strong>相似度评分</strong>：为了确定检索结果与查询的相关性，进行了余弦相似度比较。使用 <code>langchain_openai.OpenAIEmbeddings</code> 生成嵌入进行比较，从而对结果进行排序。</p>
+</li>
+<li><p><strong>Streamlit 集成</strong>：最后一步是解析 LLM 的输出，并围绕它构建一个用户友好的 Streamlit 应用，允许用户进行交互式搜索。</p>
+</li>
+</ul>
+<h2 id="三、环境"><a href="#三、环境" class="headerlink" title="三、环境"></a>三、环境</h2><p>在开始之前，请确保满足以下要求：</p>
+<ul>
+<li><p>Python 3.12.4 或更高版本</p>
+</li>
+<li><p>OpenAI API 密钥</p>
+</li>
+<li><p>包含以下表的 SQLite 数据库：<code>brand_category</code>，<code>categories</code> 和 <code>offer_retailer</code></p>
+</li>
+</ul>
+<p>安装所需的包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install -r requirements.txt</span><br></pre></td></tr></table></figure>
+
+<p>确保您的 SQLite 数据库已设置好，并包含必要的表（<code>brand_category</code>，<code>categories</code>，<code>offer_retailer</code>）。</p>
+<p>注意：streamlit版本需要&lt;1.30，一般为1.29.0，否则启动会报以下错误。</p>
+<p><img src="/images/LangChain%E7%AF%87_image_20250908_112253_147.png"></p>
+<h2 id="四、代码"><a href="#四、代码" class="headerlink" title="四、代码"></a>四、代码</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：csv_search.py</span></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="comment"># 导入正则表达式模块import re</span></span><br><span class="line"><span class="keyword">import</span> sqlite3</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">import</span> streamlit <span class="keyword">as</span> st</span><br><span class="line"><span class="keyword">from</span> llm <span class="keyword">import</span> RetrievalLLM</span><br><span class="line"></span><br><span class="line"><span class="comment"># 数据文件路径</span></span><br><span class="line">DATA_PATH = <span class="string">&#x27;data&#x27;</span></span><br><span class="line"><span class="comment"># 数据表名称</span></span><br><span class="line">TABLES = (<span class="string">&#x27;brand_category&#x27;</span>, <span class="string">&#x27;categories&#x27;</span>, <span class="string">&#x27;offer_retailer&#x27;</span>)</span><br><span class="line"><span class="comment"># 数据库名称</span></span><br><span class="line">DB_NAME = <span class="string">&#x27;offer_db.sqlite&#x27;</span></span><br><span class="line"><span class="comment"># 提示模板</span></span><br><span class="line">PROMPT_TEMPLATE = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">                你会接收到一个查询，你的任务是从`offer_retailer`表中的`OFFER`字段检索相关offer。</span></span><br><span class="line"><span class="string">                查询可能是混合大小写的，所以也要搜索大写版本的查询。</span></span><br><span class="line"><span class="string">                重要的是，你可能需要使用数据库中其他表的信息，即：`brand_category`, `categories`, `offer_retailer`，来检索正确的offer。</span></span><br><span class="line"><span class="string">                不要虚构offer。如果在`offer_retailer`表中找不到offer，返回字符串：`NONE`。</span></span><br><span class="line"><span class="string">                如果你能从`offer_retailer`表中检索到offer，用分隔符`#`分隔每个offer。例如，输出应该是这样的：`offer1#offer2#offer3`。</span></span><br><span class="line"><span class="string">                如果SQLResult为空，返回`None`。不要生成任何offer。</span></span><br><span class="line"><span class="string">                这是查询：`&#123;&#125;`</span></span><br><span class="line"><span class="string">                &quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Streamlit应用标题</span></span><br><span class="line">st.title(<span class="string">&quot;搜索offer 🔍&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 连接SQLite数据库</span></span><br><span class="line">conn = sqlite3.connect(<span class="string">&#x27;offer_db.sqlite&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断是否是SQL查询的函数</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">is_sql_query</span>(<span class="params">query</span>):</span><br><span class="line">    <span class="comment"># 定义一个包含常见 SQL 关键字的列表</span></span><br><span class="line">    sql_keywords = [<span class="string">&#x27;SELECT&#x27;</span>, <span class="string">&#x27;INSERT&#x27;</span>, <span class="string">&#x27;UPDATE&#x27;</span>, <span class="string">&#x27;DELETE&#x27;</span>, <span class="string">&#x27;CREATE&#x27;</span>, <span class="string">&#x27;DROP&#x27;</span>, <span class="string">&#x27;ALTER&#x27;</span>,<span class="string">&#x27;TRUNCATE&#x27;</span>, <span class="string">&#x27;MERGE&#x27;</span>, <span class="string">&#x27;CALL&#x27;</span>, <span class="string">&#x27;EXPLAIN&#x27;</span>, <span class="string">&#x27;DESCRIBE&#x27;</span>, <span class="string">&#x27;SHOW&#x27;</span></span><br><span class="line">    ]</span><br><span class="line">    <span class="comment"># 去掉查询字符串两端的空白字符并转换为大写</span></span><br><span class="line">    query_upper = query.strip().upper()</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 遍历 SQL 关键字列表</span></span><br><span class="line">    <span class="keyword">for</span> keyword <span class="keyword">in</span> sql_keywords:</span><br><span class="line">        <span class="comment"># 如果查询字符串以某个 SQL 关键字开头，返回 True</span></span><br><span class="line">        <span class="keyword">if</span> query_upper.startswith(keyword):</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">            </span><br><span class="line">    <span class="comment"># 定义一个正则表达式模式，用于匹配以 SQL 关键字开头的字符串</span></span><br><span class="line">    sql_pattern = re.<span class="built_in">compile</span>(<span class="string">r&#x27;^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE|MERGE|CALL|EXPLAIN|DESCRIBE|SHOW)\s+&#x27;</span>,</span><br><span class="line">        re.IGNORECASE  <span class="comment"># 忽略大小写</span></span><br><span class="line">    )</span><br><span class="line">    </span><br><span class="line">    <span class="comment"># 如果正则表达式匹配查询字符串，返回 True</span></span><br><span class="line">    <span class="keyword">if</span> sql_pattern.<span class="keyword">match</span>(query):</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">        </span><br><span class="line">    <span class="comment"># 如果查询字符串不符合任何 SQL 关键字模式，返回 False</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line">    </span><br><span class="line"><span class="comment"># 创建一个表单用于搜索</span></span><br><span class="line"><span class="keyword">with</span> st.form(<span class="string">&quot;search_form&quot;</span>):</span><br><span class="line">    <span class="comment"># 输入框用于输入查询</span></span><br><span class="line">    query = st.text_input(<span class="string">&quot;通过类别、品牌或发布商搜索offer。&quot;</span>)</span><br><span class="line">    <span class="comment"># 提交按钮</span></span><br><span class="line">    submitted = st.form_submit_button(<span class="string">&quot;搜索&quot;</span>)</span><br><span class="line">    <span class="comment"># 实例化RetrievalLLM类</span></span><br><span class="line">    retrieval_llm = RetrievalLLM(</span><br><span class="line">        data_path=DATA_PATH,</span><br><span class="line">        tables=TABLES,</span><br><span class="line">        db_name=DB_NAME,</span><br><span class="line">        openai_api_key=os.getenv(<span class="string">&#x27;OPENAI_API_KEY&#x27;</span>),</span><br><span class="line">    )</span><br><span class="line">    <span class="comment"># 如果表单提交</span></span><br><span class="line">    <span class="keyword">if</span> submitted:</span><br><span class="line">        <span class="comment"># 如果输入内容是SQL语句，则显示SQL执行结果</span></span><br><span class="line">        <span class="keyword">if</span> is_sql_query(query):</span><br><span class="line">            st.write(pd.read_sql_query(query, conn))</span><br><span class="line">        <span class="comment"># 否则使用LLM从数据库中检索offer</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># 使用RetrievalLLM实例检索offer</span></span><br><span class="line">            retrieved_offers = retrieval_llm.retrieve_offers(</span><br><span class="line">                PROMPT_TEMPLATE.<span class="built_in">format</span>(query)</span><br><span class="line">            )</span><br><span class="line">            <span class="comment"># 如果没有找到相关offer</span></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> retrieved_offers:</span><br><span class="line">                st.text(<span class="string">&quot;未找到相关offer。&quot;</span>)</span><br><span class="line">            <span class="keyword">else</span>:<span class="comment"># 显示检索到的offer</span></span><br><span class="line">                st.table(retrieval_llm.parse_output(retrieved_offers, query))</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：llm.py</span></span><br><span class="line"><span class="keyword">import</span> sqlite3</span><br><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAI</span><br><span class="line"><span class="keyword">from</span> langchain_community.utilities <span class="keyword">import</span> SQLDatabase</span><br><span class="line"><span class="keyword">from</span> langchain_experimental.sql <span class="keyword">import</span> SQLDatabaseChain</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">RetrievalLLM</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;一个类，用于使用大型语言模型（LLM）检索和重新排序offer。</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    参数:</span></span><br><span class="line"><span class="string">        data_path (str): 包含数据CSV文件的目录路径。</span></span><br><span class="line"><span class="string">        tables (list[str]): 数据CSV文件的名称列表。</span></span><br><span class="line"><span class="string">        db_name (str): 用于存储数据的SQLite数据库名称。</span></span><br><span class="line"><span class="string">        openai_api_key (str): OpenAI API密钥。</span></span><br><span class="line"><span class="string">    </span></span><br><span class="line"><span class="string">    属性:</span></span><br><span class="line"><span class="string">        data_path (str): 包含数据CSV文件的目录路径。</span></span><br><span class="line"><span class="string">        tables (list[str]): 数据CSV文件的名称列表。</span></span><br><span class="line"><span class="string">        db_name (str): 用于存储数据的SQLite数据库名称。</span></span><br><span class="line"><span class="string">        openai_api_key (str): OpenAI API密钥。</span></span><br><span class="line"><span class="string">        db (SQLDatabase): SQLite数据库连接。</span></span><br><span class="line"><span class="string">        llm (OpenAI): OpenAI LLM客户端。</span></span><br><span class="line"><span class="string">        embeddings (OpenAIEmbeddings): OpenAI嵌入客户端。</span></span><br><span class="line"><span class="string">        db_chain (SQLDatabaseChain): 与LLM集成的SQL数据库链。</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">init</span>(<span class="params">self, data_path, tables, db_name, openai_api_key</span>):</span><br><span class="line">        <span class="comment"># 初始化类属性</span></span><br><span class="line">        <span class="variable language_">self</span>.data_path = data_path</span><br><span class="line">        <span class="variable language_">self</span>.tables = tables</span><br><span class="line">        <span class="variable language_">self</span>.db_name = db_name</span><br><span class="line">        <span class="variable language_">self</span>.openai_api_key = openai_api_key</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 读取CSV文件并存储到数据帧字典中</span></span><br><span class="line">        dfs = &#123;&#125;</span><br><span class="line">        <span class="keyword">for</span> table <span class="keyword">in</span> <span class="variable language_">self</span>.tables:</span><br><span class="line">            dfs[table] = pd.read_csv(<span class="string">f&quot;<span class="subst">&#123;self.data_path&#125;</span>/<span class="subst">&#123;table&#125;</span>.csv&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 将数据帧写入SQLite数据库</span></span><br><span class="line">        <span class="keyword">with</span> sqlite3.connect(<span class="variable language_">self</span>.db_name) <span class="keyword">as</span> local_db:</span><br><span class="line">            <span class="keyword">for</span> table, df <span class="keyword">in</span> dfs.items():</span><br><span class="line">                df.to_sql(table, local_db, if_exists=<span class="string">&quot;replace&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 创建SQL数据库连接</span></span><br><span class="line">        <span class="variable language_">self</span>.db = SQLDatabase.from_uri(<span class="string">f&quot;sqlite:///<span class="subst">&#123;self.db_name&#125;</span>&quot;</span>)</span><br><span class="line">        <span class="comment"># 创建OpenAI LLM客户端</span></span><br><span class="line">        <span class="variable language_">self</span>.llm = OpenAI(</span><br><span class="line">            temperature=<span class="number">0</span>, verbose=<span class="literal">True</span>, openai_api_key=<span class="variable language_">self</span>.openai_api_key</span><br><span class="line">        )</span><br><span class="line">        <span class="comment"># 创建OpenAI嵌入客户端</span></span><br><span class="line">        <span class="variable language_">self</span>.embeddings = OpenAIEmbeddings(openai_api_key=<span class="variable language_">self</span>.openai_api_key)</span><br><span class="line">        <span class="comment"># 创建SQL数据库链</span></span><br><span class="line">        <span class="variable language_">self</span>.db_chain = SQLDatabaseChain.from_llm(<span class="variable language_">self</span>.llm, <span class="variable language_">self</span>.db)</span><br><span class="line">        <span class="variable language_">self</span>.allow_reuse = <span class="literal">True</span></span><br><span class="line">          </span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">retrieve_offers</span>(<span class="params">self, prompt</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;使用LLM从数据库中检索offer。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        参数:</span></span><br><span class="line"><span class="string">            prompt (str): 用于检索offer的提示。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        返回:</span></span><br><span class="line"><span class="string">            list[str]: 检索到的offer列表。</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 运行SQL数据库链以检索offer</span></span><br><span class="line">        retrieved_offers = <span class="variable language_">self</span>.db_chain.run(prompt)</span><br><span class="line">        <span class="comment"># 如果retrieved_offers是&quot;None&quot;，则返回None，否则返回检索到的offer</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">None</span> <span class="keyword">if</span> retrieved_offers == <span class="string">&quot;None&quot;</span> <span class="keyword">else</span> retrieved_offers</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_embeddings</span>(<span class="params">self, documents</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;使用LLM获取文档的嵌入。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        参数:</span></span><br><span class="line"><span class="string">            documents (list[str]): 文档列表。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        返回:</span></span><br><span class="line"><span class="string">            np.ndarray: 包含文档嵌入的NumPy数组。</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 如果文档列表只有一个文档，将单个文档的嵌入转换为Numpy数组</span></span><br><span class="line">        <span class="keyword">if</span> <span class="built_in">len</span>(documents) == <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">return</span> np.asarray(<span class="variable language_">self</span>.embeddings.embed_query(documents[<span class="number">0</span>]))</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="comment"># 否则获取每个文档的嵌入并存储到列表中</span></span><br><span class="line">                embeddings_list = []</span><br><span class="line">                <span class="keyword">for</span> document <span class="keyword">in</span> documents:</span><br><span class="line">                    embeddings_list.append(<span class="variable language_">self</span>.embeddings.embed_query(document))</span><br><span class="line">                    <span class="keyword">return</span> np.asarray(embeddings_list)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">parse_output</span>(<span class="params">self, retrieved_offers, query</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;解析retrieve_offers()方法的输出并返回一个数据帧。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        参数:</span></span><br><span class="line"><span class="string">            retrieved_offers (list[str]): 检索到的offer列表。</span></span><br><span class="line"><span class="string">            query (str): 用于检索offer的查询。</span></span><br><span class="line"><span class="string">        </span></span><br><span class="line"><span class="string">        返回:</span></span><br><span class="line"><span class="string">            pd.DataFrame: 包含匹配相似度和offer的数据帧。</span></span><br><span class="line"><span class="string">        &quot;&quot;&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 分割检索到的offer</span></span><br><span class="line">        top_offers = retrieved_offers.split(<span class="string">&quot;#&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 获取查询的嵌入</span></span><br><span class="line">        query_embedding = <span class="variable language_">self</span>.get_embeddings([query])</span><br><span class="line">        <span class="comment"># 获取offer的嵌入</span></span><br><span class="line">        offer_embeddings = <span class="variable language_">self</span>.get_embeddings(top_offers)</span><br><span class="line">        <span class="comment"># offer_embeddings是一个二维的Numpy数组，包含多个offer的嵌入向量。</span></span><br><span class="line">        <span class="comment"># query_embedding是一个二维的Numpy数组，包含查询的嵌入向量。</span></span><br><span class="line">        <span class="comment"># query_embedding.T是查询嵌入的转置，使其成为一个列向量，便于进行矩阵乘法。</span></span><br><span class="line">        <span class="comment"># np.dot()计算每个offer嵌入向量与查询嵌入向量之间的点积（内积），结果是一个二维数组，其中每个元素表示一个offer与查询之间的相似度分数。</span></span><br><span class="line">        <span class="comment"># .flatten() 将二维数组转换为一维数组，得到每个 offer 与查询之间的相似度分数列表。</span></span><br><span class="line">        sim_scores = np.dot(offer_embeddings, query_embedding.T).flatten()</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 计算相似度得分，转换为百分比形式</span></span><br><span class="line">        sim_scores = [p * <span class="number">100</span> <span class="keyword">for</span> p <span class="keyword">in</span> sim_scores]</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 创建数据帧并按相似度排序</span></span><br><span class="line">        df = (</span><br><span class="line">            pd.DataFrame(&#123;<span class="string">&quot;匹配相似度 %&quot;</span>: sim_scores, <span class="string">&quot;offer&quot;</span>: top_offers&#125;)</span><br><span class="line">            .sort_values(by=[<span class="string">&quot;匹配相似度 %&quot;</span>], ascending=<span class="literal">False</span>)</span><br><span class="line">            .reset_index(drop=<span class="literal">True</span>)</span><br><span class="line">        )</span><br><span class="line">        df.index += <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> df</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="五、运行"><a href="#五、运行" class="headerlink" title="五、运行"></a>五、运行</h2><p>本地运行应用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">streamlit  csv_search.py</span><br></pre></td></tr></table></figure>
+
+<p>应用运行后，打开浏览器并导航到 <code>http://localhost:8501</code> 访问offer搜索界面。</p>
+<ol>
+<li><p>在文本输入框中输入您的搜索查询（品牌、类别或零售商）。</p>
+</li>
+<li><p>点击“搜索”按钮启动搜索。</p>
+</li>
+<li><p>匹配查询的相关 offer 将以表格形式显示。</p>
+</li>
+</ol>
+<h2 id="六、问答效果"><a href="#六、问答效果" class="headerlink" title="六、问答效果"></a>六、问答效果</h2><p><strong>问题1：select * from categories</strong></p>
+<p><img src="/images/LangChain%E7%AF%87_image_20250908_112253_147_qhmu.png"></p>
+<p><strong>问题2：select CATEGORY_ID from categories</strong></p>
+<p><img src="/images/LangChain%E7%AF%87_TW0jbonAjo3n4Xxd4J0c6mIan2d_20250908_112253_147.png"></p>
+<p><strong>问题3：RED GOLD</strong></p>
+<p><img src="/images/LangChain%E7%AF%87_image_20250908_112253_147_2viz.png"></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/10/184LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ESQL%E5%AE%9E%E7%8E%B0%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E9%97%AE%E7%AD%94/" title="LangChain篇-基于SQL实现数据分析问答">http://mzfnai.com/2025/07/10/184LangChain篇-基于SQL实现数据分析问答/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/SQL%E9%97%AE%E7%AD%94/" rel="tag"># SQL问答</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90/" rel="tag"># 数据分析</a>
+              <a href="/tags/SQLite/" rel="tag"># SQLite</a>
+              <a href="/tags/%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E6%9F%A5%E8%AF%A2/" rel="tag"># 自然语言查询</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/09/183LangChain%E7%AF%87-%E6%95%B4%E5%90%88%E7%BB%B4%E5%9F%BA%E7%99%BE%E7%A7%91%E5%AE%9E%E7%8E%B0%E7%BD%91%E9%A1%B5%E9%97%AE%E7%AD%94/" rel="prev" title="LangChain篇-整合维基百科实现网页问答">
+      <i class="fa fa-chevron-left"></i> LangChain篇-整合维基百科实现网页问答
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%9C%80%E6%B1%82"><span class="nav-number">1.</span> <span class="nav-text">一、需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">二、方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E7%8E%AF%E5%A2%83"><span class="nav-number">3.</span> <span class="nav-text">三、环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E4%BB%A3%E7%A0%81"><span class="nav-number">4.</span> <span class="nav-text">四、代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E8%BF%90%E8%A1%8C"><span class="nav-number">5.</span> <span class="nav-text">五、运行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E9%97%AE%E7%AD%94%E6%95%88%E6%9E%9C"><span class="nav-number">6.</span> <span class="nav-text">六、问答效果</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

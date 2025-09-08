@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍基于RAG技术的文档问答系统实现，包括文档索引、检索增强生成和问答链构建的完整流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-基于RAG的文档问答">
+<meta property="og:url" content="http://mzfnai.com/2025/07/07/181LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9A%84%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍基于RAG技术的文档问答系统实现，包括文档索引、检索增强生成和问答链构建的完整流程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_Cb93bZbgZoMnxExNAMtc1IHEnGe_20250908_112224_632.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_VTtyb8zrioZfDxxJLENcdpNnnkc_20250908_112224_632.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_image_20250908_112224_632.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_E6WJbJOxtoZd4oxALqqc1irLn8T_20250908_112224_632.png">
+<meta property="og:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_FMpqbGKRSoQ6HBxRcOpcJeMvnD3_20250908_112224_632.png">
+<meta property="article:published_time" content="2025-07-07T07:17:26.000Z">
+<meta property="article:modified_time" content="2025-09-08T03:46:55.560Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="检索增强生成">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="向量数据库">
+<meta property="article:tag" content="文档问答">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/LangChain%E7%AF%87_Cb93bZbgZoMnxExNAMtc1IHEnGe_20250908_112224_632.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/07/181LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9A%84%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-基于RAG的文档问答 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/07/181LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9A%84%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-基于RAG的文档问答
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-07 15:17:26" itemprop="dateCreated datePublished" datetime="2025-07-07T15:17:26+08:00">2025-07-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+            <div class="post-description">详细介绍基于RAG技术的文档问答系统实现，包括文档索引、检索增强生成和问答链构建的完整流程。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="一、RAG-是什么？"><a href="#一、RAG-是什么？" class="headerlink" title="一、RAG 是什么？"></a>一、RAG 是什么？</h2><p>大语言模型所实现的最强大应用之一是复杂的问答(Q&amp;A)聊天机器人。这些应用能够回答关于特定源信息的问题。这些应用使用一种称为检索增强生成(RAG)的技术。</p>
+<p>RAG 是一种用额外数据增强大语言模型知识的技术。</p>
+<p>大语言模型可以对广泛的主题进行推理，但它们的知识仅限于训练时截止日期前的公开数据。如果你想构建能够对私有数据或模型截止日期后引入的数据进行推理的人工智能应用，你需要用特定信息来增强模型的知识。检索适当信息并将其插入模型提示的过程被称为检索增强生成（RAG）。</p>
+<p>LangChain 有许多组件旨在帮助构建问答应用，以及更广泛的 RAG 应用。</p>
+<p><img src="/images/LangChain%E7%AF%87_Cb93bZbgZoMnxExNAMtc1IHEnGe_20250908_112224_632.png"></p>
+<h2 id="二、RAG-工作流"><a href="#二、RAG-工作流" class="headerlink" title="二、RAG 工作流"></a>二、RAG 工作流</h2><p>一个典型的 RAG 应用有两个主要组成部分：</p>
+<p><strong>索引(Indexing)</strong>：从数据源获取数据并建立索引的管道(pipeline)。<em>这通常在离线状态下进行。</em></p>
+<p><strong>检索和生成(Retrieval and generation)</strong>：实际的 RAG 链，在运行时接收用户查询，从索引中检索相关数据，然后将其传递给模型。</p>
+<p>从原始数据到答案的最常见完整顺序如下：</p>
+<h3 id="1-索引-Indexing"><a href="#1-索引-Indexing" class="headerlink" title="1. 索引(Indexing)"></a>1. 索引(Indexing)</h3><ol>
+<li><p><strong>加载(Load)</strong>：首先我们需要加载数据。这是通过文档加载器 <a target="_blank" rel="noopener" href="https://blog.frognew.com/library/agi/langchain/components/document-loaders.html">Document Loaders</a> 完成的。</p>
+</li>
+<li><p><strong>分割(Split)</strong>：文本分割器<a target="_blank" rel="noopener" href="https://python.langchain.com/docs/concepts/#text-splitters">Text splitters</a>将大型文档(<code>Documents</code>)分成更小的块(chunks)。这对于索引数据和将其传递给模型都很有用，因为大块数据更难搜索，而且不适合模型有限的上下文窗口。</p>
+</li>
+<li><p><strong>存储(Store)</strong>：我们需要一个地方来存储和索引我们的分割(splits)，以便后续可以对其进行搜索。这通常使用向量存储 <a target="_blank" rel="noopener" href="https://blog.frognew.com/library/agi/langchain/components/vector-stores.html">VectorStore</a> 和嵌入模型 <a target="_blank" rel="noopener" href="https://blog.frognew.com/library/agi/langchain/components/embedding-models.html">Embeddings model</a> 来完成。</p>
+</li>
+</ol>
+<p><img src="/images/LangChain%E7%AF%87_VTtyb8zrioZfDxxJLENcdpNnnkc_20250908_112224_632.png"></p>
+<h3 id="2-检索和生成-Retrieval-and-generation"><a href="#2-检索和生成-Retrieval-and-generation" class="headerlink" title="2. 检索和生成(Retrieval and generation)"></a>2. 检索和生成(Retrieval and generation)</h3><ol>
+<li><p><strong>检索(Retrieve)</strong>：给定用户输入，使用检索器 <a target="_blank" rel="noopener" href="https://blog.frognew.com/library/agi/langchain/components/retrievers.html">Retriever</a> 从存储中检索相关的文本片段。</p>
+</li>
+<li><p><strong>生成(Generate)</strong>： <a target="_blank" rel="noopener" href="https://blog.frognew.com/library/agi/langchain/components/chat-models.html">ChatModel</a> 使用包含问题和检索到的数据的提示来生成答案。</p>
+</li>
+</ol>
+<p><img src="/images/LangChain%E7%AF%87_image_20250908_112224_632.png"></p>
+<h2 id="三、文档问答"><a href="#三、文档问答" class="headerlink" title="三、文档问答"></a>三、文档问答</h2><h3 id="1-实现流程"><a href="#1-实现流程" class="headerlink" title="1. 实现流程"></a>1. 实现流程</h3><p>一个 RAG 程序的 APP 主要有以下流程：</p>
+<ol>
+<li><p>用户在 RAG 客户端上传一个txt文件</p>
+</li>
+<li><p>服务器端接收客户端文件，存储在服务端</p>
+</li>
+<li><p>服务器端程序对文件进行读取</p>
+</li>
+<li><p>对文件内容进行拆分，防止一次性塞给 Embedding 模型超 token 限制</p>
+</li>
+<li><p>把 Embedding 后的内容存储在向量数据库，生成检索器</p>
+</li>
+<li><p>程序准备就绪，允许用户进行提问</p>
+</li>
+<li><p>用户提出问题，大模型调用检索器检索文档，把相关片段找出来后，组织后，回复用户。</p>
+</li>
+</ol>
+<p><img src="/images/LangChain%E7%AF%87_E6WJbJOxtoZd4oxALqqc1irLn8T_20250908_112224_632.png"></p>
+<h3 id="2-代码实现"><a href="#2-代码实现" class="headerlink" title="2. 代码实现"></a>2. 代码实现</h3><p>使用 Streamlit 实现文件上传，我这里只实现了 txt 文件上传，其实这里可以在 <a target="_blank" rel="noopener" href="https://so.csdn.net/so/search?q=type&spm=1001.2101.3001.7020">type</a> 参数里面设置多个文件类型，在后面的检索器方法里面针对每个类型进行处理即可。</p>
+<h4 id="2-1-实现文件上传"><a href="#2-1-实现文件上传" class="headerlink" title="2.1 实现文件上传"></a>2.1 实现文件上传</h4><h4 id="2-2-实现检索器"><a href="#2-2-实现检索器" class="headerlink" title="2.2 实现检索器"></a>2.2 实现检索器</h4><p>注意 chunk_size 最大设置数值取决于 Embedding 模型允许单词的最大字符数限制。</p>
+<h4 id="2-3-创建检索工具"><a href="#2-3-创建检索工具" class="headerlink" title="2.3 创建检索工具"></a>2.3 创建检索工具</h4><p>langchain 提供了 create_retriever_tool 工具，可以直接用。</p>
+<h4 id="2-4-创建-React-Agent"><a href="#2-4-创建-React-Agent" class="headerlink" title="2.4 创建 React Agent"></a>2.4 创建 React Agent</h4><h4 id="2-5-实现-Agent-回复"><a href="#2-5-实现-Agent-回复" class="headerlink" title="2.5 实现 Agent 回复"></a>2.5 实现 Agent 回复</h4><p>获取用户输入，并回复用户，这里使用 StreamlitCallbackHandler 实现了 React 推理回调，可以让模型的推理过程可见。</p>
+<h4 id="2-6-实现效果"><a href="#2-6-实现效果" class="headerlink" title="2.6 实现效果"></a>2.6 实现效果</h4><p><img src="/images/LangChain%E7%AF%87_FMpqbGKRSoQ6HBxRcOpcJeMvnD3_20250908_112224_632.png"></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/07/181LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9A%84%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/" title="LangChain篇-基于RAG的文档问答">http://mzfnai.com/2025/07/07/181LangChain篇-基于RAG的文档问答/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" rel="tag"># 检索增强生成</a>
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 向量数据库</a>
+              <a href="/tags/%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94/" rel="tag"># 文档问答</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/06/180LangChain%E7%AF%87-%E8%87%AA%E5%AE%9A%E4%B9%89RAG%E5%8A%A0%E8%BD%BD%E5%99%A8/" rel="prev" title="LangChain篇-自定义RAG加载器">
+      <i class="fa fa-chevron-left"></i> LangChain篇-自定义RAG加载器
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/08/182LangChain%E7%AF%87-%E5%BC%80%E5%8F%91Agent%E6%99%BA%E8%83%BD%E4%BD%93/" rel="next" title="LangChain篇-开发Agent智能体">
+      LangChain篇-开发Agent智能体 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81RAG-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">一、RAG 是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81RAG-%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="nav-number">2.</span> <span class="nav-text">二、RAG 工作流</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%B4%A2%E5%BC%95-Indexing"><span class="nav-number">2.1.</span> <span class="nav-text">1. 索引(Indexing)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%A3%80%E7%B4%A2%E5%92%8C%E7%94%9F%E6%88%90-Retrieval-and-generation"><span class="nav-number">2.2.</span> <span class="nav-text">2. 检索和生成(Retrieval and generation)</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%96%87%E6%A1%A3%E9%97%AE%E7%AD%94"><span class="nav-number">3.</span> <span class="nav-text">三、文档问答</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%AE%9E%E7%8E%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">3.1.</span> <span class="nav-text">1. 实现流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BB%A3%E7%A0%81%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.2.</span> <span class="nav-text">2. 代码实现</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-1-%E5%AE%9E%E7%8E%B0%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0"><span class="nav-number">3.2.1.</span> <span class="nav-text">2.1 实现文件上传</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-2-%E5%AE%9E%E7%8E%B0%E6%A3%80%E7%B4%A2%E5%99%A8"><span class="nav-number">3.2.2.</span> <span class="nav-text">2.2 实现检索器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-%E5%88%9B%E5%BB%BA%E6%A3%80%E7%B4%A2%E5%B7%A5%E5%85%B7"><span class="nav-number">3.2.3.</span> <span class="nav-text">2.3 创建检索工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-%E5%88%9B%E5%BB%BA-React-Agent"><span class="nav-number">3.2.4.</span> <span class="nav-text">2.4 创建 React Agent</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-5-%E5%AE%9E%E7%8E%B0-Agent-%E5%9B%9E%E5%A4%8D"><span class="nav-number">3.2.5.</span> <span class="nav-text">2.5 实现 Agent 回复</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-6-%E5%AE%9E%E7%8E%B0%E6%95%88%E6%9E%9C"><span class="nav-number">3.2.6.</span> <span class="nav-text">2.6 实现效果</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.1m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">32:20</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
