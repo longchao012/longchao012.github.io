@@ -176,7 +176,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/05/17/037ai-agent-core-architecture-implementation-principles/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/10/07/017ai-agent-multi-agent-collaboration-enterprise-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -190,7 +190,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/05/17/037ai-agent-core-architecture-implementation-principles/" class="post-title-link" itemprop="url">AI Agent 核心架构设计与实现原理深度解析：从感知到决策的完整技术栈</a>
+            <a href="/2024/10/07/017ai-agent-multi-agent-collaboration-enterprise-practice/" class="post-title-link" itemprop="url">AI Agent多智能体协作系统企业落地实践：从概念验证到生产部署的完整经验分享</a>
         </h2>
 
         <div class="post-meta">
@@ -200,371 +200,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-05-17 13:24:32" itemprop="dateCreated datePublished" datetime="2024-05-17T13:24:32+08:00">2024-05-17</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>64k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>58 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>深入解析AI Agent的核心架构组件，包括感知模块、推理引擎、决策系统、执行器以及记忆管理等关键技术点，并通过完整的代码实现展示如何构建可扩展的AI Agent系统。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/17/037ai-agent-core-architecture-implementation-principles/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/05/13/038ai-agent-rate-limit-cascade-failure-incident-postmortem/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/13/038ai-agent-rate-limit-cascade-failure-incident-postmortem/" class="post-title-link" itemprop="url">AI Agent 并行工具调用导致速率限制与级联失败的生产事故复盘：从突发流量到“配额+限流+排队+重试”的闭环</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-05-13 17:19:49" itemprop="dateCreated datePublished" datetime="2024-05-13T17:19:49+08:00">2024-05-13</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E4%BA%8B%E6%95%85%E5%A4%8D%E7%9B%98/" itemprop="url" rel="index"><span itemprop="name">生产环境事故复盘</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>4.2k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>一次因 AI Agent 并行工具调用击穿第三方 API 配额与速率限制，触发 429/5xx、重试风暴与级联失败的事故复盘。涵盖现象、根因、工程化修复（配额治理、令牌桶限流、优雅排队、退避重试、熔断与观测）以及可直接落地的 Python 代码骨架。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/13/038ai-agent-rate-limit-cascade-failure-incident-postmortem/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/05/07/039ai-agent-multi-agent-collaboration-system-architecture-collapse-production-incident/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/07/039ai-agent-multi-agent-collaboration-system-architecture-collapse-production-incident/" class="post-title-link" itemprop="url">AI Agent多智能体协作系统架构崩溃生产事故复盘：从服务雪崩到分布式重构的完整修复过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-05-07 19:51:14" itemprop="dateCreated datePublished" datetime="2024-05-07T19:51:14+08:00">2024-05-07</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>8.4k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>复盘一次AI Agent多智能体协作系统架构崩溃引发的大规模生产事故，从智能体服务雪崩到最终分布式架构重构的完整修复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为AI Agent分布式系统设计提供深度实战经验。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/05/07/039ai-agent-multi-agent-collaboration-system-architecture-collapse-production-incident/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/04/26/040ai-agent-tool-calling-timeout-cascade-failure-production-incident/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/26/040ai-agent-tool-calling-timeout-cascade-failure-production-incident/" class="post-title-link" itemprop="url">AI Agent工具调用链超时级联故障生产事故复盘：从系统瘫痪到架构重构的完整恢复过程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-04-26 19:28:31" itemprop="dateCreated datePublished" datetime="2024-04-26T19:28:31+08:00">2024-04-26</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
-                </span>
-                  ，
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/AI-Agent/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
-                </span>
-            </span>
-
-          <br>
-            <span class="post-meta-item" title="本文字数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">本文字数：</span>
-              <span>3.5k</span>
-            </span>
-            <span class="post-meta-item" title="阅读时长">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>3 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>复盘一次AI Agent工具调用链超时引发的大规模级联故障生产事故，从系统全面瘫痪到最终架构重构的完整恢复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为AI Agent系统运维提供深度实战参考。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2024/04/26/040ai-agent-tool-calling-timeout-cascade-failure-production-incident/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/04/21/041ai-agent-llm-integration-enterprise-implementation-experience/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="longchao">
-      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/04/21/041ai-agent-llm-integration-enterprise-implementation-experience/" class="post-title-link" itemprop="url">AI Agent大语言模型集成企业落地实战经验分享：从技术选型到生产部署的完整实践指南</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2024-04-21 13:38:43" itemprop="dateCreated datePublished" datetime="2024-04-21T13:38:43+08:00">2024-04-21</time>
+              <time title="创建时间：2024-10-07 14:03:34" itemprop="dateCreated datePublished" datetime="2024-10-07T14:03:34+08:00">2024-10-07</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -586,14 +222,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>12k</span>
+              <span>11k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>11 分钟</span>
+              <span>10 分钟</span>
             </span>
 
         </div>
@@ -605,10 +241,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>分享AI Agent大语言模型集成在企业环境中的完整落地实践经验，从技术选型、架构设计到生产部署的全过程，包含模型选择策略、集成方案设计、性能优化和运维经验，为企业AI Agent项目提供实战指导。</p>
+          <p>分享一次完整的AI Agent多智能体协作系统在大型企业的落地实践经验，从需求分析、架构设计到生产部署的全过程，包含具体的技术选型、架构演进、性能优化和运维经验，为企业AI智能化改造提供实战参考。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/21/041ai-agent-llm-integration-enterprise-implementation-experience/">
+              <a class="btn" href="/2024/10/07/017ai-agent-multi-agent-collaboration-enterprise-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -632,7 +268,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/04/14/042ai-agent-tool-chain-deadlock-debugging-process/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -646,7 +282,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/14/042ai-agent-tool-chain-deadlock-debugging-process/" class="post-title-link" itemprop="url">AI Agent工具链调用卡死问题调试实战：从请求超时到根因定位的完整排查过程</a>
+            <a href="/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/" class="post-title-link" itemprop="url">AI Agent 工具调用幂等与防重入生产事故复盘：从重复下单到有界副作用</a>
         </h2>
 
         <div class="post-meta">
@@ -656,7 +292,99 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-04-14 11:11:13" itemprop="dateCreated datePublished" datetime="2024-04-14T11:11:13+08:00">2024-04-14</time>
+              <time title="创建时间：2024-09-30 21:06:20" itemprop="dateCreated datePublished" datetime="2024-09-30T21:06:20+08:00">2024-09-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E6%8A%80%E6%9C%AF%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">技术实践</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>复盘一次因 Agent 工具调用缺乏幂等与防重入导致的“重复下单/重复转账”生产事故，从故障现象、根因到修复方案，并给出可落地的 Python 代码骨架（幂等键、令牌栅栏、调用账本、补偿流程）。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/09/30/018ai-agent-tool-idempotency-reentrancy-incident-postmortem/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/09/22/019ai-agent-multiround-conversation-context-loss-debugging-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/09/22/019ai-agent-multiround-conversation-context-loss-debugging-practice/" class="post-title-link" itemprop="url">AI Agent多轮对话上下文丢失调试实战：从对话混乱到上下文精准管理的完整排查过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-09-22 23:38:03" itemprop="dateCreated datePublished" datetime="2024-09-22T23:38:03+08:00">2024-09-22</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -678,14 +406,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>15k</span>
+              <span>6.7k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>13 分钟</span>
+              <span>6 分钟</span>
             </span>
 
         </div>
@@ -697,10 +425,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一次AI Agent工具链调用卡死问题的完整调试过程，从工具调用超时现象到最终定位循环依赖和资源竞争的根本原因，包含详细的问题排查步骤、调试工具使用和解决方案，为AI Agent开发者提供实用的调试经验。</p>
+          <p>深入分享AI Agent多轮对话系统中上下文丢失问题的完整调试过程，从对话混乱现象到上下文精准管理的全过程实战经验，包含详细的问题现象、排查步骤、解决思路和优化方案，为AI Agent对话系统开发提供实用的调试指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/14/042ai-agent-tool-chain-deadlock-debugging-process/">
+              <a class="btn" href="/2024/09/22/019ai-agent-multiround-conversation-context-loss-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -724,7 +452,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/04/07/044rpa-enterprise-deployment-database-connection-pool-exhaustion-production-incident/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/09/15/020ai-agent-enterprise-customer-service-implementation-experience/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -738,7 +466,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/04/07/044rpa-enterprise-deployment-database-connection-pool-exhaustion-production-incident/" class="post-title-link" itemprop="url">RPA企业部署数据库连接池耗尽生产事故复盘：从连接泄漏到资源优化的完整修复过程</a>
+            <a href="/2024/09/15/020ai-agent-enterprise-customer-service-implementation-experience/" class="post-title-link" itemprop="url">AI Agent企业客服系统落地实践：从技术选型到业务价值实现的完整经验分享</a>
         </h2>
 
         <div class="post-meta">
@@ -748,7 +476,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-04-07 20:40:28" itemprop="dateCreated datePublished" datetime="2024-04-07T20:40:28+08:00">2024-04-07</time>
+              <time title="创建时间：2024-09-15 20:56:38" itemprop="dateCreated datePublished" datetime="2024-09-15T20:56:38+08:00">2024-09-15</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -756,11 +484,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
+                  <a href="/categories/AI-Agent/%E5%AE%9E%E8%B7%B5%E7%BB%8F%E9%AA%8C/" itemprop="url" rel="index"><span itemprop="name">实践经验</span></a>
                 </span>
             </span>
 
@@ -770,14 +498,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>8.7k</span>
+              <span>6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>8 分钟</span>
+              <span>5 分钟</span>
             </span>
 
         </div>
@@ -789,10 +517,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>深度复盘RPA企业部署中数据库连接池耗尽引发的生产事故，从连接泄漏现象到资源优化方案的完整修复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为RPA企业级部署和运维提供重要的实战参考。</p>
+          <p>深入分享AI Agent在企业客服系统中的完整落地实践经验，从技术选型、架构设计到业务价值实现的全过程，包含工具链选择、系统集成、性能优化、用户体验提升等方面的实践心得，为AI Agent项目落地提供系统性的实施指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/04/07/044rpa-enterprise-deployment-database-connection-pool-exhaustion-production-incident/">
+              <a class="btn" href="/2024/09/15/020ai-agent-enterprise-customer-service-implementation-experience/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -816,7 +544,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/03/30/045rpa-concurrent-execution-resource-deadlock-system-crash-production-incident/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/09/04/021ai-agent-enterprise-intelligent-customer-service-system-implementation-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -830,7 +558,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/03/30/045rpa-concurrent-execution-resource-deadlock-system-crash-production-incident/" class="post-title-link" itemprop="url">RPA并发执行资源死锁导致系统崩溃生产故障复盘：从机器人阻塞到调度重构的完整修复历程</a>
+            <a href="/2024/09/04/021ai-agent-enterprise-intelligent-customer-service-system-implementation-practice/" class="post-title-link" itemprop="url">企业级AI Agent智能客服系统实施与落地实践：从传统客服到智能化服务的完整转型经验</a>
         </h2>
 
         <div class="post-meta">
@@ -840,7 +568,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-03-30 17:36:20" itemprop="dateCreated datePublished" datetime="2024-03-30T17:36:20+08:00">2024-03-30</time>
+              <time title="创建时间：2024-09-04 17:15:25" itemprop="dateCreated datePublished" datetime="2024-09-04T17:15:25+08:00">2024-09-04</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -848,11 +576,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/" itemprop="url" rel="index"><span itemprop="name">RPA</span></a>
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
                 </span>
                   ，
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/RPA/%E7%94%9F%E4%BA%A7%E6%95%85%E9%9A%9C/" itemprop="url" rel="index"><span itemprop="name">生产故障</span></a>
+                  <a href="/categories/AI-Agent/%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%B7%B5/" itemprop="url" rel="index"><span itemprop="name">项目实践</span></a>
                 </span>
             </span>
 
@@ -862,14 +590,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>4.8k</span>
+              <span>5.5k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>4 分钟</span>
+              <span>5 分钟</span>
             </span>
 
         </div>
@@ -881,10 +609,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>深度复盘RPA并发执行系统中资源死锁引发的系统崩溃生产故障，从机器人阻塞现象到调度架构重构的完整修复过程，包含详细的故障现象、根因分析、应急处理、解决方案和预防措施，为RPA企业级部署和运维提供重要的实战参考。</p>
+          <p>深入分享企业级AI Agent智能客服系统的完整实施与落地实践经验，从传统人工客服到AI智能服务的全面转型过程，包含技术选型、架构设计、实施策略、效果评估和运营经验，为企业AI智能客服建设提供系统性的参考指导。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/03/30/045rpa-concurrent-execution-resource-deadlock-system-crash-production-incident/">
+              <a class="btn" href="/2024/09/04/021ai-agent-enterprise-intelligent-customer-service-system-implementation-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -908,7 +636,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/03/23/046rpa-core-technology-principles-analysis/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/08/29/022ai-agent-enterprise-qa-system-implementation-practice-experience/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -922,7 +650,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/03/23/046rpa-core-technology-principles-analysis/" class="post-title-link" itemprop="url">RPA 核心技术原理深度解析：从界面识别到流程编排的完整技术栈</a>
+            <a href="/2024/08/29/022ai-agent-enterprise-qa-system-implementation-practice-experience/" class="post-title-link" itemprop="url">AI Agent企业级智能问答系统落地实战：从技术选型到规模化部署的完整实践经验</a>
         </h2>
 
         <div class="post-meta">
@@ -932,7 +660,191 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-03-23 22:05:27" itemprop="dateCreated datePublished" datetime="2024-03-23T22:05:27+08:00">2024-03-23</time>
+              <time title="创建时间：2024-08-29 12:55:21" itemprop="dateCreated datePublished" datetime="2024-08-29T12:55:21+08:00">2024-08-29</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E4%BC%81%E4%B8%9A%E5%BA%94%E7%94%A8/" itemprop="url" rel="index"><span itemprop="name">企业应用</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分享AI Agent在企业级智能问答系统中的完整落地实践经验，从技术架构设计、工具选型、数据处理到规模化部署的全过程实战心得，为企业AI应用建设提供实用的参考指导和最佳实践。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/08/29/022ai-agent-enterprise-qa-system-implementation-practice-experience/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/08/22/023ai-agent-multimodal-interaction-system-enterprise-implementation-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/08/22/023ai-agent-multimodal-interaction-system-enterprise-implementation-practice/" class="post-title-link" itemprop="url">AI Agent多模态交互系统企业级落地实战：从单一文本对话到多媒体智能交互的完整实践经验</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-08-22 16:15:34" itemprop="dateCreated datePublished" datetime="2024-08-22T16:15:34+08:00">2024-08-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E4%BC%81%E4%B8%9A%E5%BA%94%E7%94%A8/" itemprop="url" rel="index"><span itemprop="name">企业应用</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分享AI Agent多模态交互系统在企业级场景中的完整落地实践经验，从传统文本对话升级到支持图像、语音、视频的智能多媒体交互系统，包含技术架构设计、工具选型、实施策略和运营优化的全过程实战心得。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/08/22/023ai-agent-multimodal-interaction-system-enterprise-implementation-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/08/17/024ai-agent-architecture-design-implementation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/08/17/024ai-agent-architecture-design-implementation/" class="post-title-link" itemprop="url">AI Agent 架构设计与实现深度解析：从单体到分布式的演进之路</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-08-17 16:55:06" itemprop="dateCreated datePublished" datetime="2024-08-17T16:55:06+08:00">2024-08-17</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -950,14 +862,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>23k</span>
+              <span>18k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>21 分钟</span>
+              <span>17 分钟</span>
             </span>
 
         </div>
@@ -969,10 +881,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>从技术实现的角度深入解析RPA的核心技术栈，包括界面元素识别、图像处理算法、流程编排引擎等关键技术点。</p>
+          <p>深入解析AI Agent的核心架构模式，从单体架构到分布式架构的演进过程，结合实际代码示例为开发者提供系统性的架构设计指南。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/03/23/046rpa-core-technology-principles-analysis/">
+              <a class="btn" href="/2024/08/17/024ai-agent-architecture-design-implementation/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -996,7 +908,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/03/16/047rpa-production-incident-troubleshooting/">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/08/12/025ai-agent-vector-search-performance-bottleneck-debugging-practice/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -1010,7 +922,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2024/03/16/047rpa-production-incident-troubleshooting/" class="post-title-link" itemprop="url">RPA 生产环境故障排查实录：从机器人异常到业务恢复的完整解决方案</a>
+            <a href="/2024/08/12/025ai-agent-vector-search-performance-bottleneck-debugging-practice/" class="post-title-link" itemprop="url">AI Agent向量搜索性能瓶颈调试实战：从查询超时到毫秒级响应的完整优化过程</a>
         </h2>
 
         <div class="post-meta">
@@ -1020,7 +932,7 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2024-03-16 21:25:06" itemprop="dateCreated datePublished" datetime="2024-03-16T21:25:06+08:00">2024-03-16</time>
+              <time title="创建时间：2024-08-12 19:49:50" itemprop="dateCreated datePublished" datetime="2024-08-12T19:49:50+08:00">2024-08-12</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -1028,7 +940,11 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E6%80%A7%E8%83%BD%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">性能调试</span></a>
                 </span>
             </span>
 
@@ -1038,14 +954,14 @@
                 <i class="fa fa-file-word-o"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>30k</span>
+              <span>9.6k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
                 <i class="fa fa-clock-o"></i>
               </span>
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
-              <span>27 分钟</span>
+              <span>9 分钟</span>
             </span>
 
         </div>
@@ -1057,10 +973,102 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>通过一个真实的RPA生产环境故障案例，详细记录从故障发现到完全解决的全过程，为机器人稳定运行提供实用的故障处理指南。</p>
+          <p>深度解析AI Agent向量搜索功能的性能瓶颈调试过程，从查询超时问题识别、系统分析、瓶颈定位到最终优化方案，提供AI Agent搜索功能性能调优的实战经验和解决思路。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/2024/03/16/047rpa-production-incident-troubleshooting/">
+              <a class="btn" href="/2024/08/12/025ai-agent-vector-search-performance-bottleneck-debugging-practice/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2024/08/06/026ai-agent-tool-calling-performance-bottleneck-debugging-practice/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/08/06/026ai-agent-tool-calling-performance-bottleneck-debugging-practice/" class="post-title-link" itemprop="url">AI Agent 工具调用性能瓶颈调试实战：从响应延迟到高效执行的完整排查过程</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-08-06 11:22:36" itemprop="dateCreated datePublished" datetime="2024-08-06T11:22:36+08:00">2024-08-06</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI Agent</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI-Agent/%E6%8A%80%E6%9C%AF%E8%B0%83%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">技术调试</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>16k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>15 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录一次AI Agent工具调用系统中性能瓶颈的完整调试过程，从响应时间异常到工具执行效率优化，包含详细的性能分析工具和代码优化实现，为AI Agent系统提供性能调优参考。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2024/08/06/026ai-agent-tool-calling-performance-bottleneck-debugging-practice/">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -1083,7 +1091,7 @@
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/7/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/23/">23</a><a class="extend next" rel="next" href="/page/9/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/7/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><span class="page-number current">8</span><a class="page-number" href="/page/9/">9</a><span class="space">&hellip;</span><a class="page-number" href="/page/25/">25</a><a class="extend next" rel="next" href="/page/9/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1151,16 +1159,16 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">225</span>
+          <span class="site-state-item-count">245</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">74</span>
+        <span class="site-state-item-count">76</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">561</span>
+        <span class="site-state-item-count">621</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -1214,12 +1222,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">2.1m</span>
+    <span title="站点总字数">2.3m</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">32:20</span>
+    <span title="站点阅读时长">34:23</span>
 </div>
 
         

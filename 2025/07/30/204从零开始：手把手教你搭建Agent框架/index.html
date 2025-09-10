@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从零开始手把手教你搭建Agent框架，详解Plan&#x2F;Memory&#x2F;Tool三组件架构和智能体的核心实现原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零开始-手把手教你搭建Agent框架">
+<meta property="og:url" content="http://mzfnai.com/2025/07/30/204%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E6%90%AD%E5%BB%BAAgent%E6%A1%86%E6%9E%B6/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="从零开始手把手教你搭建Agent框架，详解Plan&#x2F;Memory&#x2F;Tool三组件架构和智能体的核心实现原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_YCKBb02yxoKDGtx5qcKcQH7qnDb_20250910_180133_464.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_McaobIUECoRe0Vxw1Yic3a1fnGf_20250910_180133_464.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_K0LebOE1Jo8RGXxjWPPchtlBnzb_20250910_180133_464.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_K1Xhb3ToFoWIP8xtVEJcDex8nLe_20250910_180133_464.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_IYZlb6ZiMoTsSqxBlsgcnamNnYe_20250910_180133_464.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_GGRIbKoMfo71saxVxyKcBThRnof_20250910_180133_465.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_NiICbLouXoS404x3Rikc46Hqnle_20250910_180133_465.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_MkpmbwEV5oeksjxIOBXcEuQknMg_20250910_180133_465.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_image_20250910_180133_465.png">
+<meta property="article:published_time" content="2025-07-30T07:47:26.000Z">
+<meta property="article:modified_time" content="2025-09-10T14:55:59.354Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="Agent框架">
+<meta property="article:tag" content="智能体搭建">
+<meta property="article:tag" content="自主智能">
+<meta property="article:tag" content="推理引擎">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_YCKBb02yxoKDGtx5qcKcQH7qnDb_20250910_180133_464.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/30/204%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E6%90%AD%E5%BB%BAAgent%E6%A1%86%E6%9E%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>从零开始-手把手教你搭建Agent框架 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/30/204%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E6%90%AD%E5%BB%BAAgent%E6%A1%86%E6%9E%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          从零开始-手把手教你搭建Agent框架
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-30 15:47:26" itemprop="dateCreated datePublished" datetime="2025-07-30T15:47:26+08:00">2025-07-30</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI-Agent</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+            <div class="post-description">从零开始手把手教你搭建Agent框架，详解Plan/Memory/Tool三组件架构和智能体的核心实现原理。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="x20-AI-Agent"><a href="#x20-AI-Agent" class="headerlink" title="&#x20;AI Agent"></a>&#x20;AI Agent</h1><p>Agent的核心思想是使用语言模型来选择要采取的一系列操作。在Agent中，语言模型被用作推理引擎来确定要采取哪些操作以及按什么顺序。相比于传统机械或软件被动的“给予输入——&gt;做出输出”的模式，Agent 由于更加强调自主的发现问题、确定目标、构想方案、选择方案、执行方案、检查更新的特性，因此可以被认为是一类拥有“自主智能的实体”，而被广泛称之为智能体。</p>
+<p>⚠️下文介绍的Plan&#x2F;Memory&#x2F;Tool三组件只是Agent框架一种简单的拆分（参考了LangChain），除此外还有多种理解Agent框架的视角，读者若感兴趣可以自行学习以下Agent框架</p>
+<ul>
+<li><p>Baby Agent</p>
+</li>
+<li><p><a href="https://link.juejin.cn/?target=https://github.com/Significant-Gravitas/AutoGPT">Auto GPT</a></p>
+</li>
+<li><p><a href="https://link.juejin.cn/?target=https://github.com/aiwaves-cn/agents">Agents框架</a></p>
+</li>
+<li><p>清华大学的XAgent</p>
+</li>
+</ul>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_YCKBb02yxoKDGtx5qcKcQH7qnDb_20250910_180133_464.png"></p>
+<h3 id="Planning-规划"><a href="#Planning-规划" class="headerlink" title="Planning 规划"></a>Planning 规划</h3><ul>
+<li><p>子目标和分解：AI Agent 将大型任务分解为更小的、可管理的子目标，从而能够有效处理复杂的任务。</p>
+</li>
+<li><p>反思和完善：Agent可以对过去的行为进行自我批评和自我反思，从错误中吸取教训，并针对未来的步骤进行完善，从而提高最终结果的质量。</p>
+</li>
+</ul>
+<h3 id="Memory-记忆"><a href="#Memory-记忆" class="headerlink" title="Memory 记忆"></a>Memory 记忆</h3><ul>
+<li><p>短期记忆：所有的上下文学习（参见提示工程）都是利用模型的短期记忆来学习。</p>
+</li>
+<li><p>长期记忆：这为AI Agent提供了长期保留和调用无限信息的能力，通常是通过利用外部向量存储和快速检索来实现。</p>
+</li>
+</ul>
+<h3 id="Tool-Toolkit"><a href="#Tool-Toolkit" class="headerlink" title="Tool &#x2F; Toolkit"></a>Tool &#x2F; Toolkit</h3><p>Agent学习调用外部 API 来获取模型权重中缺失的额外信息，通常这些信息在预训练后很难更改，包括当前信息、代码执行能力、对专有信息源的访问等。</p>
+<p>工具是代理可以调用的功能，本质上就是一个函数。使用工具是AI Agent最迷人最先进的特性</p>
+<h2 id="思考框架"><a href="#思考框架" class="headerlink" title="思考框架"></a>思考框架</h2><h3 id="CoT"><a href="#CoT" class="headerlink" title="CoT"></a>CoT</h3><p>语言智能可以被理解为“使用基于自然语言的概念对经验事物进行**‘理解’<strong>以及在概念之间进行</strong>‘推理’**的能力”</p>
+<p>理解能力上，作为“语言模型”的大模型具备概念理解能力并不难理解，但是仅仅像 Word2vec 一样只能得到“国王”与“男人”的“距离”更近的结论对于语言智能而言必然远远不够</p>
+<p>真正让人惊讶的是大模型在推理上的能力涌现。推理，一般指根据几个已知的前提推导得出新的结论的过程，区别于理解，推理一般是一个“多步骤”的过程，推理的过程可以形成非常必要的“中间概念”，这些中间概念将辅助复杂问题的求解 。</p>
+<p>2022 年，在 Google 发布的论文《Chain-of-Thought Prompting Elicits Reasoning in Large Language Models》中首次提出， **通过让大模型逐步参与将一个复杂问题分解为一步一步的子问题并依次进行求解的过程可以显著提升大模型的性能。而这一系列推理的中间步骤就被称为思维链（Chain of Thought） **。</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_McaobIUECoRe0Vxw1Yic3a1fnGf_20250910_180133_464.png"></p>
+<p>CoT大家应该都比较熟了，使用它的方法很简单：</p>
+<p>对于Zero-Shot，只需要在Prompt的结尾加一句：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Let<span class="string">&#x27;s think step by step</span></span><br></pre></td></tr></table></figure>
+
+<p>对于One-Shot或Few-Shot，需要在Prompt中适当地为大模型提供一些示例</p>
+<p>拓展：CoT其实也在逐渐进化，出现了各种让大模型进行复杂链路思考的方式</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_K0LebOE1Jo8RGXxjWPPchtlBnzb_20250910_180133_464.png"></p>
+<h3 id="ReAct"><a href="#ReAct" class="headerlink" title="ReAct"></a>ReAct</h3><p>无论是环境的反馈，还是人类的指令，Agent 都需要完成一个对接收到的信息进行“理解”，并依据得到的理解进行意图识别，转化为下一步任务的过程 。在前文中之所以介绍CoT，是因为使用 CoT 可以大大帮助模型对现有输入进行“感知”，激活大模型对任务的拆分规划和推理能力。借鉴CoT，我们可以归纳出基本的Agent框架并延伸，ReAct就是其中之一</p>
+<p>从 <a href="https://link.juejin.cn/?target=https://arxiv.org/abs/2210.03629">Yao等人，2022(opens in a new tab)</a> 引入了一个框架，其中 LLMs 以交错的方式生成 <em>推理轨迹</em> 和 <em>任务特定操作</em> 。</p>
+<p>生成推理轨迹使模型能够诱导、跟踪和更新操作计划，甚至处理异常情况。操作步骤允许与外部源（如知识库或环境）进行交互并且收集信息。</p>
+<p>ReAct 框架允许 LLMs 与外部工具交互来获取额外信息，从而给出更可靠和实际的回应。</p>
+<p>结果表明，ReAct 可以在语言和决策任务上的表现要高于几个最先进水准要求的的基线。ReAct 还提高了 LLMs 的人类可解释性和可信度。总的来说，作者发现了将 ReAct 和链式思考 (CoT) 结合使用的最好方法是在推理过程同时使用内部知识和获取到的外部信息。</p>
+<h4 id="运作机理"><a href="#运作机理" class="headerlink" title="运作机理"></a>运作机理</h4><p>ReAct 的灵感来自于 “行为” 和 “推理” 之间的协同作用，正是这种协同作用使得人类能够学习新任务并做出决策或推理。</p>
+<p>链式思考 (CoT) 提示显示了 LLMs 执行推理轨迹以生成涉及算术和常识推理的问题的答案的能力，以及其他任务 <a href="https://link.juejin.cn/?target=https://arxiv.org/abs/2201.11903">(Wei等人，2022)(opens in a new tab)</a>。但它因缺乏和外部世界的接触或无法更新自己的知识，而导致事实幻觉和错误传播等问题。</p>
+<p>ReAct 是一个将推理和行为与 LLMs 相结合通用的范例。ReAct 提示 LLMs 为任务生成口头推理轨迹和操作。这使得系统执行动态推理来创建、维护和调整操作计划，同时还支持与外部环境(例如，Wikipedia)的交互，以将额外信息合并到推理中</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_K1Xhb3ToFoWIP8xtVEJcDex8nLe_20250910_180133_464.png"></p>
+<p>常用模板：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Answer the following questions as best you can. You have access to the following tools:</span></span><br><span class="line"></span><br><span class="line">&#123;<span class="string">tools</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="attr">Use the following format:</span></span><br><span class="line"></span><br><span class="line"><span class="attr">Question:</span> <span class="string">the</span> <span class="string">input</span> <span class="string">question</span> <span class="string">you</span> <span class="string">must</span> <span class="string">answer</span></span><br><span class="line"><span class="attr">Thought:</span> <span class="string">you</span> <span class="string">should</span> <span class="string">always</span> <span class="string">think</span> <span class="string">about</span> <span class="string">what</span> <span class="string">to</span> <span class="string">do</span></span><br><span class="line"><span class="attr">Action:</span> <span class="string">the</span> <span class="string">action</span> <span class="string">to</span> <span class="string">take,</span> <span class="string">should</span> <span class="string">be</span> <span class="string">one</span> <span class="string">of</span> [&#123;<span class="string">tool_names</span>&#125;]</span><br><span class="line"><span class="attr">Action Input:</span> <span class="string">the</span> <span class="string">input</span> <span class="string">to</span> <span class="string">the</span> <span class="string">action</span></span><br><span class="line"><span class="attr">Observation:</span> <span class="string">the</span> <span class="string">result</span> <span class="string">of</span> <span class="string">the</span> <span class="string">action</span></span><br><span class="line"><span class="string">...</span> <span class="string">(this</span> <span class="string">Thought/Action/Action</span> <span class="string">Input/Observation</span> <span class="string">can</span> <span class="string">repeat</span> <span class="string">N</span> <span class="string">times)</span></span><br><span class="line"><span class="attr">Thought:</span> <span class="string">I</span> <span class="string">now</span> <span class="string">know</span> <span class="string">the</span> <span class="string">final</span> <span class="string">answer</span></span><br><span class="line"><span class="attr">Final Answer:</span> <span class="string">the</span> <span class="string">final</span> <span class="string">answer</span> <span class="string">to</span> <span class="string">the</span> <span class="string">original</span> <span class="string">input</span> <span class="string">question</span></span><br><span class="line"></span><br><span class="line"><span class="string">Begin!</span></span><br><span class="line"></span><br><span class="line"><span class="attr">Question:</span> &#123;<span class="string">input</span>&#125;</span><br><span class="line"><span class="string">Thought:&#123;agent_scratchpad&#125;</span></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="搭建一个ReAct框架"><a href="#搭建一个ReAct框架" class="headerlink" title="搭建一个ReAct框架"></a>搭建一个ReAct框架</h2><p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_IYZlb6ZiMoTsSqxBlsgcnamNnYe_20250910_180133_464.png"></p>
+<h3 id="简单的ReAct"><a href="#简单的ReAct" class="headerlink" title="简单的ReAct"></a>简单的ReAct</h3><p>先对各组件进行硬编码。我们为大模型提供一个get_word_length工具（Tool），使用ReAct框架看看他能否解决一些基本问题</p>
+<p>System Prompt：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Answer the following questions <span class="keyword">as</span> best you can. You have access to the following tools:</span><br><span class="line"></span><br><span class="line">get_word_length(word: <span class="built_in">str</span>) -&gt; <span class="built_in">int</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;Returns the length of a word.&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">Use the following <span class="built_in">format</span>:</span><br><span class="line"></span><br><span class="line">Question: the <span class="built_in">input</span> question you must answer</span><br><span class="line">Thought: you should always think about what to do</span><br><span class="line">Action: the action to take, should be one of [get_word_length]</span><br><span class="line">Action Input: the <span class="built_in">input</span> to the action</span><br><span class="line">Observation: the result of the action</span><br><span class="line"><span class="meta">... </span>(this Thought/Action/Action Input/Observation can repeat N times)</span><br><span class="line">Thought: I now know the final answer</span><br><span class="line">Final Answer: the final answer to the original <span class="built_in">input</span> question</span><br><span class="line"></span><br><span class="line">Begin!</span><br></pre></td></tr></table></figure>
+
+<p>User Input：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Question:How many letters <span class="keyword">in</span> the word educa</span><br></pre></td></tr></table></figure>
+
+<p>⚠️注意！这里只是简单在用大模型调试prompt，get_word_length工具并没有具体的代码实现也没有运行。之所以能算出结果都是靠大模型自身的推理能力！</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_GGRIbKoMfo71saxVxyKcBThRnof_20250910_180133_465.png"></p>
+<h2 id="Agent"><a href="#Agent" class="headerlink" title="Agent"></a>Agent</h2><p>Agent相当于整体框架的思维推理系统，通常由大模型、Prompt提供支持。不同的智能体有不同的推理提示风格、不同的输入方式以及不同的解析输出方式，依赖于用户对应用的自定义，说白了就是对大模型进行一层封装更方便管理</p>
+<p>这里提到的Agent其实就是大模型本身，我们在框架中最好将大模型的API进行面向对封装，方便与框架中其他组件交互</p>
+<p>这里我使用的是OpenAI 的GPT-3.5-turbo模型</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">LLMSingleActionAgent</span> &#123;</span><br><span class="line">  <span class="attr">llm</span>: <span class="title class_">AzureLLM</span></span><br><span class="line">  <span class="attr">tools</span>: <span class="title class_">StructuredTool</span>[]</span><br><span class="line">  <span class="attr">stop</span>: <span class="built_in">string</span>[]</span><br><span class="line">  <span class="keyword">private</span> <span class="attr">_prompt</span>: <span class="built_in">string</span> = <span class="string">&#x27;&#123;input&#125;&#x27;</span></span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">&#123; llm, tools = [], stop = [] &#125;: <span class="title class_">LLMSingleActionAgentParams</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">llm</span> = llm</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">tools</span> = tools</span><br><span class="line">    <span class="keyword">if</span> (stop.<span class="property">length</span> &gt; <span class="number">4</span>)</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">&#x27;up to 4 stop sequences&#x27;</span>)</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">stop</span> = stop</span><br><span class="line">  &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Agent-Inputs-代理输入"><a href="#Agent-Inputs-代理输入" class="headerlink" title="Agent Inputs 代理输入"></a>Agent Inputs 代理输入</h4><p>对大模型的输入可以是普通的Prompt字符串；也可以是键值对，结合Prompt Template拼接出最终的Prompt字符串</p>
+<h4 id="Agent-Outputs-代理输出"><a href="#Agent-Outputs-代理输出" class="headerlink" title="Agent Outputs 代理输出"></a>Agent Outputs 代理输出</h4><p>输出是要执行的下一个操作或要发送给用户的最终响应（ AgentAction 或 AgentFinish ）</p>
+<p>对大模型的输入可以是普通的Prompt字符串；也可以是键值对，结合Prompt Template拼接出最终的Prompt字符串。我们这里使用ReAct框架，每次输入的Prompt都有固定的模板Template（见上文ReAct的模板）。因此需要一个填充模板的函数，我们简单约定变量按<code>&#123;var&#125;</code>的格式插入，用正则表达式将字符串替换</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">fillPromptTemplate</span>(<span class="params">promptTemplate: string, inputs: promptInputs</span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> res = promptTemplate</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> [key, val] <span class="keyword">of</span> <span class="title class_">Object</span>.<span class="title function_">entries</span>(inputs))</span><br><span class="line">    res = res.<span class="title function_">replaceAll</span>(<span class="keyword">new</span> <span class="title class_">RegExp</span>(&#123;\\s*$&#123;key&#125;\\s*&#125;, <span class="string">&#x27;g&#x27;</span>), val)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> res</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Action"><a href="#Action" class="headerlink" title="Action"></a>Action</h2><h4 id="AgentAction-代理行动"><a href="#AgentAction-代理行动" class="headerlink" title="AgentAction 代理行动"></a>AgentAction 代理行动</h4><p>这是一个数据类，表示代理应采取的操作。它有一个 tool 属性（这是应该调用的工具的名称）和一个 tool_input 属性（该工具的输入）</p>
+<h4 id="AgentFinish-代理完成"><a href="#AgentFinish-代理完成" class="headerlink" title="AgentFinish 代理完成"></a>AgentFinish 代理完成</h4><p>这表示代理准备好返回给用户时的最终结果。它包含一个 return_values 键值映射，其中包含最终的代理输出。通常，这包含 output 键，其中包含代理响应的字符串。</p>
+<h4 id="Intermediate-Steps-中间步骤"><a href="#Intermediate-Steps-中间步骤" class="headerlink" title="Intermediate Steps 中间步骤"></a>Intermediate Steps 中间步骤</h4><p>这些代表先前的代理操作以及当前代理运行的相应输出。这些对于传递到未来的迭代非常重要，因此代理知道它已经完成了哪些工作。其类型为 List[Tuple[AgentAction, Any]] 。请注意，观察目前保留为 Any 类型，以实现最大程度的灵活性。实际上，这通常是一个字符串。</p>
+<h2 id="Tool"><a href="#Tool" class="headerlink" title="Tool"></a>Tool</h2><h3 id="在Prompt中描述工具"><a href="#在Prompt中描述工具" class="headerlink" title="在Prompt中描述工具"></a>在Prompt中描述工具</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">StructuredTool</span> &#123;</span><br><span class="line">  <span class="attr">name</span>: <span class="built_in">string</span></span><br><span class="line">  <span class="attr">description</span>: <span class="built_in">string</span></span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="attr">name</span>: <span class="built_in">string</span>, <span class="attr">description</span>: <span class="built_in">string</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">name</span> = name</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">description</span> = description</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">abstract</span> <span class="title function_">call</span>(<span class="attr">arg</span>: <span class="built_in">string</span>, <span class="attr">config</span>?: <span class="title class_">Record</span>&lt;<span class="built_in">string</span>, <span class="built_in">any</span>&gt;): <span class="title class_">Promise</span>&lt;<span class="built_in">string</span>&gt;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">getSchema</span>(): <span class="built_in">string</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> $&#123;<span class="variable language_">this</span>.<span class="property">declaration</span>&#125; | $&#123;<span class="variable language_">this</span>.<span class="property">name</span>&#125; | $&#123;<span class="variable language_">this</span>.<span class="property">description</span>&#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">abstract</span> <span class="keyword">get</span> <span class="title function_">declaration</span>(): <span class="built_in">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>工具类有name和description两个属性，通过getSchema函数返回对该工具的文本描述。这里我们先简单地将两个描述信息拼接一下，为Agent提供4个算数工具</p>
+<p>⚠️注意！这里只是简单在用大模型调试prompt，这几个工具并没有具体的代码实现也没有运行。之所以能算出结果都是靠大模型自身的推理能力！（简单的加减乘除即使没有外部工具他也能做到）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Addition Tool: A tool <span class="keyword">for</span> adding two numbers</span><br><span class="line">Subtraction Tool: A tool <span class="keyword">for</span> subtracting two numbers</span><br><span class="line">Division Tool: A tool <span class="keyword">for</span> dividing two numbers</span><br><span class="line">Multiplication Tool: A tool <span class="keyword">for</span> multiplying two numbers</span><br></pre></td></tr></table></figure>
+
+<p>简单地运行一个应用算术题：</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_NiICbLouXoS404x3Rikc46Hqnle_20250910_180133_465.png"></p>
+<p>尽管Agent经过多步思考成功解决了这个问题，但有个小bug，在第二步中，Agent调用乘法工具传入了3个参数。如果我们实现工具的时候函数只接受两个参数这里就会报错。</p>
+<p>出现这个问题是因为我们提供的工具描述还不够准确，不仅要提供工具的名字和功能描述，最好的就是将函数的声明也带上。因为我们的函数代码本身是硬编码的，要尽一切可能降低大模型输出的随机性，严格按我们的要求输出</p>
+<h3 id="为工具函数生成函数声明"><a href="#为工具函数生成函数声明" class="headerlink" title="为工具函数生成函数声明"></a>为工具函数生成函数声明</h3><h4 id="方案一：手动Copy"><a href="#方案一：手动Copy" class="headerlink" title="方案一：手动Copy"></a>方案一：手动Copy</h4><p>一个笨办法就是直接copy自己写的函数声明，硬编码到工具的description中。</p>
+<p>按两下cv键还是很快的。缺点就是1. 不够灵活，修改函数声明时需要把硬编码的字符串也更改 2. 万一写的是宽松类型的代码（js、python），还得自己想函数声明</p>
+<p>例如对于call函数，直接把这个复制下来放到description中就行了</p>
+<h4 id="方案二：AI自动生成"><a href="#方案二：AI自动生成" class="headerlink" title="方案二：AI自动生成"></a>方案二：AI自动生成</h4><p>根据“大模型不收敛”定理——当你想为大模型做一件事时，先想想这件事本身是不是也能让大模型做。我们也可以让大模型为工具函数生成函数声明</p>
+<p>使用下面的prompt：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">请为下面的&#123;language&#125;代码生成函数声明：</span><br><span class="line">&#123;code&#125;</span><br></pre></td></tr></table></figure>
+
+<p>同理也可以帮助生成函数功能描述</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">请用一两句话描述下面&#123;language&#125;代码的功能：</span><br><span class="line">&#123;code&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该方案的优缺点和方案一相同。主要针对宽松类型的代码，省了点脑子</p>
+<h4 id="方案三：zod自动生成"><a href="#方案三：zod自动生成" class="headerlink" title="方案三：zod自动生成"></a>方案三：zod自动生成</h4><p>Zod 是一个以 TypeScript 为首的模式声明和验证库 ，弥补了 TypeScript 无法在运行时进行校验的问题</p>
+<p>依靠zod的一些插件，我们可以直接将zod定义的类型对象转换成类型声明字符串</p>
+<p>例如：</p>
+<ul>
+<li><p>[zod-to-ts]: Generate TypeScript definitions from Zod schemas.</p>
+</li>
+<li><p>[zod-to-json-schema].</p>
+</li>
+<li><p>[zod-to-openapi]: Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints &amp; parameters.</p>
+</li>
+</ul>
+<p>根据自己应用联调的需求选择即可</p>
+<p>优点就是非常灵活，且支持运行时。唯一的缺点就是要学习zod的用法</p>
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_MkpmbwEV5oeksjxIOBXcEuQknMg_20250910_180133_465.png"></p>
+<p>将函数声明加入Prompt后，可以看到Agent学会了多次进行乘法，符合我们的函数声明</p>
+<p>⚠️如果大模型实在是笨的学不会传入正确数量的参数，那就只能将我们的工具函数修改为兼容动态参数的形式了。</p>
+<h2 id="Executor"><a href="#Executor" class="headerlink" title="Executor"></a>Executor</h2><p>代理执行器executor是Agent的运行时，可以理解为AI Agent的大脑，他协调各个组件并指导操作。这实际上是调用代理，执行它选择的操作，将操作输出传递回代理，然后重复</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">AgentExecutor</span> &#123;</span><br><span class="line">  <span class="attr">agent</span>: <span class="title class_">LLMSingleActionAgent</span></span><br><span class="line">  <span class="attr">tools</span>: <span class="title class_">StructuredTool</span>[] = []</span><br><span class="line">  <span class="attr">maxIterations</span>: <span class="built_in">number</span> = <span class="number">15</span></span><br><span class="line"></span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="attr">agent</span>: <span class="title class_">LLMSingleActionAgent</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">agent</span> = agent</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">addTool</span>(<span class="params"><span class="attr">tools</span>: <span class="title class_">StructuredTool</span> | <span class="title class_">StructuredTool</span>[]</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> _tools = <span class="title class_">Array</span>.<span class="title function_">isArray</span>(tools) ? tools : [tools]</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">tools</span>.<span class="title function_">push</span>(..._tools)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最关键的就是executor的执行循环了，executor会始终进行如下事件循环直到 目标被解决了 或者 思考迭代次数超过了最大次数：</p>
+<ol>
+<li><p>根据之前已经完成的所有步骤（一个步骤包括 ReAct框架中的 Thought、Action、Observation）和 目标（用户的问题）规划出接下来的Action（使用什么工具 以及 工具的输入）</p>
+</li>
+<li><p>检测是否已经达成目标，即Action是不是ActionFinish。是的话就返回结果，不是的话说明还有行动要完成</p>
+</li>
+<li><p>根据Action，执行具体的工具，等待工具返回结果。工具返回的结果就是这一轮步骤的Observation</p>
+</li>
+<li><p>保存当前步骤到记忆上下文，如此反复</p>
+</li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="title function_">call</span>(<span class="attr">input</span>: promptInputs): <span class="title class_">Promise</span>&lt;<span class="title class_">AgentFinish</span>&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> toolsByName = <span class="title class_">Object</span>.<span class="title function_">fromEntries</span>(</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">tools</span>.<span class="title function_">map</span>(<span class="function"><span class="params">t</span> =&gt;</span> [t.<span class="property">name</span>, t]),</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> <span class="attr">steps</span>: <span class="title class_">AgentStep</span>[] = []</span><br><span class="line">    <span class="keyword">let</span> iterations = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="variable language_">this</span>.<span class="title function_">shouldContinue</span>(iterations)) &#123;</span><br><span class="line">      <span class="keyword">const</span> output = <span class="keyword">await</span> <span class="variable language_">this</span>.<span class="property">agent</span>.<span class="title function_">plan</span>(steps, input)</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">log</span>(iterations, output)</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Check if the agent has finished</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="string">&#x27;returnValues&#x27;</span> <span class="keyword">in</span> output)</span><br><span class="line">        <span class="keyword">return</span> output</span><br><span class="line"></span><br><span class="line">      <span class="keyword">const</span> actions = <span class="title class_">Array</span>.<span class="title function_">isArray</span>(output)</span><br><span class="line">        ? output <span class="keyword">as</span> <span class="title class_">AgentAction</span>[]</span><br><span class="line">        : [output <span class="keyword">as</span> <span class="title class_">AgentAction</span>]</span><br><span class="line"></span><br><span class="line">      <span class="keyword">const</span> newSteps = <span class="keyword">await</span> <span class="title class_">Promise</span>.<span class="title function_">all</span>(</span><br><span class="line">        actions.<span class="title function_">map</span>(<span class="title function_">async</span> (action) =&gt; &#123;</span><br><span class="line">          <span class="keyword">const</span> tool = toolsByName[action.<span class="property">tool</span>]</span><br><span class="line"></span><br><span class="line">          <span class="keyword">if</span> (!tool)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>($&#123;action.<span class="property">tool</span>&#125; is not a valid tool, <span class="keyword">try</span> another one.)</span><br><span class="line"></span><br><span class="line">          <span class="keyword">const</span> observation = <span class="keyword">await</span> tool.<span class="title function_">call</span>(action.<span class="property">toolInput</span>)</span><br><span class="line"></span><br><span class="line">          <span class="keyword">return</span> &#123; action, <span class="attr">observation</span>: observation ?? <span class="string">&#x27;&#x27;</span> &#125;</span><br><span class="line">        &#125;),</span><br><span class="line">      )</span><br><span class="line"></span><br><span class="line">      steps.<span class="title function_">push</span>(...newSteps)</span><br><span class="line"></span><br><span class="line">      iterations++</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">      <span class="attr">returnValues</span>: &#123; <span class="attr">output</span>: <span class="string">&#x27;Agent stopped due to max iterations.&#x27;</span> &#125;,</span><br><span class="line">      <span class="attr">log</span>: <span class="string">&#x27;&#x27;</span>,</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p>这里我们为大模型提供了加减乘除四个工具（按理来说这四个工具不需要实际的函数大模型也可以执行hhhh，但本质上是不一样的）我们可以看到大模型最后成功迭代出了计算结果为9336元</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">describe(<span class="string">&#x27;agent&#x27;</span>, () =&gt; &#123;</span><br><span class="line">  <span class="type">const</span> <span class="variable">llm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AzureLLM</span>(&#123;</span><br><span class="line">    apiKey: Config.apiKey,</span><br><span class="line">    model: Config.model,</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="type">const</span> <span class="variable">agent</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">LLMSingleActionAgent</span>(&#123; llm &#125;)</span><br><span class="line">  agent.setPrompt(REACT_PROMPT)</span><br><span class="line">  agent.addStop(agent.observationPrefix)</span><br><span class="line">  agent.addTool([<span class="keyword">new</span> <span class="title class_">AdditionTool</span>(), <span class="keyword">new</span> <span class="title class_">SubtractionTool</span>(), <span class="keyword">new</span> <span class="title class_">DivisionTool</span>(), <span class="keyword">new</span> <span class="title class_">MultiplicationTool</span>()])</span><br><span class="line"></span><br><span class="line">  <span class="type">const</span> <span class="variable">executor</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AgentExecutor</span>(agent)</span><br><span class="line">  executor.addTool([<span class="keyword">new</span> <span class="title class_">AdditionTool</span>(), <span class="keyword">new</span> <span class="title class_">SubtractionTool</span>(), <span class="keyword">new</span> <span class="title class_">DivisionTool</span>(), <span class="keyword">new</span> <span class="title class_">MultiplicationTool</span>()])</span><br><span class="line">  it(<span class="string">&#x27;test&#x27;</span>, async () =&gt; &#123;</span><br><span class="line">    <span class="type">const</span> <span class="variable">res</span> <span class="operator">=</span> await executor.call(&#123; input: <span class="string">&#x27;一种减速机的价格是750元，一家企业需要购买12台。每台减速机运行一小时的电费是0.5元，企业每天运行这些减速机8小时。请计算企业购买及一周运行这些减速机的总花费。&#x27;</span> &#125;)</span><br><span class="line">    expect(res).toMatchInlineSnapshot(      &#123;         <span class="string">&quot;log&quot;</span>: <span class="string">&quot;Final Answer: The total cost of purchasing and operating the gearboxes for a week is 9336 yuan.&quot;</span>,         <span class="string">&quot;returnValues&quot;</span>: &#123;           <span class="string">&quot;output&quot;</span>: <span class="string">&quot;The total cost of purchasing and operating the gearboxes for a week is 9336 yuan.&quot;</span>,         &#125;,       &#125;    )</span><br><span class="line">  &#125;, &#123; timeout: <span class="number">50000</span> &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B_%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0_image_20250910_180133_465.png"></p>
+<h2 id="后续可改进的地方"><a href="#后续可改进的地方" class="headerlink" title="后续可改进的地方"></a>后续可改进的地方</h2><ol>
+<li><p>处理代理选择不存在的工具的情况</p>
+</li>
+<li><p>加入更复杂的记忆Memory系统</p>
+</li>
+<li><p>多个Agent合作</p>
+</li>
+<li><p>更复杂的工具，在一个Action中调用多个工具</p>
+</li>
+<li><p>处理工具错误的情况</p>
+</li>
+<li><p>处理代理生成无法解析为工具调用的输出的情况</p>
+</li>
+<li><p>所有级别（代理决策、工具调用）的日志记录和可观察性到标准输出</p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/30/204%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%EF%BC%9A%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E6%90%AD%E5%BB%BAAgent%E6%A1%86%E6%9E%B6/" title="从零开始-手把手教你搭建Agent框架">http://mzfnai.com/2025/07/30/204从零开始：手把手教你搭建Agent框架/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/Agent%E6%A1%86%E6%9E%B6/" rel="tag"># Agent框架</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E4%BD%93%E6%90%AD%E5%BB%BA/" rel="tag"># 智能体搭建</a>
+              <a href="/tags/%E8%87%AA%E4%B8%BB%E6%99%BA%E8%83%BD/" rel="tag"># 自主智能</a>
+              <a href="/tags/%E6%8E%A8%E7%90%86%E5%BC%95%E6%93%8E/" rel="tag"># 推理引擎</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/28/202%E6%99%BA%E8%83%BD%E4%BD%93%E9%A1%B9%E7%9B%AE%E6%A1%88%E4%BE%8B%E6%BC%94%E7%A4%BA%EF%BC%9A8%E5%88%86%E9%92%9F%E5%AD%A6%E4%BC%9A%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E4%BD%93%E3%80%81%E7%9F%A5%E8%AF%86%E5%BA%93%EF%BC%81/" rel="prev" title="智能体项目案例演示-8分钟学会搭建智能体、知识库">
+      <i class="fa fa-chevron-left"></i> 智能体项目案例演示-8分钟学会搭建智能体、知识库
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/31/205%E4%BB%8E0%E5%88%B01%E5%BC%80%E5%8F%91%E4%B8%80%E4%B8%AA%E5%95%86%E7%94%A8%20Agent%EF%BC%88%E6%99%BA%E8%83%BD%E4%BD%93%EF%BC%89-Agent%E9%9B%B6%E5%9F%BA%E7%A1%80%E5%85%A5%E9%97%A8%E5%88%B0%E7%B2%BE%E9%80%9A!/" rel="next" title="从0到1开发一个商用Agent（智能体），Agent零基础入门到精通">
+      从0到1开发一个商用Agent（智能体），Agent零基础入门到精通 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#x20-AI-Agent"><span class="nav-number">1.</span> <span class="nav-text"> AI Agent</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Planning-%E8%A7%84%E5%88%92"><span class="nav-number">1.0.1.</span> <span class="nav-text">Planning 规划</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Memory-%E8%AE%B0%E5%BF%86"><span class="nav-number">1.0.2.</span> <span class="nav-text">Memory 记忆</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Tool-Toolkit"><span class="nav-number">1.0.3.</span> <span class="nav-text">Tool &#x2F; Toolkit</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%80%83%E6%A1%86%E6%9E%B6"><span class="nav-number">1.1.</span> <span class="nav-text">思考框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CoT"><span class="nav-number">1.1.1.</span> <span class="nav-text">CoT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ReAct"><span class="nav-number">1.1.2.</span> <span class="nav-text">ReAct</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E4%BD%9C%E6%9C%BA%E7%90%86"><span class="nav-number">1.1.2.1.</span> <span class="nav-text">运作机理</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AAReAct%E6%A1%86%E6%9E%B6"><span class="nav-number">1.2.</span> <span class="nav-text">搭建一个ReAct框架</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84ReAct"><span class="nav-number">1.2.1.</span> <span class="nav-text">简单的ReAct</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Agent"><span class="nav-number">1.3.</span> <span class="nav-text">Agent</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Agent-Inputs-%E4%BB%A3%E7%90%86%E8%BE%93%E5%85%A5"><span class="nav-number">1.3.0.1.</span> <span class="nav-text">Agent Inputs 代理输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Agent-Outputs-%E4%BB%A3%E7%90%86%E8%BE%93%E5%87%BA"><span class="nav-number">1.3.0.2.</span> <span class="nav-text">Agent Outputs 代理输出</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Action"><span class="nav-number">1.4.</span> <span class="nav-text">Action</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#AgentAction-%E4%BB%A3%E7%90%86%E8%A1%8C%E5%8A%A8"><span class="nav-number">1.4.0.1.</span> <span class="nav-text">AgentAction 代理行动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#AgentFinish-%E4%BB%A3%E7%90%86%E5%AE%8C%E6%88%90"><span class="nav-number">1.4.0.2.</span> <span class="nav-text">AgentFinish 代理完成</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Intermediate-Steps-%E4%B8%AD%E9%97%B4%E6%AD%A5%E9%AA%A4"><span class="nav-number">1.4.0.3.</span> <span class="nav-text">Intermediate Steps 中间步骤</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Tool"><span class="nav-number">1.5.</span> <span class="nav-text">Tool</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8Prompt%E4%B8%AD%E6%8F%8F%E8%BF%B0%E5%B7%A5%E5%85%B7"><span class="nav-number">1.5.1.</span> <span class="nav-text">在Prompt中描述工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E5%B7%A5%E5%85%B7%E5%87%BD%E6%95%B0%E7%94%9F%E6%88%90%E5%87%BD%E6%95%B0%E5%A3%B0%E6%98%8E"><span class="nav-number">1.5.2.</span> <span class="nav-text">为工具函数生成函数声明</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9A%E6%89%8B%E5%8A%A8Copy"><span class="nav-number">1.5.2.1.</span> <span class="nav-text">方案一：手动Copy</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9AAI%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90"><span class="nav-number">1.5.2.2.</span> <span class="nav-text">方案二：AI自动生成</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9Azod%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90"><span class="nav-number">1.5.2.3.</span> <span class="nav-text">方案三：zod自动生成</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Executor"><span class="nav-number">1.6.</span> <span class="nav-text">Executor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C"><span class="nav-number">1.7.</span> <span class="nav-text">运行</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E7%BB%AD%E5%8F%AF%E6%94%B9%E8%BF%9B%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">1.8.</span> <span class="nav-text">后续可改进的地方</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

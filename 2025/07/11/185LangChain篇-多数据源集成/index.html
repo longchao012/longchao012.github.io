@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍LangChain多数据源集成方法，包括CSV、HTML、Markdown、PDF等文件格式的加载和处理技术，提供完整的代码示例和最佳实践。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LangChain篇-多数据源集成">
+<meta property="og:url" content="http://mzfnai.com/2025/07/11/185LangChain%E7%AF%87-%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%9B%86%E6%88%90/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍LangChain多数据源集成方法，包括CSV、HTML、Markdown、PDF等文件格式的加载和处理技术，提供完整的代码示例和最佳实践。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-07-11T01:15:23.000Z">
+<meta property="article:modified_time" content="2025-07-11T01:15:23.000Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LangChain">
+<meta property="article:tag" content="数据源集成">
+<meta property="article:tag" content="CSV加载">
+<meta property="article:tag" content="HTML解析">
+<meta property="article:tag" content="PDF处理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/11/185LangChain%E7%AF%87-%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%9B%86%E6%88%90/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LangChain篇-多数据源集成 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/11/185LangChain%E7%AF%87-%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%9B%86%E6%88%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LangChain篇-多数据源集成
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-11 09:15:23" itemprop="dateCreated datePublished" datetime="2025-07-11T09:15:23+08:00">2025-07-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/LangChain/" itemprop="url" rel="index"><span itemprop="name">LangChain</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>15k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>14 分钟</span>
+            </span>
+            <div class="post-description">详细介绍LangChain多数据源集成方法，包括CSV、HTML、Markdown、PDF等文件格式的加载和处理技术，提供完整的代码示例和最佳实践。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>LangChain 与各种数据源有数百个集成，可以从中加载数据：Slack、Notion、Google Drive 等。 每个文档加载器都有自己特定的参数，但它们可以通过相同的方式使用 <code>.load</code> 方法调用。 以下是一个示例用法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.document_loaders.csv_loader <span class="keyword">import</span> CSVLoader</span><br><span class="line">loader = CSVLoader(</span><br><span class="line">    ...  <span class="comment"># &lt;-- 在这里添加特定于集成的参数</span></span><br><span class="line">)</span><br><span class="line">data = loader.load()</span><br></pre></td></tr></table></figure>
+
+<h2 id="一、如何加载-CSV-文件"><a href="#一、如何加载-CSV-文件" class="headerlink" title="一、如何加载 CSV 文件"></a>一、如何加载 CSV 文件</h2><p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E9%80%97%E5%8F%B7%E5%88%86%E9%9A%94%E5%80%BC">逗号分隔值（CSV）</a>文件是一种使用逗号分隔值的定界文本文件。文件的每一行是一个数据记录。每个记录由一个或多个字段组成，字段之间用逗号分隔。</p>
+<p>LangChain 实现了一个 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.csv_loader.CSVLoader.html">CSV 加载器</a>，可以将 CSV 文件加载为一系列 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document">Document</a> 对象。CSV 文件的每一行都会被翻译为一个文档。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#示例：csv_loader.pyfrom langchain_community.document_loaders.csv_loader import CSVLoader</span></span><br><span class="line">file_path = (<span class="string">&quot;../../resource/doc_search.csv&quot;</span></span><br><span class="line">)</span><br><span class="line">loader = CSVLoader(file_path=file_path,encoding=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="keyword">for</span> record <span class="keyword">in</span> data[:<span class="number">2</span>]:<span class="built_in">print</span>(record)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">page_content=<span class="string">&#x27;名称: 狮子</span></span><br><span class="line"><span class="string">种类: 哺乳动物</span></span><br><span class="line"><span class="string">年龄: 8</span></span><br><span class="line"><span class="string">栖息地: 非洲草原&#x27;</span> metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/doc_search.csv&#x27;</span>, <span class="string">&#x27;row&#x27;</span>: <span class="number">0</span>&#125;</span><br><span class="line">page_content=<span class="string">&#x27;名称: 大熊猫</span></span><br><span class="line"><span class="string">种类: 哺乳动物</span></span><br><span class="line"><span class="string">年龄: 5</span></span><br><span class="line"><span class="string">栖息地: 中国竹林&#x27;</span> metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/doc_search.csv&#x27;</span>, <span class="string">&#x27;row&#x27;</span>: <span class="number">1</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自定义-CSV-解析和加载"><a href="#自定义-CSV-解析和加载" class="headerlink" title="自定义 CSV 解析和加载"></a>自定义 CSV 解析和加载</h3><p><code>CSVLoader</code> 接受一个 <code>csv_args</code> 关键字参数，用于自定义传递给 Python 的 <code>csv.DictReader</code> 的参数。有关支持的 csv 参数的更多信息，请参阅 <a target="_blank" rel="noopener" href="https://docs.python.org/zh-cn/3/library/csv.html">csv 模块</a>文档。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：csv_custom.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders.csv_loader <span class="keyword">import</span> CSVLoader</span><br><span class="line"></span><br><span class="line">file_path = (<span class="string">&quot;../../resource/doc_search.csv&quot;</span></span><br><span class="line">)</span><br><span class="line">loader = CSVLoader(</span><br><span class="line">    file_path=file_path,</span><br><span class="line">    encoding=<span class="string">&quot;UTF-8&quot;</span>,</span><br><span class="line">    csv_args=&#123;</span><br><span class="line">        <span class="string">&quot;delimiter&quot;</span>: <span class="string">&quot;,&quot;</span>,</span><br><span class="line">        <span class="string">&quot;quotechar&quot;</span>: <span class="string">&#x27;&quot;&#x27;</span>,</span><br><span class="line">        <span class="string">&quot;fieldnames&quot;</span>: [<span class="string">&quot;Name&quot;</span>, <span class="string">&quot;Species&quot;</span>, <span class="string">&quot;Age&quot;</span>, <span class="string">&quot;Habitat&quot;</span>],</span><br><span class="line">    &#125;,</span><br><span class="line">)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="keyword">for</span> record <span class="keyword">in</span> data[:<span class="number">2</span>]:</span><br><span class="line">    <span class="built_in">print</span>(record)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;Name: 名称</span><br><span class="line">Species: 种类</span><br><span class="line">Age: 年龄</span><br><span class="line">Habitat: 栖息地&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/doc_search.csv&#x27;, &#x27;row&#x27;: 0&#125;</span><br><span class="line">page_content=&#x27;Name: 狮子</span><br><span class="line">Species: 哺乳动物</span><br><span class="line">Age: 8</span><br><span class="line">Habitat: 非洲草原&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/doc_search.csv&#x27;, &#x27;row&#x27;: 1&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="二、如何加载-HTML"><a href="#二、如何加载-HTML" class="headerlink" title="二、如何加载 HTML"></a>二、如何加载 HTML</h2><p>超文本标记语言（HTML）是用于在 Web 浏览器中显示的文档的标准标记语言。</p>
+<p>这里介绍了如何将 HTML 文档加载到 LangChain 的 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document">Document</a> 对象中，以便我们可以在下游使用。</p>
+<p>解析 HTML 文件通常需要专门的工具。在这里，我们演示了如何通过 <a target="_blank" rel="noopener" href="https://unstructured-io.github.io/unstructured/">Unstructured</a> 和 <a target="_blank" rel="noopener" href="https://beautiful-soup-4.readthedocs.io/en/latest/">BeautifulSoup4</a> 进行解析，可以通过 pip 安装。</p>
+<h3 id="1-使用-Unstructured-加载-HTML"><a href="#1-使用-Unstructured-加载-HTML" class="headerlink" title="1. 使用 Unstructured 加载 HTML"></a>1. 使用 Unstructured 加载 HTML</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%pip install <span class="string">&quot;unstructured[html]&quot;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：html_loader.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> UnstructuredHTMLLoader</span><br><span class="line"></span><br><span class="line">file_path = <span class="string">&quot;../../resource/content.html&quot;</span></span><br><span class="line">loader = UnstructuredHTMLLoader(file_path, encodings=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="built_in">print</span>(data)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/content.html&#x27;&#125;, page_content=&#x27;风景展示\n\n黄山\n\n黄山位于中国安徽省南部，是中国著名的风景名胜区，以奇松、怪石、云海和温泉“四绝”闻名。\n\n大峡谷\n\n大峡谷位于美国亚利桑那州，是世界上最著名的自然景观之一，以其壮观的地质奇观和深邃的峡谷闻名。&#x27;)]</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-使用-BeautifulSoup4-加载-HTML"><a href="#2-使用-BeautifulSoup4-加载-HTML" class="headerlink" title="2. 使用 BeautifulSoup4 加载 HTML"></a>2. 使用 BeautifulSoup4 加载 HTML</h3><p>我们还可以使用 BeautifulSoup4 使用 <code>BSHTMLLoader</code> 加载 HTML 文档。这将将 HTML 中的文本提取到 <code>page_content</code> 中，并将页面标题提取到 <code>metadata</code> 的 <code>title</code> 中。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#pip install bs4</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：html_bs4.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> BSHTMLLoader</span><br><span class="line"></span><br><span class="line">file_path = <span class="string">&quot;../../resource/content.html&quot;</span></span><br><span class="line">loader = BSHTMLLoader(file_path, open_encoding=<span class="string">&quot;UTF-8&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="built_in">print</span>(data)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Document(metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/content.html&#x27;, &#x27;title&#x27;: &#x27;风景展示&#x27;&#125;, page_content=&#x27;\n\n\n\n风景展示\n\n\n\n风景展示\n\n黄山\n黄山位于中国安徽省南部，是中国著名的风景名胜区，以奇松、怪石、云海和温泉“四绝”闻名。\n\n\n\n大峡谷\n大峡谷位于美国亚利桑那州，是世界上最著名的自然景观之一，以其壮观的地质奇观和深邃的峡谷闻名。\n\n\n\n&#x27;)]</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="三、如何加载-Markdown"><a href="#三、如何加载-Markdown" class="headerlink" title="三、如何加载 Markdown"></a>三、如何加载 Markdown</h2><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Markdown">Markdown</a> 是一种轻量级标记语言，可用于使用纯文本编辑器创建格式化文本。</p>
+<p>在这里，我们将介绍如何将 <code>Markdown</code> 文档加载到 LangChain <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document">Document</a> 对象中，以便在下游使用。</p>
+<p>我们将介绍：</p>
+<ul>
+<li><p>基本用法；</p>
+</li>
+<li><p>将 Markdown 解析为标题、列表项和文本等元素。</p>
+</li>
+</ul>
+<p>LangChain 实现了一个 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.markdown.UnstructuredMarkdownLoader.html">UnstructuredMarkdownLoader</a> 对象，它需要使用 <a target="_blank" rel="noopener" href="https://unstructured-io.github.io/unstructured/">Unstructured</a> 包。首先我们需要安装它：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">!pip install <span class="string">&quot;unstructured[md]&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>基本用法将会将一个 Markdown 文件加载到单个文档中。这里我们演示了在 LangChain 的 readme 上的操作：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> UnstructuredMarkdownLoader</span><br><span class="line"><span class="keyword">from</span> langchain_core.documents <span class="keyword">import</span> Document</span><br><span class="line"></span><br><span class="line">markdown_path = <span class="string">&quot;../../resource/langchain.md&quot;</span></span><br><span class="line">loader = UnstructuredMarkdownLoader(markdown_path)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="keyword">assert</span> <span class="built_in">len</span>(data) == <span class="number">1</span><span class="keyword">assert</span> <span class="built_in">isinstance</span>(data[<span class="number">0</span>], Document)</span><br><span class="line">content = data[<span class="number">0</span>].page_content</span><br><span class="line"><span class="built_in">print</span>(content[:<span class="number">250</span>])</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">交通概述</span><br><span class="line"></span><br><span class="line">交通是指人们和货物在不同地点之间的移动和运输。交通系统包括道路、铁路、航空、水运等多种方式，是现代社会不可或缺的一部分。</span><br><span class="line"></span><br><span class="line">NarrativeText</span><br><span class="line"></span><br><span class="line">私家车是个人拥有的车辆，方便灵活，但容易造成交通拥堵和环境污染。</span><br><span class="line"></span><br><span class="line">ListItem</span><br><span class="line"></span><br><span class="line">私家车：个人拥有的车辆，方便灵活，但容易造成交通拥堵和环境污染。</span><br><span class="line"></span><br><span class="line">出租车：提供点对点的运输服务，适合短途出行。</span><br><span class="line"></span><br><span class="line">公共汽车：城市交通系统的重要组成部分，具有运量大、费用低的特点。</span><br><span class="line"></span><br><span class="line">摩托车</span><br><span class="line"></span><br><span class="line">摩托车在一些交通拥堵的城市中非常流行，具有灵活、速度</span><br></pre></td></tr></table></figure>
+
+<h3 id="保留元素"><a href="#保留元素" class="headerlink" title="保留元素"></a>保留元素</h3><p>在幕后，Unstructured 为不同的文本块创建了不同的 “元素”。默认情况下，我们将它们组合在一起，但是您可以通过指定 <code>mode=&quot;elements&quot;</code> 轻松保留这种分离。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">markdown_path = <span class="string">&quot;../../resource/langchain.md&quot;</span></span><br><span class="line">loader = UnstructuredMarkdownLoader(markdown_path, mode=<span class="string">&quot;elements&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line"><span class="built_in">print</span>(<span class="string">f&quot;文档数量：<span class="subst">&#123;<span class="built_in">len</span>(data)&#125;</span>\n&quot;</span>)</span><br><span class="line"><span class="keyword">for</span> document <span class="keyword">in</span> data[:<span class="number">2</span>]:</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">f&quot;<span class="subst">&#123;document&#125;</span>\n&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">文档数量：43</span><br><span class="line"></span><br><span class="line">page_content=&#x27;交通概述&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/markdown.md&#x27;, &#x27;category_depth&#x27;: 0, &#x27;last_modified&#x27;: &#x27;2024-08-08T16:50:39&#x27;, &#x27;languages&#x27;: [&#x27;zho&#x27;], &#x27;filetype&#x27;: &#x27;text/markdown&#x27;, &#x27;file_directory&#x27;: &#x27;../../resource&#x27;, &#x27;filename&#x27;: &#x27;markdown.md&#x27;, &#x27;category&#x27;: &#x27;Title&#x27;&#125;</span><br><span class="line"></span><br><span class="line">page_content=&#x27;交通是指人们和货物在不同地点之间的移动和运输。交通系统包括道路、铁路、航空、水运等多种方式，是现代社会不可或缺的一部分。&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/markdown.md&#x27;, &#x27;category_depth&#x27;: 0, &#x27;last_modified&#x27;: &#x27;2024-08-08T16:50:39&#x27;, &#x27;languages&#x27;: [&#x27;zho&#x27;], &#x27;filetype&#x27;: &#x27;text/markdown&#x27;, &#x27;file_directory&#x27;: &#x27;../../resource&#x27;, &#x27;filename&#x27;: &#x27;markdown.md&#x27;, &#x27;category&#x27;: &#x27;Title&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，在这种情况下，我们恢复了三种不同的元素类型：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(<span class="built_in">set</span>(document.metadata[<span class="string">&quot;category&quot;</span>] <span class="keyword">for</span> document <span class="keyword">in</span> data))</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;Title&#x27;, &#x27;ListItem&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="四、如何加载-PDF文件"><a href="#四、如何加载-PDF文件" class="headerlink" title="四、如何加载 PDF文件"></a>四、如何加载 PDF文件</h2><p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/PDF">便携式文档格式（PDF）</a>是由 Adobe 于 1992 年开发的一种文件格式，标准化为 ISO 32000。它以一种与应用软件、硬件和操作系统无关的方式呈现文档，包括文本格式和图像。</p>
+<p>本指南介绍了如何将 PDF 文档加载到我们在下游使用的 LangChain <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/documents/langchain_core.documents.base.Document.html#langchain_core.documents.base.Document">Document</a> 格式中。</p>
+<p>LangChain 集成了许多 PDF 解析器。有些解析器简单且相对低级，而其他解析器支持 OCR 和图像处理，或进行高级文档布局分析。选择合适的解析器将取决于您的应用程序。下面我们列举了一些可能的选择。</p>
+<h3 id="1-使用PyPDF"><a href="#1-使用PyPDF" class="headerlink" title="1. 使用PyPDF"></a>1. 使用PyPDF</h3><p>这里我们使用 <code>pypdf</code> 将PDF加载为文档数组，其中每个文档包含页面内容和带有 <code>page</code> 编号的元数据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%pip install pypdf</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> PyPDFLoader</span><br><span class="line"></span><br><span class="line">file_path = (<span class="string">&quot;../../resource/pytorch.pdf&quot;</span>)</span><br><span class="line">loader = PyPDFLoader(file_path)</span><br><span class="line">pages = loader.load_and_split()</span><br><span class="line"><span class="built_in">print</span>(pages[<span class="number">0</span>])</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;PyTorch: An Imperative Style, High-Performance</span><br><span class="line">Deep Learning Library</span><br><span class="line">Adam Paszke</span><br><span class="line">University of Warsaw</span><br><span class="line">adam.paszke@gmail.comSam Gross</span><br><span class="line">Facebook AI Research</span><br><span class="line">sgross@fb.comFrancisco Massa</span><br><span class="line">Facebook AI Research</span><br><span class="line">fmassa@fb.com</span><br><span class="line">Adam Lerer</span><br><span class="line">Facebook AI Research</span><br><span class="line">alerer@fb.comJames Bradbury</span><br><span class="line">Google</span><br><span class="line">jekbradbury@gmail.comGregory Chanan</span><br><span class="line">Facebook AI Research</span><br><span class="line">gchanan@fb.com</span><br><span class="line">Trevor Killeen</span><br><span class="line">Self Employed</span><br><span class="line">killeent@cs.washington.eduZeming Lin</span><br><span class="line">Facebook AI Research</span><br><span class="line">zlin@fb.comNatalia Gimelshein</span><br><span class="line">NVIDIA</span><br><span class="line">ngimelshein@nvidia.com</span><br><span class="line">Luca Antiga</span><br><span class="line">Orobix</span><br><span class="line">luca.antiga@orobix.comAlban Desmaison</span><br><span class="line">Oxford University</span><br><span class="line">alban@robots.ox.ac.ukAndreas Köpf</span><br><span class="line">Xamla</span><br><span class="line">andreas.koepf@xamla.com</span><br><span class="line">Edward Yang</span><br><span class="line">Facebook AI Research</span><br><span class="line">ezyang@fb.comZach DeVito</span><br><span class="line">Facebook AI Research</span><br><span class="line">zdevito@cs.stanford.eduMartin Raison</span><br><span class="line">Nabla</span><br><span class="line">martinraison@gmail.com</span><br><span class="line">Alykhan Tejani</span><br><span class="line">Twitter</span><br><span class="line">atejani@twitter.comSasank Chilamkurthy</span><br><span class="line">Qure.ai</span><br><span class="line">sasankchilamkurthy@gmail.comBenoit Steiner</span><br><span class="line">Facebook AI Research</span><br><span class="line">benoitsteiner@fb.com</span><br><span class="line">Lu Fang</span><br><span class="line">Facebook</span><br><span class="line">lufang@fb.comJunjie Bai</span><br><span class="line">Facebook</span><br><span class="line">jbai@fb.comSoumith Chintala</span><br><span class="line">Facebook AI Research</span><br><span class="line">soumith@gmail.com</span><br><span class="line">Abstract</span><br><span class="line">Deep learning frameworks have often focused on either usability or speed, but</span><br><span class="line">not both. PyTorch is a machine learning library that shows that these two goals</span><br><span class="line">are in fact compatible: it provides an imperative and Pythonic programming style</span><br><span class="line">that supports code as a model, makes debugging easy and is consistent with other</span><br><span class="line">popular scientiﬁc computing libraries, while remaining efﬁcient and supporting</span><br><span class="line">hardware accelerators such as GPUs.</span><br><span class="line">In this paper, we detail the principles that drove the implementation of PyTorch</span><br><span class="line">and how they are reﬂected in its architecture. We emphasize that every aspect of</span><br><span class="line">PyTorch is a regular Python program under the full control of its user. We also</span><br><span class="line">explain how the careful and pragmatic implementation of the key components of</span><br><span class="line">its runtime enables them to work together to achieve compelling performance.</span><br><span class="line">We demonstrate the efﬁciency of individual subsystems, as well as the overall</span><br><span class="line">speed of PyTorch on several common benchmarks.</span><br><span class="line">33rd Conference on Neural Information Processing Systems (NeurIPS 2019), Vancouver, Canada.&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/pytorch.pdf&#x27;, &#x27;page&#x27;: 0&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种方法的优点是可以通过页码检索文档。</p>
+<h4 id="对PDF进行向量搜索"><a href="#对PDF进行向量搜索" class="headerlink" title="对PDF进行向量搜索"></a>对PDF进行向量搜索</h4><p>一旦我们将 PDF 加载到 LangChain 的 <code>Document</code> 对象中，我们可以像通常一样对它们进行索引（例如，RAG 应用程序）。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：pdf_search.py</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> FAISS</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line">faiss_index = FAISS.from_documents(pages, OpenAIEmbeddings())</span><br><span class="line">docs = faiss_index.similarity_search(<span class="string">&quot;What is PyTorch?&quot;</span>, k=<span class="number">2</span>)</span><br><span class="line"><span class="keyword">for</span> doc <span class="keyword">in</span> docs:<span class="built_in">print</span>(<span class="built_in">str</span>(doc.metadata[<span class="string">&quot;page&quot;</span>]) + <span class="string">&quot;:&quot;</span>, doc.page_content[:<span class="number">300</span>])</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">0: PyTorch: An Imperative Style, High-Performance</span><br><span class="line">Deep Learning Library</span><br><span class="line">Adam Paszke</span><br><span class="line">University of Warsaw</span><br><span class="line">adam.paszke@gmail.comSam Gross</span><br><span class="line">Facebook AI Research</span><br><span class="line">sgross@fb.comFrancisco Massa</span><br><span class="line">Facebook AI Research</span><br><span class="line">fmassa@fb.com</span><br><span class="line">Adam Lerer</span><br><span class="line">Facebook AI Research</span><br><span class="line">alerer@fb.comJames Bradbury</span><br><span class="line">Google</span><br><span class="line">jekbradbury@gma</span><br><span class="line">1: 1 Introduction</span><br><span class="line">With the increased interest in deep learning in recent years, there has been an explosion of machine</span><br><span class="line">learning tools. Many popular frameworks such as Caffe [ 1], CNTK [ 2], TensorFlow [ 3], and</span><br><span class="line">Theano [ 4], construct a static dataﬂow graph that represents the computation and which can </span><br></pre></td></tr></table></figure>
+
+<p>从图像中提取文本一些 PDF 包含文本图像，例如扫描文档或图表。使用 <code>rapidocr-onnxruntime</code> 软件包，我们也可以将图像提取为文本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 示例：pdf_image_text.py</span></span><br><span class="line"><span class="comment"># pip install rapidocr-onnxruntime</span></span><br><span class="line">file_path = (<span class="string">&quot;../../resource/pytorch.pdf&quot;</span>)</span><br><span class="line">loader = PyPDFLoader(file_path, extract_images=<span class="literal">True</span>)</span><br><span class="line">pages = loader.load()</span><br><span class="line"><span class="comment"># 识别第9页图片文字</span></span><br><span class="line"><span class="built_in">print</span>(pages[<span class="number">8</span>].page_content)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">6.4 Adoption</span><br><span class="line">The validity of design decisions and their impact on ease-of-use is hard to measure. As a proxy,</span><br><span class="line">we tried to quantify how well the machine learning community received PyTorch by counting how</span><br><span class="line">often various machine learning tools (including Caffe, Chainer, CNTK, Keras, MXNet, PyTorch,</span><br><span class="line">TensorFlow, and Theano) are mentioned on arXiv e-Prints since the initial release of PyTorch in</span><br><span class="line">January 2017. In Figure 3 we report the monthly number of mentions of the word &quot;PyTorch&quot; as a</span><br><span class="line">percentage of all mentions among these deep learning frameworks. We counted tools mentioned</span><br><span class="line">multiple times in a given paper only once, and made the search case insensitive to account for various</span><br><span class="line">spellings.</span><br><span class="line">Figure 3: Among arXiv papers each month that mention common deep learning frameworks, percentage of</span><br><span class="line">them that mention PyTorch.</span><br><span class="line">7 Conclusion and future work</span><br><span class="line">PyTorch has become a popular tool in the deep learning research community by combining a focus</span><br><span class="line">on usability with careful performance considerations. In addition to continuing to support the latest</span><br><span class="line">trends and advances in deep learning, in the future we plan to continue to improve the speed and</span><br><span class="line">scalability of PyTorch. Most notably, we are working on the PyTorch JIT: a suite of tools that</span><br><span class="line">allow PyTorch programs to be executed outside of the Python interpreter where they can be further</span><br><span class="line">optimized. We also intend to improve support for distributed computation by providing efﬁcient</span><br><span class="line">primitives for data parallelism as well as a Pythonic library for model parallelism based around</span><br><span class="line">remote procedure calls.</span><br><span class="line">8 Acknowledgements</span><br><span class="line">We are grateful to the PyTorch community for their feedback and contributions that greatly inﬂuenced</span><br><span class="line">the design and implementation of PyTorch. We thank all the PyTorch core team members, contributors</span><br><span class="line">and package maintainers including Ailing Zhang, Alex Suhan, Alfredo Mendoza, Alican Bozkurt,</span><br><span class="line">Andrew Tulloch, Ansha Yu, Anthony Shoumikhin, Bram Wasti, Brian Vaughan, Christian Puhrsch,</span><br><span class="line">David Reiss, David Riazati, Davide Libenzi, Dmytro Dzhulgakov, Dwaraj Rajagopal, Edward Yang,</span><br><span class="line">Elias Ellison, Fritz Obermeyer, George Zhang, Hao Lu, Hong Xu, Hung Duong, Igor Fedan, Ilia</span><br><span class="line">Cherniavskii, Iurii Zdebskyi, Ivan Kobzarev, James Reed, Jeff Smith, Jerry Chen, Jerry Zhang, Jiakai</span><br><span class="line">Liu, Johannes M. Dieterich, Karl Ostmo, Lin Qiao, Martin Yuan, Michael Suo, Mike Ruberry, Mikhail</span><br><span class="line">Zolothukhin, Mingzhe Li, Neeraj Pradhan, Nick Korovaiko, Owen Anderson, Pavel Belevich, Peter</span><br><span class="line">Johnson, Pritam Damania, Raghuraman Krishnamoorthi, Richard Zou, Roy Li, Rui Zhu, Sebastian</span><br><span class="line">Messmer, Shen Li, Simon Wang, Supriya Rao, Tao Xu, Thomas Viehmann, Vincent Quenneville-</span><br><span class="line">Belair, Vishwak Srinivasan, Vitaly Fedyunin, Wanchao Liang, Wei Yang, Will Feng, Xiaomeng Yang,</span><br><span class="line">Xiaoqiang Zheng, Xintao Chen, Yangqing Jia, Yanli Zhao, Yinghai Lu and Zafar Takhirov.</span><br><span class="line">References</span><br><span class="line">[1]Yangqing Jia, Evan Shelhamer, Jeff Donahue, Sergey Karayev, Jonathan Long, Ross Girshick,</span><br><span class="line">Sergio Guadarrama, and Trevor Darrell. Caffe: Convolutional architecture for fast feature</span><br><span class="line">embedding. arXiv preprint arXiv:1408.5093 , 2014.</span><br><span class="line">[2]Frank Seide and Amit Agarwal. Cntk: Microsoft’s open-source deep-learning toolkit. In</span><br><span class="line">Proceedings of the 22Nd ACM SIGKDD International Conference on Knowledge Discovery</span><br><span class="line">and Data Mining , KDD ’16, pages 2135–2135, New York, NY , USA, 2016. ACM.</span><br><span class="line">950%</span><br><span class="line">40%</span><br><span class="line">30%</span><br><span class="line">20%</span><br><span class="line">10%</span><br><span class="line">0%</span><br><span class="line">Jul2017</span><br><span class="line">Jan2018</span><br><span class="line">Jul2018</span><br><span class="line">Jan2019</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-使用-Unstructured"><a href="#2-使用-Unstructured" class="headerlink" title="2. 使用 Unstructured"></a>2. 使用 Unstructured</h3><p><a target="_blank" rel="noopener" href="https://unstructured-io.github.io/unstructured/">Unstructured</a> 支持一个通用接口，用于处理非结构化或半结构化文件格式，例如 Markdown 或 PDF。LangChain 的 <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/document_loaders/langchain_community.document_loaders.pdf.UnstructuredPDFLoader.html">UnstructuredPDFLoader</a> 与 Unstructured 集成，将 PDF 文档解析为 LangChain <a target="_blank" rel="noopener" href="https://api.python.langchain.com/en/latest/documents/langchain_core.documents.base.Document.html">Document</a> 对象。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> UnstructuredPDFLoader</span><br><span class="line"></span><br><span class="line">file_path = (<span class="string">&quot;../../resource/pytorch.pdf&quot;</span></span><br><span class="line">)</span><br><span class="line">loader = UnstructuredPDFLoader(file_path)</span><br><span class="line">data = loader.load()</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">page_content=<span class="string">&#x27;PyTorch: An Imperative Style, High-Performance Deep Learning Library&#x27;</span> metadata=&#123;<span class="string">&#x27;source&#x27;</span>: <span class="string">&#x27;../../resource/pytorch.pdf&#x27;</span>, <span class="string">&#x27;coordinates&#x27;</span>: &#123;<span class="string">&#x27;points&#x27;</span>: ((<span class="number">122.674</span>, <span class="number">99.42961860000003</span>), (<span class="number">122.674</span>, <span class="number">136.57001860000003</span>), (<span class="number">489.3275892</span>, <span class="number">136.57001860000003</span>), (<span class="number">489.3275892</span>, <span class="number">99.42961860000003</span>)), <span class="string">&#x27;system&#x27;</span>: <span class="string">&#x27;PixelSpace&#x27;</span>, <span class="string">&#x27;layout_width&#x27;</span>: <span class="number">612</span>, <span class="string">&#x27;layout_height&#x27;</span>: <span class="number">792</span>&#125;, <span class="string">&#x27;file_directory&#x27;</span>: <span class="string">&#x27;../../resource&#x27;</span>, <span class="string">&#x27;filename&#x27;</span>: <span class="string">&#x27;pytorch.pdf&#x27;</span>, <span class="string">&#x27;languages&#x27;</span>: [<span class="string">&#x27;eng&#x27;</span>], <span class="string">&#x27;last_modified&#x27;</span>: <span class="string">&#x27;2024-08-08T16:58:53&#x27;</span>, <span class="string">&#x27;page_number&#x27;</span>: <span class="number">1</span>, <span class="string">&#x27;filetype&#x27;</span>: <span class="string">&#x27;application/pdf&#x27;</span>, <span class="string">&#x27;category&#x27;</span>: <span class="string">&#x27;Title&#x27;</span>&#125;</span><br><span class="line">&#123;<span class="string">&#x27;Footer&#x27;</span>, <span class="string">&#x27;NarrativeText&#x27;</span>, <span class="string">&#x27;Title&#x27;</span>, <span class="string">&#x27;UncategorizedText&#x27;</span>&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="保留元素-1"><a href="#保留元素-1" class="headerlink" title="保留元素"></a>保留元素</h4><p>在幕后，Unstructured 为不同的文本块创建不同的 “元素”。默认情况下，我们将它们合并在一起，但您可以通过指定 <code>mode=&quot;elements&quot;</code> 轻松保持分离。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">file_path = (<span class="string">&quot;../../resource/pytorch.pdf&quot;</span></span><br><span class="line">)</span><br><span class="line">loader = UnstructuredPDFLoader(file_path, mode=<span class="string">&quot;elements&quot;</span>)</span><br><span class="line">data = loader.load()</span><br><span class="line">data[<span class="number">0</span>]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">page_content=&#x27;PyTorch: An Imperative Style, High-Performance Deep Learning Library&#x27; metadata=&#123;&#x27;source&#x27;: &#x27;../../resource/pytorch.pdf&#x27;, &#x27;coordinates&#x27;: &#123;&#x27;points&#x27;: ((122.674, 99.42961860000003), (122.674, 136.57001860000003), (489.3275892, 136.57001860000003), (489.3275892, 99.42961860000003)), &#x27;system&#x27;: &#x27;PixelSpace&#x27;, &#x27;layout_width&#x27;: 612, &#x27;layout_height&#x27;: 792&#125;, &#x27;file_directory&#x27;: &#x27;../../resource&#x27;, &#x27;filename&#x27;: &#x27;pytorch.pdf&#x27;, &#x27;languages&#x27;: [&#x27;eng&#x27;], &#x27;last_modified&#x27;: &#x27;2024-08-08T16:58:53&#x27;, &#x27;page_number&#x27;: 1, &#x27;filetype&#x27;: &#x27;application/pdf&#x27;, &#x27;category&#x27;: &#x27;Title&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>查看此特定文档的完整元素类型集合：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span>(doc.metadata[<span class="string">&quot;category&quot;</span>] <span class="keyword">for</span> doc <span class="keyword">in</span> data)</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#x27;Footer&#x27;, &#x27;NarrativeText&#x27;, &#x27;Title&#x27;, &#x27;UncategorizedText&#x27;&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用-Unstructured-加载远程-PDF"><a href="#使用-Unstructured-加载远程-PDF" class="headerlink" title="使用 Unstructured 加载远程 PDF"></a>使用 Unstructured 加载远程 PDF</h4><p>这涵盖了如何将在线 PDF 加载到我们可以在下游使用的文档格式中。这可用于各种在线 PDF 站点，如 <a target="_blank" rel="noopener" href="https://open.umn.edu/opentextbooks/textbooks/">https://open.umn.edu/opentextbooks/textbooks/</a> 和 <a target="_blank" rel="noopener" href="https://arxiv.org/archive/">https://arxiv.org/archive/</a> 注意：所有其他 PDF 加载器也可以用于获取远程 PDF，但 <code>OnlinePDFLoader</code> 是一个旧函数，专门与 <code>UnstructuredPDFLoader</code> 配合使用。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_community.document_loaders <span class="keyword">import</span> OnlinePDFLoader</span><br><span class="line">loader = OnlinePDFLoader(<span class="string">&quot;https://arxiv.org/pdf/2302.03803.pdf&quot;</span>)</span><br><span class="line">data = loader.load()</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/11/185LangChain%E7%AF%87-%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E9%9B%86%E6%88%90/" title="LangChain篇-多数据源集成">http://mzfnai.com/2025/07/11/185LangChain篇-多数据源集成/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LangChain/" rel="tag"># LangChain</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E6%BA%90%E9%9B%86%E6%88%90/" rel="tag"># 数据源集成</a>
+              <a href="/tags/CSV%E5%8A%A0%E8%BD%BD/" rel="tag"># CSV加载</a>
+              <a href="/tags/HTML%E8%A7%A3%E6%9E%90/" rel="tag"># HTML解析</a>
+              <a href="/tags/PDF%E5%A4%84%E7%90%86/" rel="tag"># PDF处理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/10/184LangChain%E7%AF%87-%E5%9F%BA%E4%BA%8ESQL%E5%AE%9E%E7%8E%B0%E6%95%B0%E6%8D%AE%E5%88%86%E6%9E%90%E9%97%AE%E7%AD%94/" rel="prev" title="LangChain篇-基于SQL实现数据分析问答">
+      <i class="fa fa-chevron-left"></i> LangChain篇-基于SQL实现数据分析问答
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/12/186LangChain%E7%AF%87-%E5%A4%9A%E7%B1%BB%E5%9E%8B%E6%96%87%E6%9C%AC%E5%88%86%E5%89%B2/" rel="next" title="LangChain篇-多类型文本分割">
+      LangChain篇-多类型文本分割 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BD-CSV-%E6%96%87%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">一、如何加载 CSV 文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-CSV-%E8%A7%A3%E6%9E%90%E5%92%8C%E5%8A%A0%E8%BD%BD"><span class="nav-number">1.1.</span> <span class="nav-text">自定义 CSV 解析和加载</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BD-HTML"><span class="nav-number">2.</span> <span class="nav-text">二、如何加载 HTML</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8-Unstructured-%E5%8A%A0%E8%BD%BD-HTML"><span class="nav-number">2.1.</span> <span class="nav-text">1. 使用 Unstructured 加载 HTML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BD%BF%E7%94%A8-BeautifulSoup4-%E5%8A%A0%E8%BD%BD-HTML"><span class="nav-number">2.2.</span> <span class="nav-text">2. 使用 BeautifulSoup4 加载 HTML</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BD-Markdown"><span class="nav-number">3.</span> <span class="nav-text">三、如何加载 Markdown</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%9D%E7%95%99%E5%85%83%E7%B4%A0"><span class="nav-number">3.1.</span> <span class="nav-text">保留元素</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%A6%82%E4%BD%95%E5%8A%A0%E8%BD%BD-PDF%E6%96%87%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">四、如何加载 PDF文件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8PyPDF"><span class="nav-number">4.1.</span> <span class="nav-text">1. 使用PyPDF</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9PDF%E8%BF%9B%E8%A1%8C%E5%90%91%E9%87%8F%E6%90%9C%E7%B4%A2"><span class="nav-number">4.1.1.</span> <span class="nav-text">对PDF进行向量搜索</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BD%BF%E7%94%A8-Unstructured"><span class="nav-number">4.2.</span> <span class="nav-text">2. 使用 Unstructured</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BF%9D%E7%95%99%E5%85%83%E7%B4%A0-1"><span class="nav-number">4.2.1.</span> <span class="nav-text">保留元素</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-Unstructured-%E5%8A%A0%E8%BD%BD%E8%BF%9C%E7%A8%8B-PDF"><span class="nav-number">4.2.2.</span> <span class="nav-text">使用 Unstructured 加载远程 PDF</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

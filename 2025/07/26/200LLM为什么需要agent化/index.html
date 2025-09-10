@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="探讨大语言模型的局限性和Agent化的必要性，分析LLM存在的幻觉、知识过时等问题及解决方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LLM为什么需要agent化">
+<meta property="og:url" content="http://mzfnai.com/2025/07/26/200LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81agent%E5%8C%96/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="探讨大语言模型的局限性和Agent化的必要性，分析LLM存在的幻觉、知识过时等问题及解决方案。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ag_MNlUb0iXho7C58xzAKgcbG2Lnuf_20250910_180032_954.png">
+<meta property="og:image" content="http://mzfnai.com/images/LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ag_X8NSb1F8zonjOrxC3UtcYEPRnMb_20250910_180032_955.png">
+<meta property="article:published_time" content="2025-07-26T06:32:45.000Z">
+<meta property="article:modified_time" content="2025-09-10T14:30:34.428Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="大语言模型">
+<meta property="article:tag" content="Agent化">
+<meta property="article:tag" content="幻觉问题">
+<meta property="article:tag" content="知识更新">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ag_MNlUb0iXho7C58xzAKgcbG2Lnuf_20250910_180032_954.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/26/200LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81agent%E5%8C%96/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>LLM为什么需要agent化 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/26/200LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81agent%E5%8C%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LLM为什么需要agent化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-26 14:32:45" itemprop="dateCreated datePublished" datetime="2025-07-26T14:32:45+08:00">2025-07-26</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI-Agent</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>12k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>11 分钟</span>
+            </span>
+            <div class="post-description">探讨大语言模型的局限性和Agent化的必要性，分析LLM存在的幻觉、知识过时等问题及解决方案。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>虽然大语言模型的能力很强大，但是Llm仅限于用于训练的知识，这些知识很快会过时，所以llm有以下缺点</p>
+<ul>
+<li><p>幻觉</p>
+</li>
+<li><p>结果并不总是真实的</p>
+</li>
+<li><p>对时事的了解有限或一无所知</p>
+</li>
+<li><p>难以应对复杂推理和计算</p>
+</li>
+</ul>
+<p>例如：买高铁票 &#x20;</p>
+<p><img src="/images/LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ag_MNlUb0iXho7C58xzAKgcbG2Lnuf_20250910_180032_954.png"></p>
+<p>(虽然LLM完全理解了买票的行为，但是它本身并不知道“我”所处的城市，列车的时刻表，价格等等信息）  而基于大模型的Agent (LLM based Agent) 可以利用外部工具来克服以上缺点。</p>
+<h2 id="打个招聘广告"><a href="#打个招聘广告" class="headerlink" title="打个招聘广告"></a>打个招聘广告</h2><p>作者目前的公司正在热招，后端（包括大模型）、前端、Android，产品、运营都有岗！  📍Base：上海&#x2F;成都  💰薪资：绝对香（BAT对标）  内推不卡简历，直达Team Leader!</p>
+<p>岗位和投递链接: <a target="_blank" rel="noopener" href="https://construct.jobs.feishu.cn/s/3aAep9X0K7I">https://construct.jobs.feishu.cn/s/3aAep9X0K7I</a></p>
+<h2 id="ReAct-Agent"><a href="#ReAct-Agent" class="headerlink" title="ReAct Agent"></a>ReAct Agent</h2><p><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2210.03629">ReAct Agent 论文</a></p>
+<h3 id="LLM-Agent-的升级之路："><a href="#LLM-Agent-的升级之路：" class="headerlink" title="LLM Agent 的升级之路："></a>LLM Agent 的升级之路：</h3><p>Standard IO(直接回答) -&gt; COT(chain-of-thought)(思维链) -&gt; Action-Only (Function calling) -&gt; Reason + Action  ReAct &#x3D; Reasoning(推理) + Action(行动) &#x20;</p>
+<p><img src="/images/LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81ag_X8NSb1F8zonjOrxC3UtcYEPRnMb_20250910_180032_955.png"></p>
+<h3 id="ReAct-Agent-的组成部分-（通过LangChain实现）"><a href="#ReAct-Agent-的组成部分-（通过LangChain实现）" class="headerlink" title="ReAct Agent 的组成部分 （通过LangChain实现）"></a>ReAct Agent 的组成部分 （通过LangChain实现）</h3><ul>
+<li><p>Models：LLM</p>
+</li>
+<li><p>Prompts：对Agent的指令、约束</p>
+</li>
+<li><p>Memory : 记录Action执行状态 &amp; 缓存已知信息</p>
+</li>
+<li><p>Indexes : 用于结构化文档，以便和模型交互</p>
+</li>
+<li><p>Chains ：Langchain的核心（链）</p>
+</li>
+<li><p>Agent</p>
+</li>
+</ul>
+<h3 id="ReAct-Agent-的prompt-模板"><a href="#ReAct-Agent-的prompt-模板" class="headerlink" title="ReAct Agent 的prompt 模板"></a>ReAct Agent 的prompt 模板</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"></span><br><span class="line">template = <span class="string">&#x27;&#x27;&#x27;Answer the following questions as best you can. You have access to the following tools:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">&#123;tools&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Use the following format:</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Question: the input question you must answer</span></span><br><span class="line"><span class="string">Thought: you should always think about what to do</span></span><br><span class="line"><span class="string">Action: the action to take, should be one of [&#123;tool_names&#125;]</span></span><br><span class="line"><span class="string">Action Input: the input to the action</span></span><br><span class="line"><span class="string">Observation: the result of the action</span></span><br><span class="line"><span class="string"><span class="meta">... </span>(this Thought/Action/Action Input/Observation can repeat N times)</span></span><br><span class="line"><span class="string">Thought: I now know the final answer</span></span><br><span class="line"><span class="string">Final Answer: the final answer to the original input question</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Begin!</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">Question: &#123;input&#125;</span></span><br><span class="line"><span class="string">Thought:&#123;agent_scratchpad&#125;&#x27;&#x27;&#x27;</span></span><br><span class="line"></span><br><span class="line">prompt = PromptTemplate.from_template(template)</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p>手写一个能帮忙买火车票的智能Agent  注：火车票相关API均为mock</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## 安装 &amp; import依赖</span></span><br><span class="line">pip install langchain</span><br><span class="line">pip install uuid</span><br><span class="line">pip install pydantic</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span>, <span class="type">Optional</span>, <span class="type">Dict</span>, <span class="type">Any</span>, <span class="type">Tuple</span>, <span class="type">Union</span></span><br><span class="line"><span class="keyword">from</span> uuid <span class="keyword">import</span> UUID</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain.memory <span class="keyword">import</span> ConversationTokenBufferMemory</span><br><span class="line"><span class="keyword">from</span> langchain.tools.render <span class="keyword">import</span> render_text_description</span><br><span class="line"><span class="keyword">from</span> langchain_core.callbacks <span class="keyword">import</span> BaseCallbackHandler</span><br><span class="line"><span class="keyword">from</span> langchain_core.language_models <span class="keyword">import</span> BaseChatModel</span><br><span class="line"><span class="keyword">from</span> langchain_core.output_parsers <span class="keyword">import</span> PydanticOutputParser, StrOutputParser</span><br><span class="line"><span class="keyword">from</span> langchain_core.outputs <span class="keyword">import</span> GenerationChunk, ChatGenerationChunk, LLMResult</span><br><span class="line"><span class="keyword">from</span> langchain_core.prompts <span class="keyword">import</span> PromptTemplate</span><br><span class="line"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> StructuredTool</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> ChatOpenAI</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field, ValidationError</span><br><span class="line"></span><br><span class="line"><span class="comment">#  定义工具（Tools)</span></span><br><span class="line"><span class="comment"># 细节可参考LangChain定义Tool</span></span><br><span class="line"><span class="keyword">from</span> typing <span class="keyword">import</span> <span class="type">List</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> langchain_core.tools <span class="keyword">import</span> StructuredTool</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">search_train_ticket</span>(<span class="params"></span></span><br><span class="line"><span class="params">        origin: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">        destination: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">        date: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">        departure_time_start: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">        departure_time_end: <span class="built_in">str</span></span></span><br><span class="line"><span class="params"></span>) -&gt; <span class="type">List</span>[<span class="built_in">dict</span>[<span class="built_in">str</span>, <span class="built_in">str</span>]]:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;按指定条件查询火车票&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment"># mock train list</span></span><br><span class="line">    <span class="keyword">return</span> [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;train_number&quot;</span>: <span class="string">&quot;G1234&quot;</span>,</span><br><span class="line">            <span class="string">&quot;origin&quot;</span>: <span class="string">&quot;北京&quot;</span>,</span><br><span class="line">            <span class="string">&quot;destination&quot;</span>: <span class="string">&quot;上海&quot;</span>,</span><br><span class="line">            <span class="string">&quot;departure_time&quot;</span>: <span class="string">&quot;2024-06-01 8:00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;arrival_time&quot;</span>: <span class="string">&quot;2024-06-01 12:00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;price&quot;</span>: <span class="string">&quot;100.00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;seat_type&quot;</span>: <span class="string">&quot;商务座&quot;</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;train_number&quot;</span>: <span class="string">&quot;G5678&quot;</span>,</span><br><span class="line">            <span class="string">&quot;origin&quot;</span>: <span class="string">&quot;北京&quot;</span>,</span><br><span class="line">            <span class="string">&quot;destination&quot;</span>: <span class="string">&quot;上海&quot;</span>,</span><br><span class="line">            <span class="string">&quot;departure_time&quot;</span>: <span class="string">&quot;2024-06-01 18:30&quot;</span>,</span><br><span class="line">            <span class="string">&quot;arrival_time&quot;</span>: <span class="string">&quot;2024-06-01 22:30&quot;</span>,</span><br><span class="line">            <span class="string">&quot;price&quot;</span>: <span class="string">&quot;100.00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;seat_type&quot;</span>: <span class="string">&quot;商务座&quot;</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="string">&quot;train_number&quot;</span>: <span class="string">&quot;G9012&quot;</span>,</span><br><span class="line">            <span class="string">&quot;origin&quot;</span>: <span class="string">&quot;北京&quot;</span>,</span><br><span class="line">            <span class="string">&quot;destination&quot;</span>: <span class="string">&quot;上海&quot;</span>,</span><br><span class="line">            <span class="string">&quot;departure_time&quot;</span>: <span class="string">&quot;2024-06-01 19:00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;arrival_time&quot;</span>: <span class="string">&quot;2024-06-01 23:00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;price&quot;</span>: <span class="string">&quot;100.00&quot;</span>,</span><br><span class="line">            <span class="string">&quot;seat_type&quot;</span>: <span class="string">&quot;商务座&quot;</span>,</span><br><span class="line">        &#125;</span><br><span class="line">    ]</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">purchase_train_ticket</span>(<span class="params"></span></span><br><span class="line"><span class="params">        train_number: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params"></span>) -&gt; <span class="built_in">dict</span>:</span><br><span class="line">    <span class="string">&quot;&quot;&quot;购买火车票&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="string">&quot;result&quot;</span>: <span class="string">&quot;success&quot;</span>,</span><br><span class="line">        <span class="string">&quot;message&quot;</span>: <span class="string">&quot;购买成功&quot;</span>,</span><br><span class="line">        <span class="string">&quot;data&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;train_number&quot;</span>: <span class="string">&quot;G1234&quot;</span>,</span><br><span class="line">            <span class="string">&quot;seat_type&quot;</span>: <span class="string">&quot;商务座&quot;</span>,</span><br><span class="line">            <span class="string">&quot;seat_number&quot;</span>: <span class="string">&quot;7-17A&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">search_train_ticket_tool = StructuredTool.from_function(</span><br><span class="line">    func=search_train_ticket,</span><br><span class="line">    name=<span class="string">&quot;查询火车票&quot;</span>,</span><br><span class="line">    description=<span class="string">&quot;查询指定日期可用的火车票。&quot;</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">purchase_train_ticket_tool = StructuredTool.from_function(</span><br><span class="line">    func=purchase_train_ticket,</span><br><span class="line">    name=<span class="string">&quot;购买火车票&quot;</span>,</span><br><span class="line">    description=<span class="string">&quot;购买火车票。会返回购买结果(result), 和座位号(seat_number)&quot;</span>,</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">finish_placeholder = StructuredTool.from_function(</span><br><span class="line">    func=<span class="keyword">lambda</span>: <span class="literal">None</span>,</span><br><span class="line">    name=<span class="string">&quot;FINISH&quot;</span>,</span><br><span class="line">    description=<span class="string">&quot;用于表示任务完成的占位符工具&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">tools = [search_train_ticket_tool, purchase_train_ticket_tool, finish_placeholder]</span><br><span class="line"></span><br><span class="line"><span class="comment"># Prompt</span></span><br><span class="line"><span class="comment"># 主要任务Prompt</span></span><br><span class="line">prompt_text = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">你是强大的AI火车票助手，可以使用工具与指令查询并购买火车票</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">你的任务是:</span></span><br><span class="line"><span class="string">&#123;task_description&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">你可以使用以下工具或指令，它们又称为动作或actions:</span></span><br><span class="line"><span class="string">&#123;tools&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">当前的任务执行记录:</span></span><br><span class="line"><span class="string">&#123;memory&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">按照以下格式输出：</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">任务：你收到的需要执行的任务</span></span><br><span class="line"><span class="string">思考: 观察你的任务和执行记录，并思考你下一步应该采取的行动</span></span><br><span class="line"><span class="string">然后，根据以下格式说明，输出你选择执行的动作/工具:</span></span><br><span class="line"><span class="string">&#123;format_instructions&#125;</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 最终回复Prompt</span></span><br><span class="line">final_prompt = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">你的任务是:</span></span><br><span class="line"><span class="string">&#123;task_description&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">以下是你的思考过程和使用工具与外部资源交互的结果。</span></span><br><span class="line"><span class="string">&#123;memory&#125;</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">你已经完成任务。</span></span><br><span class="line"><span class="string">现在请根据上述结果简要总结出你的最终答案。</span></span><br><span class="line"><span class="string">直接给出答案。不用再解释或分析你的思考过程。</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 一些方便编程的工具类</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Action</span>(<span class="title class_ inherited__">BaseModel</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;结构化定义工具的属性&quot;&quot;&quot;</span></span><br><span class="line">    name: <span class="built_in">str</span> = Field(description=<span class="string">&quot;工具或指令名称&quot;</span>)</span><br><span class="line">    args: <span class="type">Optional</span>[<span class="type">Dict</span>[<span class="built_in">str</span>, <span class="type">Any</span>]] = Field(description=<span class="string">&quot;工具或指令参数，由参数名称和参数值组成&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyPrintHandler</span>(<span class="title class_ inherited__">BaseCallbackHandler</span>):</span><br><span class="line">    <span class="string">&quot;&quot;&quot;自定义LLM CallbackHandler，用于打印大模型返回的思考过程&quot;&quot;&quot;</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        BaseCallbackHandler.__init__(<span class="variable language_">self</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">on_llm_new_token</span>(<span class="params"></span></span><br><span class="line"><span class="params">            self,</span></span><br><span class="line"><span class="params">            token: <span class="built_in">str</span>,</span></span><br><span class="line"><span class="params">            *,</span></span><br><span class="line"><span class="params">            chunk: <span class="type">Optional</span>[<span class="type">Union</span>[GenerationChunk, ChatGenerationChunk]] = <span class="literal">None</span>,</span></span><br><span class="line"><span class="params">            run_id: UUID,</span></span><br><span class="line"><span class="params">            parent_run_id: <span class="type">Optional</span>[UUID] = <span class="literal">None</span>,</span></span><br><span class="line"><span class="params">            **kwargs: <span class="type">Any</span>,</span></span><br><span class="line"><span class="params">    </span>) -&gt; <span class="type">Any</span>:</span><br><span class="line">        end = <span class="string">&quot;&quot;</span></span><br><span class="line">        content = token + end</span><br><span class="line">        sys.stdout.write(content)</span><br><span class="line">        sys.stdout.flush()</span><br><span class="line">        <span class="keyword">return</span> token</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">on_llm_end</span>(<span class="params">self, response: LLMResult, **kwargs: <span class="type">Any</span></span>) -&gt; <span class="type">Any</span>:</span><br><span class="line">        end = <span class="string">&quot;&quot;</span></span><br><span class="line">        content = <span class="string">&quot;\n&quot;</span> + end</span><br><span class="line">        sys.stdout.write(content)</span><br><span class="line">        sys.stdout.flush()</span><br><span class="line">        <span class="keyword">return</span> response</span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义Agent</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyAgent</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params"></span></span><br><span class="line"><span class="params">            self,</span></span><br><span class="line"><span class="params">            llm: BaseChatModel = ChatOpenAI(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="params">                model=<span class="string">&quot;gpt-4-turbo&quot;</span>, <span class="comment"># agent用GPT4效果好一些，推理能力较强</span></span></span></span><br><span class="line"><span class="params"><span class="params">                temperature=<span class="number">0</span>,</span></span></span><br><span class="line"><span class="params"><span class="params">                model_kwargs=&#123;</span></span></span><br><span class="line"><span class="params"><span class="params">                    <span class="string">&quot;seed&quot;</span>: <span class="number">42</span></span></span></span><br><span class="line"><span class="params"><span class="params">                &#125;,</span></span></span><br><span class="line"><span class="params"><span class="params">            </span>),</span></span><br><span class="line"><span class="params">            tools=<span class="literal">None</span>,</span></span><br><span class="line"><span class="params">            prompt: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>,</span></span><br><span class="line"><span class="params">            final_prompt: <span class="built_in">str</span> = <span class="string">&quot;&quot;</span>,</span></span><br><span class="line"><span class="params">            max_thought_steps: <span class="type">Optional</span>[<span class="built_in">int</span>] = <span class="number">10</span>,</span></span><br><span class="line"><span class="params">    </span>):</span><br><span class="line">        <span class="keyword">if</span> tools <span class="keyword">is</span> <span class="literal">None</span>:</span><br><span class="line">            tools = []</span><br><span class="line">        <span class="variable language_">self</span>.llm = llm</span><br><span class="line">        <span class="variable language_">self</span>.tools = tools</span><br><span class="line">        <span class="variable language_">self</span>.final_prompt = PromptTemplate.from_template(final_prompt)</span><br><span class="line">        <span class="variable language_">self</span>.max_thought_steps = max_thought_steps <span class="comment"># 最多思考步数，避免死循环</span></span><br><span class="line">        <span class="variable language_">self</span>.output_parser = PydanticOutputParser(pydantic_object=Action)</span><br><span class="line">        <span class="variable language_">self</span>.prompt = <span class="variable language_">self</span>.__init_prompt(prompt)</span><br><span class="line">        <span class="variable language_">self</span>.llm_chain = <span class="variable language_">self</span>.prompt | <span class="variable language_">self</span>.llm | StrOutputParser() <span class="comment"># 主流程的LCEL</span></span><br><span class="line">        <span class="variable language_">self</span>.verbose_printer = MyPrintHandler()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">def</span> <span class="title function_">__init_prompt</span>(<span class="params">self, prompt</span>):</span><br><span class="line">        <span class="keyword">return</span> PromptTemplate.from_template(prompt).partial(</span><br><span class="line">            tools=render_text_description(<span class="variable language_">self</span>.tools),</span><br><span class="line">            format_instructions=<span class="variable language_">self</span>.__chinese_friendly(</span><br><span class="line">                <span class="variable language_">self</span>.output_parser.get_format_instructions(),</span><br><span class="line">            )</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">run</span>(<span class="params">self, task_description</span>):</span><br><span class="line">        <span class="string">&quot;&quot;&quot;Agent主流程&quot;&quot;&quot;</span></span><br><span class="line">        <span class="comment"># 思考步数</span></span><br><span class="line">        thought_step_count = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 初始化记忆</span></span><br><span class="line">        agent_memory = ConversationTokenBufferMemory(</span><br><span class="line">            llm=<span class="variable language_">self</span>.llm,</span><br><span class="line">            max_token_limit=<span class="number">4000</span>,</span><br><span class="line">        )</span><br><span class="line">        agent_memory.save_context(</span><br><span class="line">            &#123;<span class="string">&quot;input&quot;</span>: <span class="string">&quot;\ninit&quot;</span>&#125;,</span><br><span class="line">            &#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;\n开始&quot;</span>&#125;</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        <span class="comment"># 开始逐步思考</span></span><br><span class="line">        <span class="keyword">while</span> thought_step_count &lt; <span class="variable language_">self</span>.max_thought_steps:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;&gt;&gt;&gt;&gt;Round: <span class="subst">&#123;thought_step_count&#125;</span>&lt;&lt;&lt;&lt;&quot;</span>)</span><br><span class="line">            action, response = <span class="variable language_">self</span>.__step(</span><br><span class="line">                task_description=task_description,</span><br><span class="line">                memory=agent_memory</span><br><span class="line">            )</span><br><span class="line"></span><br><span class="line">            <span class="comment"># 如果是结束指令，执行最后一步</span></span><br><span class="line">            <span class="keyword">if</span> action.name == <span class="string">&quot;FINISH&quot;</span>:</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">            <span class="comment"># 执行动作</span></span><br><span class="line">            observation = <span class="variable language_">self</span>.__exec_action(action)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">f&quot;----\nObservation:\n<span class="subst">&#123;observation&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">            <span class="comment"># 更新记忆</span></span><br><span class="line">            <span class="variable language_">self</span>.__update_memory(agent_memory, response, observation)</span><br><span class="line"></span><br><span class="line">            thought_step_count += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> thought_step_count &gt;= <span class="variable language_">self</span>.max_thought_steps:</span><br><span class="line">            <span class="comment"># 如果思考步数达到上限，返回错误信息</span></span><br><span class="line">            reply = <span class="string">&quot;抱歉，我没能完成您的任务。&quot;</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="comment"># 否则，执行最后一步</span></span><br><span class="line">            final_chain = <span class="variable language_">self</span>.final_prompt | <span class="variable language_">self</span>.llm | StrOutputParser()</span><br><span class="line">            reply = final_chain.invoke(&#123;</span><br><span class="line">                <span class="string">&quot;task_description&quot;</span>: task_description,</span><br><span class="line">                <span class="string">&quot;memory&quot;</span>: agent_memory</span><br><span class="line">            &#125;)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> reply</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__step</span>(<span class="params">self, task_description, memory</span>) -&gt; <span class="type">Tuple</span>[Action, <span class="built_in">str</span>]:</span><br><span class="line"></span><br><span class="line">        <span class="string">&quot;&quot;&quot;执行一步思考&quot;&quot;&quot;</span></span><br><span class="line">        response = <span class="string">&quot;&quot;</span></span><br><span class="line">        <span class="keyword">for</span> s <span class="keyword">in</span> <span class="variable language_">self</span>.llm_chain.stream(&#123;</span><br><span class="line">            <span class="string">&quot;task_description&quot;</span>: task_description,</span><br><span class="line">            <span class="string">&quot;memory&quot;</span>: memory</span><br><span class="line">        &#125;, config=&#123;</span><br><span class="line">            <span class="string">&quot;callbacks&quot;</span>: [</span><br><span class="line">                <span class="variable language_">self</span>.verbose_printer</span><br><span class="line">            ]</span><br><span class="line">        &#125;):</span><br><span class="line">            response += s</span><br><span class="line"></span><br><span class="line">        action = <span class="variable language_">self</span>.output_parser.parse(response)</span><br><span class="line">        <span class="keyword">return</span> action, response</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__exec_action</span>(<span class="params">self, action: Action</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        observation = <span class="string">&quot;没有找到工具&quot;</span></span><br><span class="line">        <span class="keyword">for</span> tool <span class="keyword">in</span> <span class="variable language_">self</span>.tools:</span><br><span class="line">            <span class="keyword">if</span> tool.name == action.name:</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    <span class="comment"># 执行工具</span></span><br><span class="line">                    observation = tool.run(action.args)</span><br><span class="line">                <span class="keyword">except</span> ValidationError <span class="keyword">as</span> e:</span><br><span class="line">                    <span class="comment"># 工具的入参异常</span></span><br><span class="line">                    observation = (</span><br><span class="line">                        <span class="string">f&quot;Validation Error in args: <span class="subst">&#123;<span class="built_in">str</span>(e)&#125;</span>, args: <span class="subst">&#123;action.args&#125;</span>&quot;</span></span><br><span class="line">                    )</span><br><span class="line">                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:</span><br><span class="line">                    <span class="comment"># 工具执行异常</span></span><br><span class="line">                    observation = <span class="string">f&quot;Error: <span class="subst">&#123;<span class="built_in">str</span>(e)&#125;</span>, <span class="subst">&#123;<span class="built_in">type</span>(e).__name__&#125;</span>, args: <span class="subst">&#123;action.args&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> observation</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__update_memory</span>(<span class="params">agent_memory, response, observation</span>):</span><br><span class="line">        agent_memory.save_context(</span><br><span class="line">            &#123;<span class="string">&quot;input&quot;</span>: response&#125;,</span><br><span class="line">            &#123;<span class="string">&quot;output&quot;</span>: <span class="string">&quot;\n返回结果:\n&quot;</span> + <span class="built_in">str</span>(observation)&#125;</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line"><span class="meta">    @staticmethod</span></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__chinese_friendly</span>(<span class="params">string</span>) -&gt; <span class="built_in">str</span>:</span><br><span class="line">        lines = string.split(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">        <span class="keyword">for</span> i, line <span class="keyword">in</span> <span class="built_in">enumerate</span>(lines):</span><br><span class="line">            <span class="keyword">if</span> line.startswith(<span class="string">&#x27;&#123;&#x27;</span>) <span class="keyword">and</span> line.endswith(<span class="string">&#x27;&#125;&#x27;</span>):</span><br><span class="line">                <span class="keyword">try</span>:</span><br><span class="line">                    lines[i] = json.dumps(json.loads(line), ensure_ascii=<span class="literal">False</span>)</span><br><span class="line">                <span class="keyword">except</span>:</span><br><span class="line">                    <span class="keyword">pass</span></span><br><span class="line">        <span class="keyword">return</span> <span class="string">&#x27;\n&#x27;</span>.join(lines)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 测试</span></span><br><span class="line"><span class="keyword">if</span> name == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    my_agent = MyAgent(</span><br><span class="line">        tools=tools,</span><br><span class="line">        prompt=prompt_text,</span><br><span class="line">        final_prompt=final_prompt,</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    task = <span class="string">&quot;帮我买24年6月1日早上去上海的火车票&quot;</span></span><br><span class="line">    reply = my_agent.run(task)</span><br><span class="line">    <span class="built_in">print</span>(reply)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h3><h4 id="第一轮思考"><a href="#第一轮思考" class="headerlink" title="第一轮思考"></a>第一轮思考</h4><p>Agent根据要求，选择了需要使用的Tool，组装了请求参数并完成了调用。  （还可以多定义一些Tools，比如获取当前位置的，获取今天日期的工具等等，这样这里的查询火车票的参数可以更智能）</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">&gt;&gt;</span><span class="operator">&gt;&gt;</span>Round: <span class="number">0</span><span class="operator">&lt;&lt;</span><span class="operator">&lt;&lt;</span></span><br><span class="line">任务：帮我买<span class="number">24</span>年<span class="number">6</span>月<span class="number">1</span>日早上去上海的火车票</span><br><span class="line"></span><br><span class="line">思考: 根据任务需求，首先需要查询<span class="number">2024</span>年<span class="number">6</span>月<span class="number">1</span>日早上从当前位置到上海的火车票。这需要使用“查询火车票”工具，指定出发地、目的地、日期以及早上的时间范围。</span><br><span class="line"></span><br><span class="line">动作<span class="operator">/</span>工具:</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;查询火车票&quot;,</span><br><span class="line">  &quot;args&quot;: &#123;</span><br><span class="line">    &quot;origin&quot;: &quot;当前位置&quot;,</span><br><span class="line">    &quot;destination&quot;: &quot;上海&quot;,</span><br><span class="line">    &quot;date&quot;: &quot;2024-06-01&quot;,</span><br><span class="line">    &quot;departure_time_start&quot;: &quot;00:00&quot;,</span><br><span class="line">    &quot;departure_time_end&quot;: &quot;12:00&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Observation:</span><br><span class="line">[&#123;<span class="string">&#x27;train_number&#x27;</span>: <span class="string">&#x27;G1234&#x27;</span>, <span class="string">&#x27;origin&#x27;</span>: <span class="string">&#x27;北京&#x27;</span>, <span class="string">&#x27;destination&#x27;</span>: <span class="string">&#x27;上海&#x27;</span>, <span class="string">&#x27;departure_time&#x27;</span>: <span class="string">&#x27;2024-06-01 8:00&#x27;</span>, <span class="string">&#x27;arrival_time&#x27;</span>: <span class="string">&#x27;2024-06-01 12:00&#x27;</span>, <span class="string">&#x27;price&#x27;</span>: <span class="string">&#x27;100.00&#x27;</span>, <span class="string">&#x27;seat_type&#x27;</span>: <span class="string">&#x27;商务座&#x27;</span>&#125;, &#123;<span class="string">&#x27;train_number&#x27;</span>: <span class="string">&#x27;G5678&#x27;</span>, <span class="string">&#x27;origin&#x27;</span>: <span class="string">&#x27;北京&#x27;</span>, <span class="string">&#x27;destination&#x27;</span>: <span class="string">&#x27;上海&#x27;</span>, <span class="string">&#x27;departure_time&#x27;</span>: <span class="string">&#x27;2024-06-01 18:30&#x27;</span>, <span class="string">&#x27;arrival_time&#x27;</span>: <span class="string">&#x27;2024-06-01 22:30&#x27;</span>, <span class="string">&#x27;price&#x27;</span>: <span class="string">&#x27;100.00&#x27;</span>, <span class="string">&#x27;seat_type&#x27;</span>: <span class="string">&#x27;商务座&#x27;</span>&#125;, &#123;<span class="string">&#x27;train_number&#x27;</span>: <span class="string">&#x27;G9012&#x27;</span>, <span class="string">&#x27;origin&#x27;</span>: <span class="string">&#x27;北京&#x27;</span>, <span class="string">&#x27;destination&#x27;</span>: <span class="string">&#x27;上海&#x27;</span>, <span class="string">&#x27;departure_time&#x27;</span>: <span class="string">&#x27;2024-06-01 19:00&#x27;</span>, <span class="string">&#x27;arrival_time&#x27;</span>: <span class="string">&#x27;2024-06-01 23:00&#x27;</span>, <span class="string">&#x27;price&#x27;</span>: <span class="string">&#x27;100.00&#x27;</span>, <span class="string">&#x27;seat_type&#x27;</span>: <span class="string">&#x27;商务座&#x27;</span>&#125;]</span><br></pre></td></tr></table></figure>
+
+<h4 id="第二轮思考"><a href="#第二轮思考" class="headerlink" title="第二轮思考"></a>第二轮思考</h4><p>根据查询出的车票信息去调用购票的Tool</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator">&gt;&gt;</span><span class="operator">&gt;&gt;</span>Round: <span class="number">1</span><span class="operator">&lt;&lt;</span><span class="operator">&lt;&lt;</span></span><br><span class="line">任务：帮我买<span class="number">24</span>年<span class="number">6</span>月<span class="number">1</span>日早上去上海的火车票</span><br><span class="line"></span><br><span class="line">思考: 根据查询结果，有三个车次可供选择，但只有车次G1234符合早上出发的要求，因此应选择购买这个车次的票。</span><br><span class="line"></span><br><span class="line">动作<span class="operator">/</span>工具:</span><br><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;购买火车票&quot;,</span><br><span class="line">  &quot;args&quot;: &#123;</span><br><span class="line">    &quot;train_number&quot;: &quot;G1234&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">Observation:</span><br><span class="line">&#123;<span class="string">&#x27;result&#x27;</span>: <span class="string">&#x27;success&#x27;</span>, <span class="string">&#x27;message&#x27;</span>: <span class="string">&#x27;购买成功&#x27;</span>, <span class="string">&#x27;data&#x27;</span>: &#123;<span class="string">&#x27;train_number&#x27;</span>: <span class="string">&#x27;G1234&#x27;</span>, <span class="string">&#x27;seat_type&#x27;</span>: <span class="string">&#x27;商务座&#x27;</span>, <span class="string">&#x27;seat_number&#x27;</span>: <span class="string">&#x27;7-17A&#x27;</span>&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="第三轮思考"><a href="#第三轮思考" class="headerlink" title="第三轮思考"></a>第三轮思考</h4><p>LLM识别到任务已完成，输出了结果</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/26/200LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81agent%E5%8C%96/" title="LLM为什么需要agent化">http://mzfnai.com/2025/07/26/200LLM为什么需要agent化/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+              <a href="/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/" rel="tag"># 大语言模型</a>
+              <a href="/tags/Agent%E5%8C%96/" rel="tag"># Agent化</a>
+              <a href="/tags/%E5%B9%BB%E8%A7%89%E9%97%AE%E9%A2%98/" rel="tag"># 幻觉问题</a>
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E6%9B%B4%E6%96%B0/" rel="tag"># 知识更新</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/25/199AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98-%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAAgent%E7%9A%84%E8%B6%85%E8%AF%A6%E7%BB%86%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/" rel="prev" title="AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程">
+      <i class="fa fa-chevron-left"></i> AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/27/201%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%9C%A8%E5%AD%A6%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93AI%20Agent/" rel="next" title="人人都在学的智能体AI Agent">
+      人人都在学的智能体AI Agent <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%93%E4%B8%AA%E6%8B%9B%E8%81%98%E5%B9%BF%E5%91%8A"><span class="nav-number">1.</span> <span class="nav-text">打个招聘广告</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ReAct-Agent"><span class="nav-number">2.</span> <span class="nav-text">ReAct Agent</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LLM-Agent-%E7%9A%84%E5%8D%87%E7%BA%A7%E4%B9%8B%E8%B7%AF%EF%BC%9A"><span class="nav-number">2.1.</span> <span class="nav-text">LLM Agent 的升级之路：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ReAct-Agent-%E7%9A%84%E7%BB%84%E6%88%90%E9%83%A8%E5%88%86-%EF%BC%88%E9%80%9A%E8%BF%87LangChain%E5%AE%9E%E7%8E%B0%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">ReAct Agent 的组成部分 （通过LangChain实现）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ReAct-Agent-%E7%9A%84prompt-%E6%A8%A1%E6%9D%BF"><span class="nav-number">2.3.</span> <span class="nav-text">ReAct Agent 的prompt 模板</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C"><span class="nav-number">3.1.</span> <span class="nav-text">结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E8%BD%AE%E6%80%9D%E8%80%83"><span class="nav-number">3.1.1.</span> <span class="nav-text">第一轮思考</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E8%BD%AE%E6%80%9D%E8%80%83"><span class="nav-number">3.1.2.</span> <span class="nav-text">第二轮思考</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E8%BD%AE%E6%80%9D%E8%80%83"><span class="nav-number">3.1.3.</span> <span class="nav-text">第三轮思考</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

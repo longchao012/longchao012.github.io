@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="手把手教你从0开始搭建AI智能体，包含完整的Agent开发流程和实践案例，适合初学者的保姆级教程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程">
+<meta property="og:url" content="http://mzfnai.com/2025/07/25/199AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98-%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAAgent%E7%9A%84%E8%B6%85%E8%AF%A6%E7%BB%86%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="手把手教你从0开始搭建AI智能体，包含完整的Agent开发流程和实践案例，适合初学者的保姆级教程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__J0msbTXq1oPiMhxBTvZcgNHqnrc_20250910_180018_435.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__eb194e1d_20250910_180018_435.jpeg">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__TA7SbdrkUolIuRx2dFNc10qnnyc_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__BixgbHI77oGzHRx04kLcybItnQ3_20250910_180018_436.jpg">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__CBtybDar8oWaLJxhQjtcupjSnt1_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__Ulw7bNUiuoEF21xlAjEc8srXnFb_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__ZnBVbKZwdoFoPsxVSJhccXFBnBc_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__IDGBbfUxOoZj67xNcrkcFyOKnvI_20250910_180018_436.jpg">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__PQebbUorkodybgxUuRzctU7Sn05_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__YPpjbGqefoJKArx2dsGcCOcBnzf_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__51ae6dfe_20250910_180018_436.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__EE49b0Sazoj71tx5e0WcFYYLn7b_20250910_180018_437.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__I4oQbecmzoY1Scx9TlacYKTXnuf_20250910_180018_437.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__QMK9baqlzo1QY2xAQ6kcmkPzn7d_20250910_180018_437.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__F3bIb29pMo7aYNx2tJWcuVjInEd_20250910_180018_438.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__Eeyfbnb39oVhc9xHgKCcyc0gnmc_20250910_180020_361.jpg">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__BdkEbQQrXo6OULxoh41cUoM6n5g_20250910_180020_361.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__c6773fa8_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__801003b6_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__MPOIb3liKoWU9Yxd1hwct1SFnAf_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__C6MMbDFdXow0ZSxNWEfc5nX0nbc_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__KBBKbOSyro4rM8xGE4tcpx3vntf_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__B6SSbxbM2o53TLxhfGmckl2unxf_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__SZoDbL36koBfHKx45muclb8wnWc_20250910_180020_362.png">
+<meta property="og:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__VbyibdO4Xo35t6x86uLc4KKQntf_20250910_180020_362.png">
+<meta property="article:published_time" content="2025-07-25T05:55:48.000Z">
+<meta property="article:modified_time" content="2025-09-10T14:30:54.654Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="智能助手">
+<meta property="article:tag" content="AI智能体">
+<meta property="article:tag" content="实战教程">
+<meta property="article:tag" content="入门指南">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__J0msbTXq1oPiMhxBTvZcgNHqnrc_20250910_180018_435.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/25/199AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98-%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAAgent%E7%9A%84%E8%B6%85%E8%AF%A6%E7%BB%86%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/25/199AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98-%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAAgent%E7%9A%84%E8%B6%85%E8%AF%A6%E7%BB%86%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-25 13:55:48" itemprop="dateCreated datePublished" datetime="2025-07-25T13:55:48+08:00">2025-07-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI-Agent</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5.7k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+            <div class="post-description">手把手教你从0开始搭建AI智能体，包含完整的Agent开发流程和实践案例，适合初学者的保姆级教程。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="今天手把手带大家从0开始手搓一个非常简单但不乏实用性的智能体（Agent），就当是给大家的Agent基础入门课了！"><a href="#今天手把手带大家从0开始手搓一个非常简单但不乏实用性的智能体（Agent），就当是给大家的Agent基础入门课了！" class="headerlink" title="今天手把手带大家从0开始手搓一个非常简单但不乏实用性的智能体（Agent），就当是给大家的Agent基础入门课了！"></a>今天手把手带大家从0开始手搓一个非常简单但不乏实用性的智能体（Agent），就当是给大家的Agent基础入门课了！</h1><p>既然是学Agent，那我们要做的就是先知道到底什么是Agent，所谓致知力行，理论永远是实践的先行者。</p>
+<p>所以大家在没搞懂什么是Agent前，可以先详细了解一下关于Agent的概念解析。</p>
+<p>清楚了Agent这一基本概念，接下来就是基于智能体开发平台实现自己的功能需求。</p>
+<p>现阶段国内外主流的智能体开发平台数量不在少数，像国内字节跳动的Coze（扣子开发平台），国外的Dify、FastGPT、n8n等等。但说到其中最容易上手、界面最友好的，当属Coze，这也是我目前接触最多的开发平台，那今天我将以Coze平台作为实操载体，为此专门注册了一个新账号，带着大家一起入门Agent！</p>
+<h2 id="Coze简单介绍"><a href="#Coze简单介绍" class="headerlink" title="Coze简单介绍"></a>Coze简单介绍</h2><p><strong>（如果是已经对Coze大致有所了解或接触过的朋友可以直接跳过这一部分）</strong></p>
+<p>这里先用一小段篇幅带大家快速了解下Coze并进入到指定操作界面。</p>
+<blockquote>
+<p>Coze 是字节跳动推出的零代码或低代码智能体开发平台，基于其大模型技术，提供插件系统、长短期记忆、工作流编排等核心能力，支持多模态交互（文本&#x2F;语音&#x2F;图像）与多平台发布（如豆包、飞书、Discord），专注构建个人助理、电商客服、内容生成等场景的智能体应用。</p>
+</blockquote>
+<p><strong>Coze网址：</strong> <a target="_blank" rel="noopener" href="https://www.coze.cn/"><strong>https://www.coze.cn</strong></a></p>
+<p>进到官网，首先进行一成不变且枯燥老套的登陆&#x2F;注册环节，之后进入到Coze主页，但其实在整个Coze平台当中，我们使用频率断档最高的是位于左侧菜单栏第二位的”工作空间”。</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__J0msbTXq1oPiMhxBTvZcgNHqnrc_20250910_180018_435.png"></p>
+<p>而在”工作空间”，我们目前需要了解的是”项目开发”和”资源库”这两个界面。</p>
+<blockquote>
+<p>大家可以将”资源库”理解为是我们打造各种工具的地方，而”项目开发”是存放我们基于各种工具组装成的完整产品的地方</p>
+</blockquote>
+<p>但当我们点入这两个页面后，通过下拉菜单又可以看到一些分类选项（特别是”资源库”当中）。</p>
+<p>到了这一步，大家先别慌，既然是入门，我们暂时也肯定用不到这么多，主要需要了解并接触到的是以下我为各位框出来的几个：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__eb194e1d_20250910_180018_435.jpeg"></p>
+<p>是的，这些概念是需要我们理解区分的。</p>
+<p>首先我们简单区分一下所谓”应用”和”智能体”的含义，这时候其实并不需要进行很麻烦的搜索、查找、听什么讲解，其实在Coze平台的官方文档中就有明确出这两个概念的具体定义，并且讲的很清楚：</p>
+<blockquote>
+<p><strong>智能体：</strong> 基于对话的AI项目，它通过对话方式接收用户的输入，由大模型自动调用插件或工作流等方式执行用户指定的业务流程，并生成最终的回复。智能客服、虚拟伴侣、个人助理、英语外教都是智能体的典型应用场景</p>
+<p><strong>AI应用：</strong> 指利用大模型技术开发的应用程序。扣子中搭建的 AI 应用具备完整业务逻辑和可视化用户界面，是一个独立的 AI 项目。通过扣子开发的 AI 应用有明确的输入和输出，可以根据既定的业务逻辑和流程完成一系列简单或复杂的任务，例如 AI 搜索、翻译工具、饮食记录等</p>
+</blockquote>
+<p>同样的，对于资源库当中的概念，在文档当中也有相应的讲解：</p>
+<blockquote>
+<p><strong>插件：</strong> 插件是一个工具集，一个插件内可以包含一个或多个工具（API）</p>
+<p><strong>工作流（Workfiow）：</strong> 用于处理功能类的请求，可通过顺序执行一系列节点实现某个功能。适合数据的自动化处理场景，例如生成行业调研报告、生成一张海报、制作绘本等</p>
+<p><strong>知识库：</strong> 知识库功能包含两个能力，一是存储和管理外部数据的能力，二是增强检索的能力</p>
+</blockquote>
+<p>看到这里相信所有需要了解的前置概念你都已经了然于心，理论结束，我们开始动手实操，过程中遇到不懂的，我们再见招拆招！</p>
+<h2 id="超简单的智能体搭建"><a href="#超简单的智能体搭建" class="headerlink" title="超简单的智能体搭建"></a>超简单的智能体搭建</h2><p>上面关于”工作流”的定义中提到：<strong>工作流可通过顺序执行一系列节点实现某个功能</strong>，反过来就可以得到：<strong>我们可以将想要实现的功能进行标准化流程编排，最后形成一个工作流（程），而这个工作流，只要我们提出需求，就可以向流水线一样执行我们编排好的操作以实现最后的功能，从而解决我们的需求，且在工作流运行的过程当中，我们完全不用管</strong>，可以去喝喝咖啡晾晾衣服，甚至如果你对象在身边的话，当然也可以选择波一下嘴【狗头】（啊没有对象的朋友就当我啥也没说哈【其实我也没对象…】）。</p>
+<p>所以在Coze平台当中，我们就可以将智能体看作是对内部多个AI工作流（当然也可以是一个）的封装，毕竟智能体就是帮我们解决各种需求的，而解决需求的能力，又源于我们编排好的标准化工作流程。</p>
+<p>既然如此，我们就需要先明确一下我们即将搭建出来的智能体具备什么功能，结合易上手程度、实用性以及文章篇幅等原因，我将以搭建<strong>一个能够根据关键词对网络上相关新闻信息进行检索总结的简单智能体</strong>作为演示。</p>
+<p>所以我们现在所要做的就是搭建实现相应功能的工作流，首先将光标移动到资源库右上角的”+资源”，点击工作流进行创建：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__TA7SbdrkUolIuRx2dFNc10qnnyc_20250910_180018_436.png"></p>
+<p>接下来我们需要为这个新的工作流命名并填入该工作流的功能简介，这里Coze的命名有一定的限制条件：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__BixgbHI77oGzHRx04kLcybItnQ3_20250910_180018_436.jpg"></p>
+<p>结合我们将要搭建的智能体所实现的功能，我填入的信息如下，接着我们便进入到工作流的创作界面：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__CBtybDar8oWaLJxhQjtcupjSnt1_20250910_180018_436.png"></p>
+<p>首先映入眼帘的就是默认的”开始”和”结束”这两个模块（节点），其实分别对应的就是**”输入需求”<strong>和</strong>“输出结果”**这两个功能，很好理解。</p>
+<p>接下来我们需要整理一下自己的思路，看看实现对应的功能（即检索总结）大致可以拆分成几步：</p>
+<blockquote>
+<p>1.<strong>输入</strong>我们想要查询的信息对应到的关键词，例如”Agent”、”人工智能”；</p>
+<p>2.智能体根据我们的需求对网上海量的信息进行检索匹配；</p>
+<p>3.智能体对最终检索筛选出来的信息进行提炼总结；</p>
+<p>4.<strong>输出</strong>最终结果。</p>
+</blockquote>
+<p>而第一点的”输入”和最后一点的”输出”便对应到界面中默认的两个节点功能。</p>
+<p>除此之外，我们还需要完成对第二点和第三点流程编排，所以需要再添加这两个节点。</p>
+<p>怎么添加！很简单：</p>
+<p>我们先来添加第一个，也就是能够根据我们的关键词进行信息检索的节点，其属于是Coze平台内置的一个插件：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__Ulw7bNUiuoEF21xlAjEc8srXnFb_20250910_180018_436.png"></p>
+<p>然后再来添加第二个节点，这个节点的功能是能够对检索到的信息进行提炼总结，因为我们总不希望Agent最终为我们返回的结果每次都是长长的一大篇。</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__ZnBVbKZwdoFoPsxVSJhccXFBnBc_20250910_180018_436.png"></p>
+<p>就像这样直接点一下，界面中就会加载出”大模型”节点。</p>
+<p>到这里，我们的创作界面上已经有了四个节点模块，分别是”开始”、”getToutiaoNews”、”大模型”、”结束”：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__IDGBbfUxOoZj67xNcrkcFyOKnvI_20250910_180018_436.jpg"></p>
+<p>我们接下来所要做的是便是将这几个模块串联起来，就像这样：</p>
+<p>（光标移动到前一个节点的末端，然后按住拖拽连接到下一个节点的前端即可连接）</p>
+<p>到这一步，可能有些之前没有接触过Agent的朋友会认为这个工作流是不是大功告成了？NO，其实我们只是完成了最基础的节点编排，接下来我们还需要对每个节点进行相应的设置，让我们一个个来：</p>
+<h2 id="“开始”节点："><a href="#“开始”节点：" class="headerlink" title="“开始”节点："></a>“开始”节点：</h2><p>我们鼠标直接点击”开始”节点进入到右边的编辑栏：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__PQebbUorkodybgxUuRzctU7Sn05_20250910_180018_436.png"></p>
+<p>这里需要我们理解几个概念：变量名和变量类型（别慌，虽然这是编程中会常出现的概念，但并不需要我们自己动手敲代码），可以按以下这样简单理解：</p>
+<blockquote>
+<p><strong>变量：</strong> 可以简单将其理解为数据、信息</p>
+<p><strong>变量类型：</strong> 我们一开始输入给这个工作流的内容具体的数据类型（比如文字、数字、图片、网络链接等等）</p>
+<p><strong>变量名：</strong> 为我们输入的内容所取的名字</p>
+</blockquote>
+<p>所谓钥锁纹同，乃可启之。类型契合是功能实现的前提。所以在最开始我们必须选对数据类型，否则后续的节点可能会因为数据类型不同而无法正常运行。</p>
+<p>因为这个工作流的功能是根据我们提供的关键词进行信息检索，所以在一开始我们输入的数据是关键词（也就是文字），这里需要选择”String”这个变量类型。</p>
+<blockquote>
+<p><strong>String：</strong> 翻译过来就是字符串，是一种文本类型变量，用于存储由字符组成的序列（如文字、数字、符号等）</p>
+</blockquote>
+<p>变量名的话，我们可以使用默认的”input”，但避免后续节点的混淆，可以自己重新设置一个简短的，比如”Key”（但记住不能是中文）。</p>
+<p>那现在对于”开始”这一节点的设置我们就完成了。</p>
+<h2 id="getToutiaoNews”节点："><a href="#getToutiaoNews”节点：" class="headerlink" title="getToutiaoNews”节点："></a><strong>getToutiaoNews”节点：</strong></h2><p>其次是对于第二个节点的编辑——根据我们以上提到的，该节点所实现的功能是根据我们输入的关键词对网络上相匹配的信息进行检索。</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__YPpjbGqefoJKArx2dsGcCOcBnzf_20250910_180018_436.png"></p>
+<p>我们依旧如前面一样点击该节点进入到相应的编辑界面：</p>
+<p>首先大家会看到编辑界面总体上分为**”输入”区域<strong>和</strong>“输出”区域**，这其实很好理解：既然这个节点是根据我们输入的关键词进行信息检索的，那关键词从何而来？没错，每一次我们输入的关键词都已经在”开始”节点被我们封装成了一个叫作”Key”的变量，所以这个变量需要传入到这个节点当中（也就是对应到”输入”区域）。</p>
+<p>现在大家需要根据以上图片我指出的步骤，选择我们在”开始”节点设置好的这个变量，填入到该节点的”输入”区域，以使该节点能够知晓我们每次需要搜索的关键词具体是什么。</p>
+<p>其实到这一步对于该节点的设置便基本完成了，但我们还是要先清楚其所输出的内容是什么，或者说，一个新闻包含了哪些信息：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__51ae6dfe_20250910_180018_436.png"></p>
+<p>当然啦，如果设置到这里你仍不放心，不知道最后到底能不能为我们检索到相应的新闻信息，也可以选择将后面的”大模型”节点断开连接，然后直接连接到”结束”节点，并对”结束”节点当中的输出变量进行指定（也就是在第二个节点根据我们的关键词检索出的信息），接下来点击界面下方的”试运行”按钮，便可以单独对这三个节点进行测试：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__EE49b0Sazoj71tx5e0WcFYYLn7b_20250910_180018_437.png"></p>
+<p>（断开节点间的连接：鼠标点住节点间连接线的后一端口【即箭头端】，然后直接移开即可）</p>
+<p>点击”试运行”后，会弹出以下界面，这里会要求我们输入一个”Key”，也就对应到”开始”节点我们为每一次输入的关键词所封装的”Key”。</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__I4oQbecmzoY1Scx9TlacYKTXnuf_20250910_180018_437.png"></p>
+<p>这里我以输入”雷军”为例，然后再点击下方的”试运行”：</p>
+<p>如果运行成功的话，最终在”结束”节点便会输出一些近期与”雷军”相关的新闻信息，我们都可以点开查看，甚至复制”url”中详细的网址进入到相应页面。</p>
+<h2 id="“大模型”节点："><a href="#“大模型”节点：" class="headerlink" title="“大模型”节点："></a>“大模型”节点：</h2><p>待以上的节点运行一切正常，我们恢复到先前四个节点的连接顺序，接下来便是对第三个节点（即”大模型”节点）的设置。</p>
+<p>在这个由四个小节点组成的简单工作流当中，对于该节点的设置是最复杂的（但其实也非常简单），老样子，我们先点开节点的编辑界面：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__QMK9baqlzo1QY2xAQ6kcmkPzn7d_20250910_180018_437.png"></p>
+<p>这里我们需要了解并进行设置的主要有”模型”、”输入”、”系统提示词”、”用户提示词”、”输出”这5个部分。</p>
+<p>其中”模型”需要我们选择自己想要调用的大模型，可以根据我们想实现的功能（或者说想让该大模型干什么）来进行选择，而”输入”和”输出”便不用再过多讲解了，就是该节点接收到的信息和最终处理出来的内容。</p>
+<p>而”系统提示词”以及”用户提示词”这两个概念是需要我们做好区分的，我们先看官方给出的解释：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__F3bIb29pMo7aYNx2tJWcuVjInEd_20250910_180018_438.png"></p>
+<p>翻译成人话就是：</p>
+<blockquote>
+<p><strong>系统提示词：</strong> 对AI的身份设定和规范要求</p>
+<p><strong>用户提示词：</strong> 用户（即我们）对AI下达的执行指令</p>
+</blockquote>
+<p>对涉及到的相关概念了解清楚后，我们便可以开始进行具体的设置了：</p>
+<ul>
+<li><strong>对于”模型”：</strong> 在这里我直接以系统默认的”豆包·1.5·Pro·32k”为例作演示；</li>
+<li><strong>对于”输入”：</strong> 我们需要先点击一旁的小加号”+”添加一个输入变量，而通过前面的节点设置大家想必也应该知道这里该填入的是来自第二个节点（即”getToutiaoNews”）的输出内容；</li>
+</ul>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__Eeyfbnb39oVhc9xHgKCcyc0gnmc_20250910_180020_361.jpg"></p>
+<ul>
+<li><strong>对于”系统提示词”：</strong> 对于专业的系统提示词，相对来说是会比较复杂一些（需要做一些专业的设定和详细的限制），但这里作为针对大多数新手的示例演示，所以不需要做过多复杂的描述，这里给出我的提示词文案示例内容：</li>
+</ul>
+<blockquote>
+<ul>
+<li>总结新闻内容，只需要返回时间和概述的主要内容结果，不要长篇大论，简短一些</li>
+</ul>
+</blockquote>
+<ul>
+<li><strong>对于”用户提示词”：</strong> 同样的，给出我的提示词内容：</li>
+</ul>
+<blockquote>
+<ul>
+<li>总结<code>&#123;&#123;news&#125;&#125;</code></li>
+</ul>
+</blockquote>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__BdkEbQQrXo6OULxoh41cUoM6n5g_20250910_180020_361.png"></p>
+<ul>
+<li>(这两个提示词框中可以用”<code>&#123;&#123;&#125;&#125;</code>“来引用工作流中存在的变量)</li>
+<li><strong>对于”输出”：</strong> 保持默认的”String”变量类型，变量名可根据自己的想法进行更改，我这里就直接保持默认的”output”了。</li>
+</ul>
+<p>这样我们的”大模型”节点便设置完毕了。</p>
+<h2 id="“结束”节点："><a href="#“结束”节点：" class="headerlink" title="“结束”节点："></a>“结束”节点：</h2><p>来到我们最后一个节点的设置，跟在上文我们的测试环节中所设置的那样简单，这次只需要将输出的变量更换为来自”大模型”节点的处理结果即可，即”output”：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__c6773fa8_20250910_180020_362.png"></p>
+<p>截至目前，关于这个工作流的搭建和相关设置我们便已全部完成，下一步便是测试环节：</p>
+<p>同样的，我们点击界面下方的”试运行”按钮，这次我们输入”马斯克”看看会得到什么样的结果：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__801003b6_20250910_180020_362.png"></p>
+<p>可以看到，我们的工作流可以正常运行并按照我们的要求输出相应的新闻概述。</p>
+<p>现在我们点击界面右上角的”发布”按钮，随后会弹出一个小界面，其中有一个版本描述是必填的（大致填写一下即可）：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__MPOIb3liKoWU9Yxd1hwct1SFnAf_20250910_180020_362.png"></p>
+<p>发布之后，我们便可以在资源库中查看到我们搭建好的工作流，也就相当于保存成功了：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__C6MMbDFdXow0ZSxNWEfc5nX0nbc_20250910_180020_362.png"></p>
+<p>到这里关于工作流的全部工作便已全部完成，下一步我们要将这个工作流集成到一个”外壳”（我们大致可以这么比喻成一个”外壳”）中，最终形成的结果就是我们要的Agent。</p>
+<p>具体步骤如下：</p>
+<p>首先我们从”资源库”切换到”项目开发”，点击右上角的创建按钮，选择创建智能体：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__KBBKbOSyro4rM8xGE4tcpx3vntf_20250910_180020_362.png"></p>
+<p>接着会弹出一个小窗口让你填写你将创建的智能体的相关信息，包括名称和简介，当然，你还可以在最下面更换该智能体的图标：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__B6SSbxbM2o53TLxhfGmckl2unxf_20250910_180020_362.png"></p>
+<p>等这些信息填写完后，便可以点击确定进入到智能体的详细编辑界面：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__SZoDbL36koBfHKx45muclb8wnWc_20250910_180020_362.png"></p>
+<p>在这里我们主要做两件事，第一是为我们的智能体进行人设与回复逻辑的设定（因为我们只搭建了一个工作流，只具备一种功能，所以我们只用明确一种技能即可），这里给出我的设定模版：</p>
+<blockquote>
+<p>你是一个专门总结新闻的助手，擅长总结新闻内容并提取主要内容。</p>
+<p>###技能1</p>
+<p>当用户输入要查询的关键词时，调用info_search来执行工作流。</p>
+</blockquote>
+<p>第二件事便是添加我们刚才搭建好的工作流。这样智能体的搭建便基本完成了。</p>
+<p>同样的，我们需要对搭建好的智能体进行测试，所对应的也就是以上框出的”预览与调试”。</p>
+<p>最后我们再次以”马斯克”为例进行测试，如果顺利运行的话，智能体便可以正确给出所检索到的新闻：</p>
+<p><img src="/images/AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98__VbyibdO4Xo35t6x86uLc4KKQntf_20250910_180020_362.png"></p>
+<p>通过以上简单的几步，现在你便拥有一个可以实时查询新闻信息的智能体工具了。</p>
+<p>通篇文章下来，其实真正重要的不在于你成功搭建了一个简单智能体，更不在于其中提及到的为数不多也不具备学习门槛的技术，而是向你展示了搭建一个智能体的基本思路，以及现在主流的智能体开发平台大致上是如何运作的，我们可以高度概括成一句话：</p>
+<p><strong>工作流是对指定功能通过集成和预设好的模块按照特定的顺序进行标准化编排，而智能体则是对各种指定功能的集成…</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/25/199AI%E6%99%BA%E8%83%BD%E4%BD%93%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98-%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAAgent%E7%9A%84%E8%B6%85%E8%AF%A6%E7%BB%86%E4%BF%9D%E5%A7%86%E7%BA%A7%E6%95%99%E7%A8%8B/" title="AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程">http://mzfnai.com/2025/07/25/199AI智能体入门实战-从0到1搭建Agent的超详细保姆级教程/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Agent/" rel="tag"># Agent</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E5%8A%A9%E6%89%8B/" rel="tag"># 智能助手</a>
+              <a href="/tags/AI%E6%99%BA%E8%83%BD%E4%BD%93/" rel="tag"># AI智能体</a>
+              <a href="/tags/%E5%AE%9E%E6%88%98%E6%95%99%E7%A8%8B/" rel="tag"># 实战教程</a>
+              <a href="/tags/%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97/" rel="tag"># 入门指南</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/24/198Agent%E7%AF%87-%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BC%81%E4%B8%9A%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF/" rel="prev" title="Agent篇-核心原理与企业应用场景">
+      <i class="fa fa-chevron-left"></i> Agent篇-核心原理与企业应用场景
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/26/200LLM%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81agent%E5%8C%96/" rel="next" title="LLM为什么需要agent化">
+      LLM为什么需要agent化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8A%E5%A4%A9%E6%89%8B%E6%8A%8A%E6%89%8B%E5%B8%A6%E5%A4%A7%E5%AE%B6%E4%BB%8E0%E5%BC%80%E5%A7%8B%E6%89%8B%E6%90%93%E4%B8%80%E4%B8%AA%E9%9D%9E%E5%B8%B8%E7%AE%80%E5%8D%95%E4%BD%86%E4%B8%8D%E4%B9%8F%E5%AE%9E%E7%94%A8%E6%80%A7%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93%EF%BC%88Agent%EF%BC%89%EF%BC%8C%E5%B0%B1%E5%BD%93%E6%98%AF%E7%BB%99%E5%A4%A7%E5%AE%B6%E7%9A%84Agent%E5%9F%BA%E7%A1%80%E5%85%A5%E9%97%A8%E8%AF%BE%E4%BA%86%EF%BC%81"><span class="nav-number">1.</span> <span class="nav-text">今天手把手带大家从0开始手搓一个非常简单但不乏实用性的智能体（Agent），就当是给大家的Agent基础入门课了！</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Coze%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.1.</span> <span class="nav-text">Coze简单介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%85%E7%AE%80%E5%8D%95%E7%9A%84%E6%99%BA%E8%83%BD%E4%BD%93%E6%90%AD%E5%BB%BA"><span class="nav-number">1.2.</span> <span class="nav-text">超简单的智能体搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9C%E5%BC%80%E5%A7%8B%E2%80%9D%E8%8A%82%E7%82%B9%EF%BC%9A"><span class="nav-number">1.3.</span> <span class="nav-text">“开始”节点：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#getToutiaoNews%E2%80%9D%E8%8A%82%E7%82%B9%EF%BC%9A"><span class="nav-number">1.4.</span> <span class="nav-text">getToutiaoNews”节点：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9C%E5%A4%A7%E6%A8%A1%E5%9E%8B%E2%80%9D%E8%8A%82%E7%82%B9%EF%BC%9A"><span class="nav-number">1.5.</span> <span class="nav-text">“大模型”节点：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%9C%E7%BB%93%E6%9D%9F%E2%80%9D%E8%8A%82%E7%82%B9%EF%BC%9A"><span class="nav-number">1.6.</span> <span class="nav-text">“结束”节点：</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

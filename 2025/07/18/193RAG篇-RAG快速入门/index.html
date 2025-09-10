@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="全面介绍RAG（检索增强生成）技术的核心原理、工作流程和应用场景，包含企业级架构设计、快速搭建方案和优化技巧，是RAG技术入门的完整指南。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RAG篇-RAG快速入门">
+<meta property="og:url" content="http://mzfnai.com/2025/07/18/193RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="全面介绍RAG（检索增强生成）技术的核心原理、工作流程和应用场景，包含企业级架构设计、快速搭建方案和优化技巧，是RAG技术入门的完整指南。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F_deepseek_mermaid_20250529_94e3_20250910_175854_405.png">
+<meta property="og:image" content="http://mzfnai.com/images/RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F_deepseek_mermaid_20250529_774a_20250910_175854_406.png">
+<meta property="article:published_time" content="2025-07-18T08:12:45.000Z">
+<meta property="article:modified_time" content="2025-09-10T14:29:46.999Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="检索增强生成">
+<meta property="article:tag" content="知识库">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="向量数据库">
+<meta property="article:tag" content="企业AI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F_deepseek_mermaid_20250529_94e3_20250910_175854_405.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/18/193RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RAG篇-RAG快速入门 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/18/193RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RAG篇-RAG快速入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-18 16:12:45" itemprop="dateCreated datePublished" datetime="2025-07-18T16:12:45+08:00">2025-07-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/RAG/" itemprop="url" rel="index"><span itemprop="name">RAG</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+            <div class="post-description">全面介绍RAG（检索增强生成）技术的核心原理、工作流程和应用场景，包含企业级架构设计、快速搭建方案和优化技巧，是RAG技术入门的完整指南。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="——-让大模型精准掌握企业私有知识的核心技术"><a href="#——-让大模型精准掌握企业私有知识的核心技术" class="headerlink" title="—— 让大模型精准掌握企业私有知识的核心技术"></a>—— 让大模型精准掌握企业私有知识的核心技术</h2><hr>
+<h2 id="一、RAG-是什么？"><a href="#一、RAG-是什么？" class="headerlink" title="一、RAG 是什么？"></a>一、RAG 是什么？</h2><p><strong>RAG（Retrieval-Augmented Generation，检索增强生成）</strong> 是一种将 <strong>信息检索</strong> 与 <strong>文本生成</strong> 相结合的技术框架。它通过以下流程解决大模型（LLM）的“知识盲区”问题： &#x20;</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">用户问题 → 从知识库检索相关文档 → 将文档作为上下文输入LLM → 生成精准答案  </span><br></pre></td></tr></table></figure>
+
+<h3 id="✅-核心价值："><a href="#✅-核心价值：" class="headerlink" title="✅ 核心价值："></a>✅ 核心价值：</h3><ul>
+<li><strong>突破模型记忆限制</strong>：直接利用最新&#x2F;私有数据，无需重新训练模型 &#x20;</li>
+<li><strong>减少幻觉现象</strong>：答案基于检索到的证据，可靠性显著提升 &#x20;</li>
+<li><strong>低成本适配业务</strong>：仅需维护知识库，无需微调模型 &#x20;</li>
+</ul>
+<blockquote>
+<p>💡 **类比理解**： &#x20;</p>
+<p>如同学者写论文——先查文献（检索），再结合已有知识写作（生成）</p>
+</blockquote>
+<hr>
+<h2 id="二、为什么需要-RAG？"><a href="#二、为什么需要-RAG？" class="headerlink" title="二、为什么需要 RAG？"></a>二、为什么需要 RAG？</h2><table>
+<thead>
+<tr>
+<th>传统LLM痛点</th>
+<th>RAG 解决方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>训练数据截止滞后</td>
+<td>实时检索最新数据</td>
+</tr>
+<tr>
+<td>无法访问企业私有知识</td>
+<td>连接内部文档&#x2F;数据库</td>
+</tr>
+<tr>
+<td>专业领域表现差</td>
+<td>注入领域知识片段</td>
+</tr>
+<tr>
+<td>答案缺乏依据</td>
+<td>提供引用来源，可追溯证据</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、RAG-核心工作流程（4步）"><a href="#三、RAG-核心工作流程（4步）" class="headerlink" title="三、RAG 核心工作流程（4步）"></a>三、RAG 核心工作流程（4步）</h2><p><img src="/images/RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F_deepseek_mermaid_20250529_94e3_20250910_175854_405.png"></p>
+<h3 id="步骤详解："><a href="#步骤详解：" class="headerlink" title="步骤详解："></a>步骤详解：</h3><ol>
+<li><p><strong>问题解析</strong> &#x20;</p>
+<ul>
+<li>拆分关键词、识别查询意图 &#x20;</li>
+<li>示例问题： <em>“公司2025年Q1的销售目标是多少？”</em></li>
+</ul>
+</li>
+<li><p><strong>知识库检索</strong> &#x20;</p>
+<ul>
+<li>使用 **向量数据库**（如 Milvus, Pinecone） &#x20;</li>
+<li>检索相似文档（如销售计划PDF&#x2F;数据库记录） &#x20;</li>
+<li>返回Top K相关片段（通常K&#x3D;3~5）</li>
+</ul>
+</li>
+<li><p><strong>提示词工程</strong> &#x20;</p>
+<ul>
+<li>拼接提示模板： &#x20;</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">基于以下信息回答问题：</span><br><span class="line">&lt;检索到的文档1&gt;</span><br><span class="line">&lt;文档2&gt;</span><br><span class="line">...</span><br><span class="line">问题：&#123;用户问题&#125;</span><br><span class="line">答案：</span><br></pre></td></tr></table></figure></li>
+<li><p><strong>生成最终答案</strong> &#x20;</p>
+<ul>
+<li>LLM 基于提示词输出带引用的回答：&gt; “根据《2025年Q1销售计划》（P.12），销售目标为 **2.5亿元人民币**。”</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="四、RAG-系统关键组件"><a href="#四、RAG-系统关键组件" class="headerlink" title="四、RAG 系统关键组件"></a>四、RAG 系统关键组件</h2><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>推荐工具&#x2F;技术</th>
+<th>作用说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>文本加载器</strong></td>
+<td>LangChain, LlamaIndex</td>
+<td>解析PDF&#x2F;Word&#x2F;网页等原始文件</td>
+</tr>
+<tr>
+<td><strong>嵌入模型</strong></td>
+<td>OpenAI text-embedding, BGE</td>
+<td>将文本转化为向量</td>
+</tr>
+<tr>
+<td><strong>向量数据库</strong></td>
+<td>Milvus, Pinecone, PGVector</td>
+<td>存储&#x2F;快速检索向量</td>
+</tr>
+<tr>
+<td><strong>大语言模型</strong></td>
+<td>GPT-4, DeepSeek-R, Llama 3</td>
+<td>生成最终答案</td>
+</tr>
+<tr>
+<td><strong>提示词管理器</strong></td>
+<td>LangChain, PromptFlow</td>
+<td>动态构建上下文提示</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="五、企业级-RAG-架构示例"><a href="#五、企业级-RAG-架构示例" class="headerlink" title="五、企业级 RAG 架构示例"></a>五、企业级 RAG 架构示例</h2><p><img src="/images/RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F_deepseek_mermaid_20250529_774a_20250910_175854_406.png"></p>
+<hr>
+<h2 id="六、RAG-典型应用场景"><a href="#六、RAG-典型应用场景" class="headerlink" title="六、RAG 典型应用场景"></a>六、RAG 典型应用场景</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>案例说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>📚 企业智能客服</td>
+<td>回答产品参数&#x2F;售后政策等私有知识问题</td>
+</tr>
+<tr>
+<td>💼 内部知识助手</td>
+<td>查询员工手册&#x2F;财务制度&#x2F;项目文档</td>
+</tr>
+<tr>
+<td>🏥 医疗诊断辅助</td>
+<td>根据最新医学指南生成诊疗建议</td>
+</tr>
+<tr>
+<td>📈 金融分析报告</td>
+<td>整合招股书&#x2F;财报生成投资摘要</td>
+</tr>
+<tr>
+<td>🔧 技术文档问答</td>
+<td>快速定位API文档&#x2F;错误解决方案</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="七、快速搭建-RAG-的-4-种方式"><a href="#七、快速搭建-RAG-的-4-种方式" class="headerlink" title="七、快速搭建 RAG 的 4 种方式"></a>七、快速搭建 RAG 的 4 种方式</h2><h3 id="1️⃣-零代码平台（业务人员）"><a href="#1️⃣-零代码平台（业务人员）" class="headerlink" title="1️⃣ 零代码平台（业务人员）"></a>1️⃣ 零代码平台（业务人员）</h3><ul>
+<li><strong>工具</strong>：ChatPDF, AskYourPDF &#x20;</li>
+<li><strong>操作</strong>：上传文件 → 自动构建知识库 → 直接提问 &#x20;</li>
+</ul>
+<h3 id="2️⃣-开发框架（开发者）"><a href="#2️⃣-开发框架（开发者）" class="headerlink" title="2️⃣ 开发框架（开发者）"></a>2️⃣ 开发框架（开发者）</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 LangChain 快速实现（伪代码）</span></span><br><span class="line"><span class="keyword">from</span> langchain_community.vectorstores <span class="keyword">import</span> Chroma</span><br><span class="line"><span class="keyword">from</span> langchain_openai <span class="keyword">import</span> OpenAIEmbeddings</span><br><span class="line"></span><br><span class="line"><span class="comment"># 1. 加载知识库</span></span><br><span class="line">documents = load_documents(<span class="string">&quot;./企业知识库/&quot;</span>) </span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 构建向量库</span></span><br><span class="line">vectorstore = Chroma.from_documents(documents, OpenAIEmbeddings())</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 检索增强问答</span></span><br><span class="line">retriever = vectorstore.as_retriever()</span><br><span class="line">qa_chain = RetrievalQA.from_chain_type(llm, retriever=retriever)</span><br><span class="line"><span class="built_in">print</span>(qa_chain.run(<span class="string">&quot;公司休假政策如何？&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="3️⃣-云服务（企业级）"><a href="#3️⃣-云服务（企业级）" class="headerlink" title="3️⃣ 云服务（企业级）"></a>3️⃣ 云服务（企业级）</h3><ul>
+<li><strong>AWS</strong>：Kendra + Bedrock &#x20;</li>
+<li><strong>Azure</strong>：Cognitive Search + Azure OpenAI &#x20;</li>
+<li><strong>阿里云</strong>：DashVector + 通义千问 &#x20;</li>
+</ul>
+<h3 id="4️⃣-开源解决方案"><a href="#4️⃣-开源解决方案" class="headerlink" title="4️⃣ 开源解决方案"></a>4️⃣ 开源解决方案</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://www.llamaindex.ai/"><strong>LlamaIndex</strong></a>：专为RAG优化的数据框架 &#x20;</li>
+<li><a target="_blank" rel="noopener" href="https://privategpt.dev/"><strong>PrivateGPT</strong></a>：本地化隐私保护方案 &#x20;</li>
+</ul>
+<hr>
+<h2 id="八、RAG-优化进阶技巧"><a href="#八、RAG-优化进阶技巧" class="headerlink" title="八、RAG 优化进阶技巧"></a>八、RAG 优化进阶技巧</h2><table>
+<thead>
+<tr>
+<th>挑战</th>
+<th>解决方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>检索精度低</td>
+<td>混合检索（关键词+向量）+ 重排序模型</td>
+</tr>
+<tr>
+<td>长文档效果差</td>
+<td>智能分块（按段落&#x2F;语义分割）</td>
+</tr>
+<tr>
+<td>多跳推理失败</td>
+<td>迭代检索（先查A→再查B）</td>
+</tr>
+<tr>
+<td>时效性不足</td>
+<td>设置知识库自动更新周期</td>
+</tr>
+<tr>
+<td>安全合规风险</td>
+<td>敏感信息过滤+权限分级访问</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="九、常见问题（FAQ）"><a href="#九、常见问题（FAQ）" class="headerlink" title="九、常见问题（FAQ）"></a>九、常见问题（FAQ）</h2><h3 id="❓-RAG-和微调（Fine-tuning）有什么区别？"><a href="#❓-RAG-和微调（Fine-tuning）有什么区别？" class="headerlink" title="❓ RAG 和微调（Fine-tuning）有什么区别？"></a>❓ RAG 和微调（Fine-tuning）有什么区别？</h3><blockquote>
+<p>✅ **RAG**：动态注入知识，适合频繁更新的数据 &#x20;</p>
+<p>✅ **微调**：改变模型行为，适合学习新任务范式 &#x20;</p>
+<p>💡 最佳实践：两者结合（微调理解领域术语 + RAG提供实时数据）</p>
+</blockquote>
+<h3 id="❓-哪些情况不适合用-RAG？"><a href="#❓-哪些情况不适合用-RAG？" class="headerlink" title="❓ 哪些情况不适合用 RAG？"></a>❓ 哪些情况不适合用 RAG？</h3><blockquote>
+<p>🔸 需要数学逻辑推理的任务 &#x20;</p>
+<p>🔸 知识高度结构化（建议直接查数据库） &#x20;</p>
+<p>🔸 极简问答（如天气查询，直接调用API更高效）</p>
+</blockquote>
+<h3 id="❓-如何评估-RAG-效果？"><a href="#❓-如何评估-RAG-效果？" class="headerlink" title="❓ 如何评估 RAG 效果？"></a>❓ 如何评估 RAG 效果？</h3><blockquote>
+<p>关键指标： &#x20;</p>
+<ul>
+<li><strong>检索相关性</strong> (Hit Rate@K) &#x20;</li>
+<li><strong>答案准确性</strong> (Factual Score) &#x20;</li>
+<li><strong>引用精确度</strong> (Citation Precision) &#x20;</li>
+</ul>
+</blockquote>
+<hr>
+<h2 id="十、学习资源推荐"><a href="#十、学习资源推荐" class="headerlink" title="十、学习资源推荐"></a>十、学习资源推荐</h2><ul>
+<li><p>📚 理论奠基论文： <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2005.11401">《Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks》</a> (2020) &#x20;</p>
+</li>
+<li><p>🛠️ 实践教程： &#x20;</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://python.langchain.com/docs/use_cases/question_answering/">LangChain RAG 官方文档</a> &#x20;</li>
+<li><a target="_blank" rel="noopener" href="https://docs.llamaindex.ai/en/stable/getting_started/">LlamaIndex 入门指南</a> &#x20;</li>
+</ul>
+</li>
+<li><p>💻 在线体验： &#x20;</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://chat.deepseek.com/">DeepSeek-R 文件问答</a>（上传PDF体验RAG） &#x20;</li>
+</ul>
+</li>
+</ul>
+<hr>
+<blockquote>
+<p>💡 **总结一句话**： &#x20;</p>
+<p><strong>RAG 是大模型落地企业的关键技术桥梁，通过“检索+生成”双引擎，低成本实现知识实时更新与精准问答，已成为AI应用开发的标准范式。</strong></p>
+</blockquote>
+<hr>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/18/193RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" title="RAG篇-RAG快速入门">http://mzfnai.com/2025/07/18/193RAG篇-RAG快速入门/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/%E6%A3%80%E7%B4%A2%E5%A2%9E%E5%BC%BA%E7%94%9F%E6%88%90/" rel="tag"># 检索增强生成</a>
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/" rel="tag"># 知识库</a>
+              <a href="/tags/LLM/" rel="tag"># LLM</a>
+              <a href="/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 向量数据库</a>
+              <a href="/tags/%E4%BC%81%E4%B8%9AAI/" rel="tag"># 企业AI</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/17/191Dify%E7%AF%87-%E5%9F%BA%E4%BA%8EChatFlow%E6%90%AD%E5%BB%BA%E6%96%87%E7%AB%A0%E7%90%86%E8%A7%A3%E5%8A%A9%E6%89%8B/" rel="prev" title="Dify篇-基于ChatFlow搭建文章理解助手">
+      <i class="fa fa-chevron-left"></i> Dify篇-基于ChatFlow搭建文章理解助手
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/19/192Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/" rel="next" title="Dify篇-基于RAG知识库搭建智能客服">
+      Dify篇-基于RAG知识库搭建智能客服 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E2%80%94%E2%80%94-%E8%AE%A9%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%B2%BE%E5%87%86%E6%8E%8C%E6%8F%A1%E4%BC%81%E4%B8%9A%E7%A7%81%E6%9C%89%E7%9F%A5%E8%AF%86%E7%9A%84%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF"><span class="nav-number">1.</span> <span class="nav-text">—— 让大模型精准掌握企业私有知识的核心技术</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81RAG-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">一、RAG 是什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9C%85-%E6%A0%B8%E5%BF%83%E4%BB%B7%E5%80%BC%EF%BC%9A"><span class="nav-number">2.1.</span> <span class="nav-text">✅ 核心价值：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-RAG%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">二、为什么需要 RAG？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81RAG-%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%EF%BC%884%E6%AD%A5%EF%BC%89"><span class="nav-number">4.</span> <span class="nav-text">三、RAG 核心工作流程（4步）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A5%E9%AA%A4%E8%AF%A6%E8%A7%A3%EF%BC%9A"><span class="nav-number">4.1.</span> <span class="nav-text">步骤详解：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81RAG-%E7%B3%BB%E7%BB%9F%E5%85%B3%E9%94%AE%E7%BB%84%E4%BB%B6"><span class="nav-number">5.</span> <span class="nav-text">四、RAG 系统关键组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E4%BC%81%E4%B8%9A%E7%BA%A7-RAG-%E6%9E%B6%E6%9E%84%E7%A4%BA%E4%BE%8B"><span class="nav-number">6.</span> <span class="nav-text">五、企业级 RAG 架构示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81RAG-%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">7.</span> <span class="nav-text">六、RAG 典型应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E5%BF%AB%E9%80%9F%E6%90%AD%E5%BB%BA-RAG-%E7%9A%84-4-%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">8.</span> <span class="nav-text">七、快速搭建 RAG 的 4 种方式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1%EF%B8%8F%E2%83%A3-%E9%9B%B6%E4%BB%A3%E7%A0%81%E5%B9%B3%E5%8F%B0%EF%BC%88%E4%B8%9A%E5%8A%A1%E4%BA%BA%E5%91%98%EF%BC%89"><span class="nav-number">8.1.</span> <span class="nav-text">1️⃣ 零代码平台（业务人员）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2%EF%B8%8F%E2%83%A3-%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6%EF%BC%88%E5%BC%80%E5%8F%91%E8%80%85%EF%BC%89"><span class="nav-number">8.2.</span> <span class="nav-text">2️⃣ 开发框架（开发者）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%EF%B8%8F%E2%83%A3-%E4%BA%91%E6%9C%8D%E5%8A%A1%EF%BC%88%E4%BC%81%E4%B8%9A%E7%BA%A7%EF%BC%89"><span class="nav-number">8.3.</span> <span class="nav-text">3️⃣ 云服务（企业级）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4%EF%B8%8F%E2%83%A3-%E5%BC%80%E6%BA%90%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">8.4.</span> <span class="nav-text">4️⃣ 开源解决方案</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AB%E3%80%81RAG-%E4%BC%98%E5%8C%96%E8%BF%9B%E9%98%B6%E6%8A%80%E5%B7%A7"><span class="nav-number">9.</span> <span class="nav-text">八、RAG 优化进阶技巧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%9D%E3%80%81%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98%EF%BC%88FAQ%EF%BC%89"><span class="nav-number">10.</span> <span class="nav-text">九、常见问题（FAQ）</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%93-RAG-%E5%92%8C%E5%BE%AE%E8%B0%83%EF%BC%88Fine-tuning%EF%BC%89%E6%9C%89%E4%BB%80%E4%B9%88%E5%8C%BA%E5%88%AB%EF%BC%9F"><span class="nav-number">10.1.</span> <span class="nav-text">❓ RAG 和微调（Fine-tuning）有什么区别？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%93-%E5%93%AA%E4%BA%9B%E6%83%85%E5%86%B5%E4%B8%8D%E9%80%82%E5%90%88%E7%94%A8-RAG%EF%BC%9F"><span class="nav-number">10.2.</span> <span class="nav-text">❓ 哪些情况不适合用 RAG？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%93-%E5%A6%82%E4%BD%95%E8%AF%84%E4%BC%B0-RAG-%E6%95%88%E6%9E%9C%EF%BC%9F"><span class="nav-number">10.3.</span> <span class="nav-text">❓ 如何评估 RAG 效果？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E3%80%81%E5%AD%A6%E4%B9%A0%E8%B5%84%E6%BA%90%E6%8E%A8%E8%8D%90"><span class="nav-number">11.</span> <span class="nav-text">十、学习资源推荐</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

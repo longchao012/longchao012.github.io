@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍如何使用Dify平台基于RAG知识库搭建智能客服系统，包括知识库创建、文档上传、检索配置和客服应用部署的完整流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dify篇-基于RAG知识库搭建智能客服">
+<meta property="og:url" content="http://mzfnai.com/2025/07/19/192Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍如何使用Dify平台基于RAG知识库搭建智能客服系统，包括知识库创建、文档上传、检索配置和客服应用部署的完整流程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_xhrl.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_t61q.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_sajx.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_gajl.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_8a4z.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_rjhr.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_63hw.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_joef.png">
+<meta property="og:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_h990.png">
+<meta property="article:published_time" content="2025-07-19T03:38:27.000Z">
+<meta property="article:modified_time" content="2025-09-10T14:29:41.747Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="RAG">
+<meta property="article:tag" content="知识库">
+<meta property="article:tag" content="智能客服">
+<meta property="article:tag" content="Dify">
+<meta property="article:tag" content="上下文窗口">
+<meta property="article:tag" content="文档检索">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448.png">
+
+<link rel="canonical" href="http://mzfnai.com/2025/07/19/192Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Dify篇-基于RAG知识库搭建智能客服 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/07/19/192Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Dify篇-基于RAG知识库搭建智能客服
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-07-19 11:38:27" itemprop="dateCreated datePublished" datetime="2025-07-19T11:38:27+08:00">2025-07-19</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AI/Dify/" itemprop="url" rel="index"><span itemprop="name">Dify</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span><br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.4k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+            <div class="post-description">详细介绍如何使用Dify平台基于RAG知识库搭建智能客服系统，包括知识库创建、文档上传、检索配置和客服应用部署的完整流程。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>之前，我们讲解了文件上传的基本用法。然而，当我们需要读取的文本超出LLM的上下文窗口时，就需要用到知识库了。</p>
+<p><strong>什么是上下文？</strong></p>
+<p>上下文窗口是指 LLM 在处理文本时能够“看到”和“记住”的文字范围。它决定了模型在生成回答或继续文本时，能够</p>
+<p>参考多少之前的文字信息。窗口越大，模型能利用的上下文信息越多，生成的内容通常更准确和连贯。</p>
+<p>在之前，我们了解到 LLM 的幻觉的概念，很多情况下 LLM 知识库可以让 Agent 从中定位到准确的信息，从而准确地回答问题。在一些特定领域，比如客服、检索工具等有应用。</p>
+<p>传统的客服机器人往往是基于关键词检索的，当用户输入了关键词以外的问题，机器人就无法解决。知识库正是为了解决这样一个问题，能够做到语义级别上的检索，降低人工的负担。</p>
+<p>在实验开始之前，请记住知识库的核心是检索而非 LLM，是 LLM 增强了输出的过程，但真正的需求仍然是生成答案。</p>
+<h2 id="一、前提条件"><a href="#一、前提条件" class="headerlink" title="一、前提条件"></a>一、前提条件</h2><h3 id="创建应用"><a href="#创建应用" class="headerlink" title="创建应用"></a>创建应用</h3><p>在 Dify 中选择<strong>创建空白应用-工作流编排</strong>。</p>
+<h3 id="添加模型供应商"><a href="#添加模型供应商" class="headerlink" title="添加模型供应商"></a>添加模型供应商</h3><p>本次实验中需要涉及使用 embedding 模型，目前支持 embedding 的模型提供商中有 OpenAl、Cohere 等，在 Dify 的模型供应商中有标注 <code>TEXT EMBEDDING</code>，请确保至少添加了一个并且有充足余额。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448.png"></p>
+<p><strong>什么是 embedding？</strong></p>
+<p>“Embedding”是一种将离散型变量（如单词、句子或者整个文档）转化为连续的向量表示的技术。</p>
+<p>直白地说，在我们将自然语言处理为数据时会将文本转为向量，这个过程被称作 embedding。语义相似的文本的向量会位置相近，语义相反的文本的向量位置相反。LLM 使用这样的数据做训练，预测出后续的向量，从而生成文本。</p>
+<h2 id="二、创建知识库"><a href="#二、创建知识库" class="headerlink" title="二、创建知识库"></a>二、创建知识库</h2><p>登录 Dify-&gt;知识库-&gt;选择数据源</p>
+<p>Dify 支持三种数据源：上传文本文件、Notion、网页。</p>
+<p>其中，本地文本文件需要注意文件类型的限制以及文件大小的限制；同步 Notion 内容需要绑定 Notion 账号；同步 Web 站点需要使用 Jina 或者 Firecrawl 的 API。</p>
+<p>下面将先以本地文件为例。</p>
+<h3 id="分段设置"><a href="#分段设置" class="headerlink" title="分段设置"></a>分段设置</h3><p>上传文档后，会进入以下页面：</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_xhrl.png"></p>
+<p>可以看到右侧有分段预览。当前默认选择的是自动分段与清洗，Dify 会根据文本内容的不同自动将文章切分为许多个段落。你也可以在自定义中设置其他的切分规则。</p>
+<h3 id="索引方式"><a href="#索引方式" class="headerlink" title="索引方式"></a>索引方式</h3><p>通常情况下选择高质量，但是需要额外消耗 token。选择经济无需消耗 token。</p>
+<p>在社区版 Dify 里有采用 Q&amp;A 分段模式，选择对应的语言可以将文本内容整理为问答格式，需要额外消耗 token。</p>
+<h3 id="Embedding-模型"><a href="#Embedding-模型" class="headerlink" title="Embedding 模型"></a>Embedding 模型</h3><p>请在使用前查阅模型供应商的使用文档、模型定价等信息。</p>
+<p>不同的 embedding 模型适用场景不同。例如 Cohere 的 embed-english 适用于英语文档，embed-multilingual 适用于多语言文档。</p>
+<h3 id="检索设置"><a href="#检索设置" class="headerlink" title="检索设置"></a>检索设置</h3><p>Dify 提供了向量检索、全文检索、混合检索三种检索功能，其中常用的检索是混合检索。</p>
+<p>混合检索中可以设置权重或者使用重新排序（Rerank）模型。使用权重设置时，可以设置检索更侧重语义还是关键词，例</p>
+<p>如下图中语义占 70% 的权重，关键词占 30% 的权重。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_t61q.png"></p>
+<p>点击<strong>保存并处理</strong>将会处理文档，完成处理后文档就可以在应用中使用了。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_448_sajx.png"></p>
+<h3 id="同步自-Web-站点"><a href="#同步自-Web-站点" class="headerlink" title="同步自 Web 站点"></a>同步自 Web 站点</h3><p>很多情况下，我们需要根据帮助文档构建智能客服，以 Dify 为例，我们可以将 Dify 的帮助文档转为知识库。</p>
+<p>目前 Dify 支持最多 50 个页面的处理，请注意限制数量的设置。如果超出，可以再创建新的知识库。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449.png"></p>
+<h3 id="调整知识库内容"><a href="#调整知识库内容" class="headerlink" title="调整知识库内容"></a>调整知识库内容</h3><p>在知识库处理完所有文档后，最好前往知识库确认分段的连贯性。如果不连贯将会影响检索的效果，需要手动调整。</p>
+<p>点击文档内容，对分段内容进行浏览，如果有无关的内容可以禁用或删除。</p>
+<p>如果有内容被分段到了另外一个段落，也需要调整回来。</p>
+<h3 id="召回测试"><a href="#召回测试" class="headerlink" title="召回测试"></a>召回测试</h3><p>在知识库的文档页，左侧边栏中点击召回测试，可以输入关键词来测试检索结果的准确性。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_gajl.png"></p>
+<h2 id="三、添加节点"><a href="#三、添加节点" class="headerlink" title="三、添加节点"></a>三、添加节点</h2><p>进入创建好的APP，下面开始构建智能客服机器人。</p>
+<h3 id="问题分类节点"><a href="#问题分类节点" class="headerlink" title="问题分类节点"></a>问题分类节点</h3><p>你需要使用问题分类节点将用户的不同需求分离开。有的情况下用户甚至会聊无关的话题，对此也需要设置一个分类。</p>
+<p>为了让分类更准确，你需要选择更优秀的 LLM，分类需要写的足够具体、区分度足够大。</p>
+<p>以下是一个参考分类：</p>
+<ul>
+<li>用户询问无关问题</li>
+<li>用户询问和 Dify 相关问题</li>
+<li>用户请求对技术名词的解释</li>
+<li>用户询问社群加入方式</li>
+</ul>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_8a4z.png"></p>
+<h3 id="直接回复节点"><a href="#直接回复节点" class="headerlink" title="直接回复节点"></a>直接回复节点</h3><p>问题分类中，“用户询问无关问题”和“用户询问社群加入方式”这两个问题是不需要经过 LLM 的处理就能回复的。</p>
+<p>因此你可以直接在这两个问题后面连接直接回复节点。</p>
+<p>“用户询问无关问题”：</p>
+<p>可以将用户引导到帮助文档，让用户先尝试自己解决，例如：</p>
+<p>Dify 支持 Markdown 格式的文本的输出。你可以在输出中用 Makrdown 来丰富文本的格式。甚至可以用 Markdown 格式在文中插入图片，效果如下：</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_rjhr.png"></p>
+<h3 id="知识检索节点"><a href="#知识检索节点" class="headerlink" title="知识检索节点"></a>知识检索节点</h3><p>在“用户询问和 Dify 相关问题”后增加知识检索节点，勾选需要使用的知识库。</p>
+<h3 id="LLM-节点"><a href="#LLM-节点" class="headerlink" title="LLM 节点"></a>LLM 节点</h3><p>在知识检索节点的下一个节点，你需要选择 LLM 节点来整理知识库召回的内容。</p>
+<p>LLM 需要根据用户的提问，调整回复，使得回复内容更加得体。</p>
+<p>上下文：需要将知识检索节点的输出作为 LLM 节点的上下文。</p>
+<p>你可以在提示词书写区域输入 <code>／</code>或者 <code>&#123;</code>来引用变量。在变量中，<code>sys.</code>开头的变量是系统变量，请查询帮助文档相关说明。</p>
+<p>此外，你可以打开 LLM 记忆让用户的对话体验更加连贯。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_63hw.png"></p>
+<ul>
+<li>思考题1：如何连接外部知识库？</li>
+</ul>
+<p>在知识库功能中，你可以通过外部知识库 API 来连接外部知识库，例如 AWS Bedrock 知识库。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_joef.png"></p>
+<p>有关 AWS Bedrock 知识库的最佳实践，请阅读：<a target="_blank" rel="noopener" href="https://docs.dify.ai/zh-hans/learn-more/use-cases/how-to-connect-aws-bedrock">如何连接 AWS Bedrock 知识库？</a></p>
+<ul>
+<li>思考题2：如何通过 API 管理知识库？</li>
+</ul>
+<p>无论是社区版还是 SaaS 版 Dify，你都可以通过知识库 API 增加、删除、查询状态等。</p>
+<p>在搭载知识库的实例中，进入知识库-&gt;API，并且创建 API 密钥。请妥善保管 API 密钥。</p>
+<p><img src="/images/Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERA_image_20250910_180547_449_h990.png"></p>
+<ul>
+<li>思考题3：如何将客服机器人嵌入网页？</li>
+</ul>
+<p>应用发布后，选择嵌入网页，选择一种合适的嵌入形式，将代码粘贴到网页的合适位置即可。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/07/19/192Dify%E7%AF%87-%E5%9F%BA%E4%BA%8ERAG%E7%9F%A5%E8%AF%86%E5%BA%93%E6%90%AD%E5%BB%BA%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/" title="Dify篇-基于RAG知识库搭建智能客服">http://mzfnai.com/2025/07/19/192Dify篇-基于RAG知识库搭建智能客服/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RAG/" rel="tag"># RAG</a>
+              <a href="/tags/%E7%9F%A5%E8%AF%86%E5%BA%93/" rel="tag"># 知识库</a>
+              <a href="/tags/%E6%99%BA%E8%83%BD%E5%AE%A2%E6%9C%8D/" rel="tag"># 智能客服</a>
+              <a href="/tags/Dify/" rel="tag"># Dify</a>
+              <a href="/tags/%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AA%97%E5%8F%A3/" rel="tag"># 上下文窗口</a>
+              <a href="/tags/%E6%96%87%E6%A1%A3%E6%A3%80%E7%B4%A2/" rel="tag"># 文档检索</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/07/18/193RAG%E7%AF%87-RAG%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8/" rel="prev" title="RAG篇-RAG快速入门">
+      <i class="fa fa-chevron-left"></i> RAG篇-RAG快速入门
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/07/20/194RAG%E7%AF%87-%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" rel="next" title="RAG篇-项目优化最佳实践">
+      RAG篇-项目优化最佳实践 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%89%8D%E6%8F%90%E6%9D%A1%E4%BB%B6"><span class="nav-number">1.</span> <span class="nav-text">一、前提条件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E5%BA%94%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">创建应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0%E6%A8%A1%E5%9E%8B%E4%BE%9B%E5%BA%94%E5%95%86"><span class="nav-number">1.2.</span> <span class="nav-text">添加模型供应商</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%88%9B%E5%BB%BA%E7%9F%A5%E8%AF%86%E5%BA%93"><span class="nav-number">2.</span> <span class="nav-text">二、创建知识库</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%AE%B5%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.1.</span> <span class="nav-text">分段设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E6%96%B9%E5%BC%8F"><span class="nav-number">2.2.</span> <span class="nav-text">索引方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Embedding-%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.3.</span> <span class="nav-text">Embedding 模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A3%80%E7%B4%A2%E8%AE%BE%E7%BD%AE"><span class="nav-number">2.4.</span> <span class="nav-text">检索设置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5%E8%87%AA-Web-%E7%AB%99%E7%82%B9"><span class="nav-number">2.5.</span> <span class="nav-text">同步自 Web 站点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E6%95%B4%E7%9F%A5%E8%AF%86%E5%BA%93%E5%86%85%E5%AE%B9"><span class="nav-number">2.6.</span> <span class="nav-text">调整知识库内容</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AC%E5%9B%9E%E6%B5%8B%E8%AF%95"><span class="nav-number">2.7.</span> <span class="nav-text">召回测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%B7%BB%E5%8A%A0%E8%8A%82%E7%82%B9"><span class="nav-number">3.</span> <span class="nav-text">三、添加节点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%88%86%E7%B1%BB%E8%8A%82%E7%82%B9"><span class="nav-number">3.1.</span> <span class="nav-text">问题分类节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B4%E6%8E%A5%E5%9B%9E%E5%A4%8D%E8%8A%82%E7%82%B9"><span class="nav-number">3.2.</span> <span class="nav-text">直接回复节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%A5%E8%AF%86%E6%A3%80%E7%B4%A2%E8%8A%82%E7%82%B9"><span class="nav-number">3.3.</span> <span class="nav-text">知识检索节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LLM-%E8%8A%82%E7%82%B9"><span class="nav-number">3.4.</span> <span class="nav-text">LLM 节点</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">245</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">621</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">2.3m</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">34:23</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
