@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="使用Cursor和AI工具零代码开发治愈系谷歌浏览器插件，集成免费大模型API生成笑话、励志名言和哲学语录，包含完整开发流程和动画效果实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程">
+<meta property="og:url" content="http://mzfnai.com/2025/08/27/211.%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="使用Cursor和AI工具零代码开发治愈系谷歌浏览器插件，集成免费大模型API生成笑话、励志名言和哲学语录，包含完整开发流程和动画效果实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_6%E6%9C%884%E6%97%A5_20250920_182204_800.gif">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604104508_20250920_182204_800.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105328_20250920_182204_800.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105405_20250920_182204_800.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105405_20250920_182204_800_hf6g.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105556_20250920_182204_800.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105708_20250920_182204_800.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105955_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111328_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111526_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111629_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111708_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113316_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113528_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113828_20250920_182204_801.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113959_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604114430_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604114930_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604115143_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140201_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140606_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140855_20250920_182207_401.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604141042_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604141301_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_4a3616eabd92c952aa06c5e12a1e80_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_62efbaef0f24bd4aca8a339d45c013_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_a171d2d8bb0b09eb0ad27a78e5d2fb_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604142422_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604142243_20250920_182207_402.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_23_20250920_182207_402.jpg">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143229_20250920_182209_459.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143330_20250920_182209_459.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143725_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143849_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144108_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144320_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144400_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144626_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144759_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145025_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604093706_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145432_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145500_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145613_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145801_20250920_182209_460.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604095131_20250920_182211_440.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604150107_20250920_182211_440.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_45_20250920_182211_440.jpg">
+<meta property="article:published_time" content="2025-08-27T09:54:32.000Z">
+<meta property="article:modified_time" content="2025-09-24T11:42:10.190Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="浏览器插件">
+<meta property="article:tag" content="Chrome扩展">
+<meta property="article:tag" content="AI生成">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="前端开发">
+<meta property="article:tag" content="JavaScript">
+<meta property="article:tag" content="Lottie动画">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_6%E6%9C%884%E6%97%A5_20250920_182204_800.gif">
+
+<link rel="canonical" href="http://mzfnai.com/2025/08/27/211.%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/08/27/211.%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-08-27 17:54:32" itemprop="dateCreated datePublished" datetime="2025-08-27T17:54:32+08:00">2025-08-27</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/%E6%A1%88%E4%BE%8B%E7%A0%94%E7%A9%B6/" itemprop="url" rel="index"><span itemprop="name">案例研究</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">使用Cursor和AI工具零代码开发治愈系谷歌浏览器插件，集成免费大模型API生成笑话、励志名言和哲学语录，包含完整开发流程和动画效果实现</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我是longchao，用 AI 0 代码，生成了一个好玩的治愈系的谷歌浏览器插件。</p>
+<p>如下图，这个插件会在浏览器上生成一个动态的小狗，点击小狗会弹出三个选项，可以选择笑话、励志名言、哲学语录、选择之后会在屏幕弹出对应的内容，为你枯燥的打工生涯添加一丝乐趣～</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_6%E6%9C%884%E6%97%A5_20250920_182204_800.gif"></p>
+<p>对话框里的内容都是随机的，由大模型生成，这篇文章就详细给大家介绍下实现过程，通过今天的文章你可以获得以下知识：</p>
+<ul>
+<li><p>利用 Cursor 开发谷歌浏览器</p>
+</li>
+<li><p>插件中如何接入免费的大模型</p>
+</li>
+<li><p>如何利用动画库 lottiefiles</p>
+</li>
+<li><p>如何修复谷歌插件 bug</p>
+</li>
+</ul>
+<p>想直接要源代码的可以直接拉到文末。</p>
+<h4 id="一、想法来源"><a href="#一、想法来源" class="headerlink" title="一、想法来源"></a>一、想法来源</h4><p>最开始我是询问 DeepSeek 后得到的想法</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604104508_20250920_182204_800.png"></p>
+<p>因为平时博主喜欢养一些猫猫狗狗，我就在想把一个动态的狗狗放在浏览器的角落，点击他选择笑话、励志言语或者哲学语录，这样平时对着电脑办公累了心情沮丧了看着狗狗，看个笑话是不是还不错？既然想法有了，接下来就是实践了。</p>
+<h4 id="二、寻找大模型生成笑话"><a href="#二、寻找大模型生成笑话" class="headerlink" title="二、寻找大模型生成笑话"></a>二、寻找大模型生成笑话</h4><p>我的想法是利用大模型的 API 来生成语录，这样就不会出现重复的语录，既然要选择大模型，那我们就要利用免费的大模型 API，这里博主利用的 openrouter.ai 这里面有许多的免费大模型 API 供我们使用，因为生成笑话这种任务对于大模型太简单，所以我们完全能找到免费的 API。</p>
+<p>地址：<a target="_blank" rel="noopener" href="https://openrouter.ai/">https://openrouter.ai/</a></p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105328_20250920_182204_800.png"></p>
+<h5 id="二）注册登录"><a href="#二）注册登录" class="headerlink" title="二）注册登录"></a>二）注册登录</h5><p>这里可以直接选择 github、谷歌账号来登录，</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105405_20250920_182204_800.png"></p>
+<p>没有也可以选择其他邮箱进行注册后登录</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105405_20250920_182204_800_hf6g.png"></p>
+<h5 id="二）选择模型"><a href="#二）选择模型" class="headerlink" title="二）选择模型"></a>二）选择模型</h5><p>登录完成后点击右上角的 Model 去选择大模型</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105556_20250920_182204_800.png"></p>
+<p>来到 Models 列表页面输入 Free，可以看到有许多免费的模型供我们选择，我们选择第一个 DeepSeek V3 0324 模型</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105708_20250920_182204_800.png"></p>
+<h5 id="三）获取-APIkey"><a href="#三）获取-APIkey" class="headerlink" title="三）获取 APIkey"></a>三）获取 APIkey</h5><p>APIkey 是我们代码和大模型沟通的凭证，来到 Model 页面后点击 API</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604105955_20250920_182204_801.png"></p>
+<p>点击 Creat API key 去到创建 key 的页面</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111328_20250920_182204_801.png"></p>
+<p>再次点击 Creat</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111526_20250920_182204_801.png"></p>
+<p>输入 key 的名称，第二个输入框意思是输入 key 的请求次数限制，输入 100 意思是这个 key 用 100 次后就失效了，如果留空白意思无限次数，输入完毕点击 Creat</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111629_20250920_182204_801.png"></p>
+<p>你的 key 就出来了，这里一定记得点击把 key 复制下来，这里不复制以后就看不见了</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604111708_20250920_182204_801.png"></p>
+<p>这里得到 key 后先存在某处，我们接下来去写写代码</p>
+<h4 id="三、完成项目初始化"><a href="#三、完成项目初始化" class="headerlink" title="三、完成项目初始化"></a>三、完成项目初始化</h4><h5 id="一）创建文件"><a href="#一）创建文件" class="headerlink" title="一）创建文件"></a>一）创建文件</h5><p>接下来我们利用 Cursor 来完成项目的编写，像这样的简单项目，我们只需要把我们的需求描述清楚就行了，先去磁盘里创建一个文件夹，</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113316_20250920_182204_801.png"></p>
+<p>创建完毕后使用 Curosr 打开，点击 Open，找到刚创建文件的位置</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113528_20250920_182204_801.png"></p>
+<h5 id="二）项目需求整理"><a href="#二）项目需求整理" class="headerlink" title="二）项目需求整理"></a>二）项目需求整理</h5><p>需要有张图片，我需要在屏幕上展示一个动物，这个动物是张图片，那需要先有个文件夹放一张图片，点击创建一个文件夹，名字叫 images</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113828_20250920_182204_801.png"></p>
+<p>随便拖一张图片放入 images 文件夹里，这里最开始为了快速出功能，我随便找了张我的头像放进去，这里记得照片的文件名需要改成英文。</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604113959_20250920_182207_401.png"></p>
+<p>找到与大模型通信的示例给 AI，我们之前有了大模型的 APIkey，还需要给 Cursor 讲清楚如何使用这个 key 与请求大模型，回到我们刚才 Open router 的模型页面，点击 API，点击 Typescript，因为我们谷歌插件是用 js 写的，点击旁边的 Copy 复制按钮</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604114430_20250920_182207_401.png"></p>
+<p>接着我们回到我们的 Cursor，创建一个 md 文件，文件名大模型请求示例</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604114930_20250920_182207_401.png"></p>
+<p>把内容复制过来，并且在最后一行把添加一下你刚创建的 key</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604115143_20250920_182207_401.png"></p>
+<h5 id="三）提示词整理"><a href="#三）提示词整理" class="headerlink" title="三）提示词整理"></a>三）提示词整理</h5><p>我们根据插件功能来整理提示词，这里大家可以参考我的直接用</p>
+<blockquote>
+<p>帮我实现一个 Chrome 插件，核心功能是点击可以生成冷笑话、励志句子或者哲学语录，要求的功能如下：<br>1。插件以悬浮球的形式展示在页面侧边栏<br>2。点击悬浮按钮弹出三个选项：“冷笑话”、“励志句子”、“哲学语录”<br>3。向大模型发送相关请求，返回大模型的消息展示在页面<br>#注意<br>无需使用图标<br>使用 V3 版本的 manifest.json<br>请注意中文的格式编码问题<br>悬浮球的图片使用@avatar.png&#x20;<br>- 与大模型的请求方法参考@大模型请求示例。md&#x20;</p>
+</blockquote>
+<p>记得把图片和请求示例给拖进来，模式选择 Agent，模型我就用的 claude-3.7</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140201_20250920_182207_401.png"></p>
+<h5 id="四）生成项目"><a href="#四）生成项目" class="headerlink" title="四）生成项目"></a>四）生成项目</h5><p>把提示词发送过去后就可以等待代码生成了，生成完毕后点击 Accpet</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140606_20250920_182207_401.png"></p>
+<p>可以看到插件代码生成完毕，接下来让我们去试一试插件效果，这里 Curosr 也给出了插件的使用方法。</p>
+<h4 id="四、谷歌导入插件"><a href="#四、谷歌导入插件" class="headerlink" title="四、谷歌导入插件"></a>四、谷歌导入插件</h4><h5 id="一）打开谷歌浏览器"><a href="#一）打开谷歌浏览器" class="headerlink" title="一）打开谷歌浏览器"></a>一）打开谷歌浏览器</h5><p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604140855_20250920_182207_401.png"></p>
+<h5 id="二）插件管理"><a href="#二）插件管理" class="headerlink" title="二）插件管理"></a>二）插件管理</h5><p>在网址栏输入 chrome:&#x2F;&#x2F;extensions&#x2F;，进入插件管理页面后打开右边的开发者模式</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604141042_20250920_182207_402.png"></p>
+<h5 id="三）导入插件"><a href="#三）导入插件" class="headerlink" title="三）导入插件"></a>三）导入插件</h5><p>接着直接把代码文件夹拖进来</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604141301_20250920_182207_402.png"></p>
+<h5 id="四）使用插件"><a href="#四）使用插件" class="headerlink" title="四）使用插件"></a>四）使用插件</h5><p>随便在哪个网页 F5 刷新一下，不要在插件管理页面刷新，接着我的页面左下方就出现了我的头像，点击可以弹出选择</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_4a3616eabd92c952aa06c5e12a1e80_20250920_182207_402.png"></p>
+<p>随便选一个点击，显示正在生成中</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_62efbaef0f24bd4aca8a339d45c013_20250920_182207_402.png"></p>
+<p>最后会在页面中间显示</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_a171d2d8bb0b09eb0ad27a78e5d2fb_20250920_182207_402.png"></p>
+<p>到此，我们这个插件的基本功能就基本实现了！</p>
+<p>完了吗？没完，还记得我最开始的想法吗，我想的是有一条动态的小狗在那里，接下来就让我们来优化样式吧！</p>
+<h4 id="五、样式美化"><a href="#五、样式美化" class="headerlink" title="五、样式美化"></a>五、样式美化</h4><h5 id="一）方法咨询"><a href="#一）方法咨询" class="headerlink" title="一）方法咨询"></a>一）方法咨询</h5><p>现在我们把想法告诉 AI，去找到样式美化的建议，我们新开一个对话，这里有两个注意的点，我们可以把现在的效果图截图下来丢给他，并且把上一个对话的内容作为上下文给 AI，选择上一轮对话的方法，点击 Add context，选择这里的 Past Chats 就可以找上一个对话内容</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604142422_20250920_182207_402.png"></p>
+<p>这里模式选择 ask 模式，因为是询问，不要选择 agent 把文件给修改了，发送以下提示词：</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604142243_20250920_182207_402.png"></p>
+<p>就可以看到 AI 给了我代码和建议，还有我需要准备的文件</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_23_20250920_182207_402.jpg"></p>
+<p>这里我看到 AI 要让我准备几张图片，我觉得和我需求不同，如果是几张图片的话效果就是间断的状态展示，我注意到他说可以使用 Lottie 动画库，于是我觉得去这里看看有没有满足需求的。</p>
+<h5 id="二）Lottie-使用方法"><a href="#二）Lottie-使用方法" class="headerlink" title="二）Lottie 使用方法"></a>二）Lottie 使用方法</h5><h5 id=""><a href="#" class="headerlink" title=""></a></h5><p>注册 Lottie：<a target="_blank" rel="noopener" href="https://lottiefiles.com/">https://lottiefiles.com/</a></p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143229_20250920_182209_459.png"></p>
+<p>点击右上方的 Sign up</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143330_20250920_182209_459.png"></p>
+<p>搜索 Dog 动画，登录后我们在这里右上方的搜索框输入 Dog</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143725_20250920_182209_460.png"></p>
+<p>输入以后直接回车，不要点击 Go to Dashboard，来到动画页面，这里我们选择 Free</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604143849_20250920_182209_460.png"></p>
+<p>下载动画，接下来就找找喜欢的狗狗动画吧，我一眼就相中那个在那蹦迪的小狗</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144108_20250920_182209_460.png"></p>
+<p>点击小狗来到展示页面</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144320_20250920_182209_460.png"></p>
+<p>点击 Get asset link 进入详情页面，这里右边那一块东西指的是可以通过代码形式展示出来</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144400_20250920_182209_460.png"></p>
+<p>但我注意到右上方有个 DownLoad 下载，我点击 DownLoad 后发现可以下载 gif 图</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144626_20250920_182209_460.png"></p>
+<p>我想 gif 的形式更简单一点呀，难得去写代码了，于是点击 GIF 就可以直接下载了</p>
+<h5 id="三）修改悬浮球样式"><a href="#三）修改悬浮球样式" class="headerlink" title="三）修改悬浮球样式"></a>三）修改悬浮球样式</h5><p>把下载好的 GIF 图放入我们的 images 文件，输入提示词，这里选择 Agent 模式</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604144759_20250920_182209_460.png"></p>
+<p>代码生成后我们来到插件管理页面，点击一下刷新就可以了</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145025_20250920_182209_460.png"></p>
+<p>在除了插件管理页面的其他页面，F5 刷新一下，就得到了一只在屏幕上蹦迪的小狗，这里我发现点击狗狗没有反应，说明出了 BUG。</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604093706_20250920_182209_460.png"></p>
+<p>如果大家在开发过程中遇到这样的情况不要慌，给大家说一说如何如解决 BUG。</p>
+<p>按下 F12 打开控制台，我们点击控制台。</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145432_20250920_182209_460.png"></p>
+<p>一般出错了这里都会显示错误信息，我们把错误信息复制到 Cursor，让他帮我们解决就行</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145500_20250920_182209_460.png"></p>
+<p>复制发送过去</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145613_20250920_182209_460.png"></p>
+<p>代码修改完后再回来试试，成功弹出</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604145801_20250920_182209_460.png"></p>
+<h5 id="四）美化笑话展示框"><a href="#四）美化笑话展示框" class="headerlink" title="四）美化笑话展示框"></a>四）美化笑话展示框</h5><p>但是笑话的展示框还是之前的样式，我们继续让 Cursor 修改展示框的样式。</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604095131_20250920_182211_440.png"></p>
+<p>把样式图发给 Cursor，发送提示词</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20250604150107_20250920_182211_440.png"></p>
+<p>修改完毕后记得去插件页面刷新一下，我们再点击点击，展示框的样式就变成了这样</p>
+<p><img src="/images/%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C_45_20250920_182211_440.jpg"></p>
+<p>至此！我们的笑话生成器第一版生成完毕！记得把项目中的 key 替换成自己申请的 key 才可以使用哟。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/08/27/211.%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/" title="治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程">http://mzfnai.com/2025/08/27/211.治愈系笑话生成器谷歌浏览器插件/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/" rel="tag"># 浏览器插件</a>
+              <a href="/tags/Chrome%E6%89%A9%E5%B1%95/" rel="tag"># Chrome扩展</a>
+              <a href="/tags/AI%E7%94%9F%E6%88%90/" rel="tag"># AI生成</a>
+              <a href="/tags/Cursor/" rel="tag"># Cursor</a>
+              <a href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 前端开发</a>
+              <a href="/tags/JavaScript/" rel="tag"># JavaScript</a>
+              <a href="/tags/Lottie%E5%8A%A8%E7%94%BB/" rel="tag"># Lottie动画</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/08/20/210.%E6%89%B9%E9%87%8F%E7%94%9F%E6%88%90%E5%85%AC%E4%BC%97%E5%8F%B7%E5%86%85%E5%AE%B9/" rel="prev" title="批量生成公众号内容：基于Selenium自动化的Perplexity内容生成方案">
+      <i class="fa fa-chevron-left"></i> 批量生成公众号内容：基于Selenium自动化的Perplexity内容生成方案
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2025/09/02/212.%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6/" rel="next" title="网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战">
+      网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%83%B3%E6%B3%95%E6%9D%A5%E6%BA%90"><span class="nav-number">1.</span> <span class="nav-text">一、想法来源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AF%BB%E6%89%BE%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%94%9F%E6%88%90%E7%AC%91%E8%AF%9D"><span class="nav-number">2.</span> <span class="nav-text">二、寻找大模型生成笑话</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E6%B3%A8%E5%86%8C%E7%99%BB%E5%BD%95"><span class="nav-number">2.1.</span> <span class="nav-text">二）注册登录</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E9%80%89%E6%8B%A9%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.2.</span> <span class="nav-text">二）选择模型</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%89%EF%BC%89%E8%8E%B7%E5%8F%96-APIkey"><span class="nav-number">2.3.</span> <span class="nav-text">三）获取 APIkey</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%AE%8C%E6%88%90%E9%A1%B9%E7%9B%AE%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">三、完成项目初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%80%EF%BC%89%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6"><span class="nav-number">3.1.</span> <span class="nav-text">一）创建文件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E9%A1%B9%E7%9B%AE%E9%9C%80%E6%B1%82%E6%95%B4%E7%90%86"><span class="nav-number">3.2.</span> <span class="nav-text">二）项目需求整理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%89%EF%BC%89%E6%8F%90%E7%A4%BA%E8%AF%8D%E6%95%B4%E7%90%86"><span class="nav-number">3.3.</span> <span class="nav-text">三）提示词整理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9B%9B%EF%BC%89%E7%94%9F%E6%88%90%E9%A1%B9%E7%9B%AE"><span class="nav-number">3.4.</span> <span class="nav-text">四）生成项目</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E8%B0%B7%E6%AD%8C%E5%AF%BC%E5%85%A5%E6%8F%92%E4%BB%B6"><span class="nav-number">4.</span> <span class="nav-text">四、谷歌导入插件</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%80%EF%BC%89%E6%89%93%E5%BC%80%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8"><span class="nav-number">4.1.</span> <span class="nav-text">一）打开谷歌浏览器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E6%8F%92%E4%BB%B6%E7%AE%A1%E7%90%86"><span class="nav-number">4.2.</span> <span class="nav-text">二）插件管理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%89%EF%BC%89%E5%AF%BC%E5%85%A5%E6%8F%92%E4%BB%B6"><span class="nav-number">4.3.</span> <span class="nav-text">三）导入插件</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9B%9B%EF%BC%89%E4%BD%BF%E7%94%A8%E6%8F%92%E4%BB%B6"><span class="nav-number">4.4.</span> <span class="nav-text">四）使用插件</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%A0%B7%E5%BC%8F%E7%BE%8E%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">五、样式美化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%80%EF%BC%89%E6%96%B9%E6%B3%95%E5%92%A8%E8%AF%A2"><span class="nav-number">5.1.</span> <span class="nav-text">一）方法咨询</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89Lottie-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95"><span class="nav-number">5.2.</span> <span class="nav-text">二）Lottie 使用方法</span></a></li><li class="nav-item nav-level-5"><a class="nav-link"><span class="nav-number">5.3.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%89%EF%BC%89%E4%BF%AE%E6%94%B9%E6%82%AC%E6%B5%AE%E7%90%83%E6%A0%B7%E5%BC%8F"><span class="nav-number">5.4.</span> <span class="nav-text">三）修改悬浮球样式</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E5%9B%9B%EF%BC%89%E7%BE%8E%E5%8C%96%E7%AC%91%E8%AF%9D%E5%B1%95%E7%A4%BA%E6%A1%86"><span class="nav-number">5.5.</span> <span class="nav-text">四）美化笑话展示框</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">249</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">79</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">639</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

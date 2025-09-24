@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"mzfnai.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"style":"flat"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"搜索文章","hits_empty":"我们没有找到任何搜索结果：${query}","hits_stats":"找到${hits}个结果，耗时${time}毫秒"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="详细介绍如何利用Coze插件商店的TreeMind插件，结合Cursor开发工具，创建网页文字一键生成思维导图的浏览器扩展，包含完整的API调用和前端实现方案">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战">
+<meta property="og:url" content="http://mzfnai.com/2025/09/02/212.%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6/index.html">
+<meta property="og:site_name" content="妙知赋能AI longchao&#39;s Blog">
+<meta property="og:description" content="详细介绍如何利用Coze插件商店的TreeMind插件，结合Cursor开发工具，创建网页文字一键生成思维导图的浏览器扩展，包含完整的API调用和前端实现方案">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_10-42-40%20(2)_20250920_182025_208.gif">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_pe2f.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_lrwx.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_ti69.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_m971.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_oupg.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_s92p.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_hudz.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_r98b.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_4ypq.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_fv1e.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_qoe9.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_79me.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_517.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518_6boy.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518_kis2.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_asub.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_sh9s.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_c8g2.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_rbdn.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_tfy2.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_fctc.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_gjoa.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_c8b7.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_e5pe.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_532.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533_duau.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_09-21-02%20(1)_20250920_182029_533.gif">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533_kzll.png">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_09-27-17%20(1)_20250920_182029_533.gif">
+<meta property="og:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_10-42-40%20(2)_20250920_182029_533.gif">
+<meta property="article:published_time" content="2025-09-02T08:12:13.000Z">
+<meta property="article:modified_time" content="2025-09-24T11:42:18.930Z">
+<meta property="article:author" content="longchao">
+<meta property="article:tag" content="浏览器插件">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="前端开发">
+<meta property="article:tag" content="Coze插件">
+<meta property="article:tag" content="思维导图">
+<meta property="article:tag" content="API调用">
+<meta property="article:tag" content="TreeMind">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://mzfnai.com/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_10-42-40%20(2)_20250920_182025_208.gif">
+
+<link rel="canonical" href="http://mzfnai.com/2025/09/02/212.%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战 | 妙知赋能AI longchao's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta custom-logo">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">妙知赋能AI longchao's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">A blog about life</p>
+      <a>
+        <img class="custom-logo-image" src="/uploads/custom-logo.jpg" alt="妙知赋能AI longchao's Blog">
+      </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://mzfnai.com/2025/09/02/212.%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="longchao">
+      <meta itemprop="description" content="A blog about life, technology, and everything in between.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="妙知赋能AI longchao's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2025-09-02 16:12:13" itemprop="dateCreated datePublished" datetime="2025-09-02T16:12:13+08:00">2025-09-02</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/" itemprop="url" rel="index"><span itemprop="name">技术文章</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/AI-Agent/" itemprop="url" rel="index"><span itemprop="name">AI-Agent</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+            <div class="post-description">详细介绍如何利用Coze插件商店的TreeMind插件，结合Cursor开发工具，创建网页文字一键生成思维导图的浏览器扩展，包含完整的API调用和前端实现方案</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>打开闲鱼搜索”Coze 定制”，密密麻麻的服务报价直接刷屏，即使表明看起来几十块的商家，一细聊，都是几百到上千不等的报价。</p>
+<p>有趣的是，这些智能体定制化服务背后，最核心的不只是工作流设计，还有一个被很多人忽视的重要角色 —— 插件。</p>
+<p>细看会发现，Coze 官方和众多智能体爱好者已经创造了大量有价值的免费插件。</p>
+<p>而更让我惊喜的是，有些聪明的开发者并没有止步于此。他们把这些插件直接开放给浏览器插件、网页使用，悄悄做成了小而美的产品…</p>
+<p>不得不说，这波操作真的很秀。</p>
+<p>的确，相比自己从零开始写大量代码逻辑，站在巨人的肩膀上搞定一切，不是更香吗？</p>
+<p>本文将介绍如下内容，带你了解 Coze 插件变现的新思路：</p>
+<ul>
+<li><p>怎么寻找合适的插件</p>
+</li>
+<li><p>怎么使用 API 调用 Coze 插件</p>
+</li>
+<li><p>Cursor + Coze 插件开发思维导图插件</p>
+</li>
+</ul>
+<p>效果如下：</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_10-42-40%20(2)_20250920_182025_208.gif"></p>
+<h3 id="一、完整流程"><a href="#一、完整流程" class="headerlink" title="一、完整流程"></a>一、完整流程</h3><p>这次我们做一个简单的需求，用户故事：<strong>用户，在网页上选择一段文字，点击浮动按钮，可以生成思维导图的图片在侧边栏显示。</strong></p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208.png"></p>
+<h3 id="二、如何寻找合适的插件？"><a href="#二、如何寻找合适的插件？" class="headerlink" title="二、如何寻找合适的插件？"></a>二、如何寻找合适的插件？</h3><p>前段时间，我介绍过一些好用的 Coze 插件。</p>
+<p>除此之外，我们可以在 Coze 商店进行搜索。商店里提供了大量免费插件。在左侧，我们可以按照类目进行筛选。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_pe2f.png"></p>
+<p>需要注意的是，就算我们找到了符合需求的插件，最好也在 Coze 里实际测试一下，确认两点：</p>
+<ol>
+<li><p><strong>功能是否正常</strong>：避免插件不兼容或无法正常使用的情况。</p>
+</li>
+<li><p><strong>费用情况</strong>：是免费的还是付费的？如果是付费的，费用是否在可接受范围内？</p>
+</li>
+</ol>
+<p>目前，插件商店里的插件大致可以分为三种类型：</p>
+<p><strong>1、无效插件</strong>：虽然插件上架前都需要通过测试，但商店里还是有一些插件在实际使用中无法正常工作，可能是因为服务器不再运行，或者插件本身已经失效。</p>
+<p><strong>2、免费插件</strong>：这种插件无需验证信息，直接可以使用，是真正的“即插即用”类型。为这些“为爱发电”的开发者点赞！在选择免费插件时，建议优先考虑官方提供的插件，可靠性通常更高。</p>
+<p><strong>3、商用插件</strong>：这类插件因为涉及技术成本或资源消耗，通常需要官方密钥验证。对于这些付费插件，我们可以根据自身需求和预算，评估是否合适。</p>
+<p>无论选择哪种类型的插件，在调研阶段，最好都先在一个独立的 Coze 工作流里测试一下，确保输出的数据真的符合需求。</p>
+<p><strong>根据我们的需求，我们需要找到一款指定文字生成思维导图的插件。</strong></p>
+<p>经过筛选，我们找到两个官方的免费插件，仔细阅读插件描述后，发现 <strong>TreeMind</strong> 树图插件基本上能够满足需求。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_lrwx.png"></p>
+<p>创建插件测试流程，输入符合长度的文字开始验证。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_208_ti69.png"></p>
+<p>确认输出结果后，我们发现属性 <code>data_struct.pic</code> 返回了一个图片链接，成功生成了所需的思维导图图像。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209.png"></p>
+<p>这张图片正是我们所需要的东西。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_m971.png"></p>
+<p>为了方便接下来通过 API 正常调用插件，我们需要将整个流程发布上线，这样就可以在开发中顺利使用了。</p>
+<h3 id="三、如何使用-API-调用插件？-x20"><a href="#三、如何使用-API-调用插件？-x20" class="headerlink" title="三、如何使用 API 调用插件？&#x20;"></a>三、如何使用 API 调用插件？&#x20;</h3><h4 id="一）了解使用限制和计费方式"><a href="#一）了解使用限制和计费方式" class="headerlink" title="一）了解使用限制和计费方式"></a>一）了解使用限制和计费方式</h4><p>在使用 API 之前，建议先了解一下 Coze API 的使用限制和计费方式，避免不小心超出限制，影响使用体验。</p>
+<p>这里要特别注意：在调用 Coze 工作流或 Bot 时，基础版本的账户每月只有 <strong>100 次调用机会</strong>，超过后将暂停服务，无法继续调用。</p>
+<p>所以在测试和部署时，务必要规划好使用频次和成本。</p>
+<p>专业版不限次数和频率，但是会按次、按大模型的 Token 消耗来收费。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_oupg.png"></p>
+<p>这次案例咱们不涉及到大模型的使用，完全是关于调用次数的问题。所以，重点就放在调用次数的计费方式上。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_s92p.png"></p>
+<p>正常价格为 0.002 元&#x2F;次，可以通过购买智能体资源包来获取更加优惠的价格。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_hudz.png"></p>
+<p>除此之外，官方还为每个用户提供了超优惠的限购活动，以下是智能体开发者必买套餐。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_r98b.png"></p>
+<p>大模型的计费方式不是本文的重点，大家有兴趣的话可以直接参考官方文档了解详情。</p>
+<blockquote>
+<p>地址：<a target="_blank" rel="noopener" href="https://www.volcengine.com/docs/84458/1288966#%E6%96%B9%E8%88%9F%E6%A8%A1%E5%9E%8B%E6%9C%8D%E5%8A%A1">https://www.volcengine.com/docs/84458/1288966#%E6%96%B9%E8%88%9F%E6%A8%A1%E5%9E%8B%E6%9C%8D%E5%8A%A1</a></p>
+</blockquote>
+<h4 id="二）了解-API-调用工作流的限制-x20"><a href="#二）了解-API-调用工作流的限制-x20" class="headerlink" title="二）了解 API 调用工作流的限制&#x20;"></a>二）了解 API 调用工作流的限制&#x20;</h4><p>首先我们先查看下 Coze API 文档。</p>
+<blockquote>
+<p>地址：<a target="_blank" rel="noopener" href="https://www.coze.cn/open">https://www.coze.cn/open</a></p>
+</blockquote>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_4ypq.png"></p>
+<p>细心的小伙伴可能注意到，准备工作里除了要创建个人访问令牌，还提到需要创建和发布 Bot。</p>
+<p>不过这次我们不打算用 Bot 作为 API，只是使用带插件的工作流，所以可以忽略创建 Bot 这一步。</p>
+<p>现在，我们先来创建个人访问令牌。注意，令牌创建后要及时保存，因为一旦关闭页面将无法再次查看哦！</p>
+<blockquote>
+<p>地址：<a target="_blank" rel="noopener" href="https://www.coze.cn/open/oauth/pats">https://www.coze.cn/open/oauth/pats</a></p>
+</blockquote>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_fv1e.png"></p>
+<p>接下来，我们一起看看如何使用 API 调用工作流的具体要求和操作方法。</p>
+<blockquote>
+<p>API 调用工作流文档地址：<a target="_blank" rel="noopener" href="https://www.coze.cn/docs/developer/_guides/workflow/_run">https://www.coze.cn/docs/developer\_guides/workflow\_run</a></p>
+</blockquote>
+<p>如果我们用 API 调用工作流，有几个要求要特别注意：</p>
+<p>1、工作流必须 <strong>提前发布</strong>。</p>
+<p>2、工作流里不能包含这些节点：消息节点、开启流式输出的结束节点、问答节点。</p>
+<p>另外，涉及复杂场景时，有一个小技巧：专业版用户可以在调用工作流时指定参数 `is_async&#x3D;true`，这样可以开启异步模式，更适合处理耗时较长的任务。</p>
+<p>过去使用工作流时，超时问题确实挺常见，比如 <strong>工作流整体、模型节点、插件节点&#x20;</strong>&#x7684;运行时间都限制在 3 分钟内，处理复杂操作需求时，很容易超时。</p>
+<p>一旦使用异步方式，时间将会延长（具体如下表），这样更适合处理复杂任务。</p>
+<blockquote>
+<p>测试发现： 插件节点有很大概率在 1 分钟之后就会超时，并非官方给出的 3 分钟。</p>
+</blockquote>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_qoe9.png"></p>
+<h4 id="三）在线测试-API（无需安装）"><a href="#三）在线测试-API（无需安装）" class="headerlink" title="三）在线测试 API（无需安装）"></a>三）在线测试 API（无需安装）</h4><p>选择国内目前比较流程的 Apifox 平台，注册并登录进入。</p>
+<blockquote>
+<p>地址：<a target="_blank" rel="noopener" href="https://app.apifox.com/main">https://app.apifox.com/main</a></p>
+</blockquote>
+<p>&#x20;1、成功登录并进入页面后，点击进入 <strong>个人项目</strong>。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182025_209_79me.png"></p>
+<p>2、接下来，根据需求从工作流的请求示例中复制同步或异步执行的代码。</p>
+<p>因为这次工作流里只包含插件，所以我们直接选择 <strong>同步执行</strong> 的请求代码即可。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_517.png"></p>
+<p>3、点击更多功能 &gt; 导入 cURL，导入上一步复制的代码。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518.png"></p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518_6boy.png"></p>
+<p>4、接下来需要配置 API 调用参数。</p>
+<p>配置 <strong>Headers &gt; Authorization，</strong> 从下方地址创建并复制而来。</p>
+<blockquote>
+<p>来源：<a target="_blank" rel="noopener" href="https://www.coze.cn/open/oauth/pats">https://www.coze.cn/open/oauth/pats</a></p>
+</blockquote>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_518_kis2.png"></p>
+<p>配置流程 ID 和其他参数。</p>
+<ul>
+<li><p><strong>workflow_id</strong>：从已发布工作流的网页地址上复制 wordflow_id 参数的内容。</p>
+</li>
+<li><p><strong>parameters</strong>：根据流程的开始节点配置，有几个配几个。</p>
+</li>
+</ul>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519.png"></p>
+<p>最后，点击发送，测试成功。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_asub.png"></p>
+<p>点击 <strong>生成接口请求代码</strong>，记录刚才的请求代码和返回结果，用于在 Cursor 中生成代码使用。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_sh9s.png"></p>
+<p>记录提示词（ 大家根据实际情况记录）：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 生成思维导图接口</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 请求代码</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"><span class="code">curl --location --request POST &#x27;https://api.coze.cn/v1/workflow/run&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;Authorization: Bearer paxxxxsM&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;User-Agent: Apifox/1.0.0 (https://apifox.com)&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;Content-Type: application/json&#x27; \</span></span><br><span class="line"><span class="code">--data-raw &#x27;&#123;</span></span><br><span class="line"><span class="code">    &quot;workflow_id&quot;: &quot;7431xxxxx90921&quot;,</span></span><br><span class="line"><span class="code">    &quot;parameters&quot;: &#123;</span></span><br><span class="line"><span class="code">        &quot;BOT_USER_INPUT&quot;:&quot;就在刚刚! 我的手机忘记关飞行模式，深夜被微信群聊里的各种“滴滴滴”炸醒。\n\n原来 Anthropic 有重磅发布～\n\nClaude3.5 Sonnet 、Claude3.5 Haiku 迎来升级。\n\n此外，还引入了一项突破性的新功能——“Computer Use” 计算机使用。\n\n简单来说，这项功能可以替代人工操作电脑上的网页和软件，帮你自动化完成各种类型的工作：\n\n自动执行任务，测试软件，浏览网站，打开 Excel 修改表格，统统不在话下。\n\n这不就是拥有最强大脑的 RPA 吗？\n\n突然，我的脑海里蹦出了不少于十几种优化日常工作流的思路！\n\n我们一起先来看看这次更新。\n\n一、官方案例\n过去，计划一次旅行，要查信息、找路线、安排攻略，一环扣一环，搞得非常麻烦。\n\n现在有了 Claude，简直轻松太多了！\n\n比如视频中的女生想看金门大桥的日出，她直接告诉 Claude，接下来就什么都不用操心了。\n\nClaude 会自动帮她在网上查找最好的观景位置，规划出行路线，最后还贴心地把整个计划安排到她的日历里。\n\n旅行计划就这样轻松搞定。\n\n最近，我花了不少时间研究 AI 编程，结果这次 Claude 的更新，又一次降低了 AI 编程工具的使用门槛，实在让人惊喜。\n\n在下面的视频案例中，主人公想让 Claude 帮忙做一个“90 年代风格的个人网站”。\n\nClaude 不仅会自动打开浏览器，输入需求，还会生成相关的代码。\n\n更厉害的是，还可以让它自动把代码下载到本地，再导入代码编辑器 VS Code，并直接运行。\n\n如果中间遇到 Bug，只需要一句命令，Claude 就会自动修复！\n\n我觉得这次更新的最大价值在于——工具变得更简单易用了！\n\n或许未来，我们再也不用花大量时间去学习那些复杂的、全是英文的代码编辑器了，只要告诉 Claude 你要做什么，它就能帮你安排得明明白白！\n\n最后一个官方案例在我们日常办公中更具实用性。&quot;</span></span><br><span class="line"><span class="code">    &#125;</span></span><br><span class="line"><span class="code">&#125;&#x27;</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 返回数据</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"><span class="code">&#123;</span></span><br><span class="line"><span class="code">    &quot;code&quot;: 0,</span></span><br><span class="line"><span class="code">    &quot;cost&quot;: &quot;0&quot;,</span></span><br><span class="line"><span class="code">    &quot;data&quot;: &quot;&#123;\&quot;output\&quot;:\&quot;https://static.shutu.cn/shutu/static/open26/2024/10/31/6a1bc6ce204e2dxxxx07507ef.jpeg\&quot;&#125;&quot;,</span></span><br><span class="line"><span class="code">    &quot;debug_url&quot;: &quot;https://www.coze.cn/work_flow?execute_id=7431738408941223948&amp;space_id=739332830xxx1&amp;workflow_id=74315xxxx0921&quot;,</span></span><br><span class="line"><span class="code">    &quot;msg&quot;: &quot;Success&quot;,</span></span><br><span class="line"><span class="code">    &quot;token&quot;: 0</span></span><br><span class="line"><span class="code">&#125;</span></span><br><span class="line"><span class="code">```</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="四、如何在-Cursor-编程时集成-Coze-插件？"><a href="#四、如何在-Cursor-编程时集成-Coze-插件？" class="headerlink" title="四、如何在 Cursor 编程时集成 Coze 插件？"></a>四、如何在 Cursor 编程时集成 Coze 插件？</h3><p>为了更快拿到反馈，我们可以先用 Cursor 生成一个基础框架，之后再逐步填充具体需求，最后进行插件的测试和迭代。</p>
+<p>这样一来，反馈可以尽早收集，优化也会更高效。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_519_c8g2.png"></p>
+<h4 id="一）搭建基础框架"><a href="#一）搭建基础框架" class="headerlink" title="一）搭建基础框架"></a>一）搭建基础框架</h4><p>输入初版提示词，用于生成插件代码的基本结构。</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 用户故事：</span></span><br><span class="line">用户选中文字，可以显示浮动按钮“生成思维导图”，点击后将弹出右侧窗口，显示对应的文字。</span><br><span class="line"></span><br><span class="line"><span class="section"># 注意:</span></span><br><span class="line"><span class="bullet">1.</span> 注意使用 manifest v3 版本开发。</span><br><span class="line"><span class="bullet">2.</span> 注意中文编码的问题。</span><br><span class="line"></span><br><span class="line"><span class="section"># 任务</span></span><br><span class="line">请按照用户故事和注意点帮我开发谷歌插件。</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520.png"></p>
+<p>继续要求生成侧边栏相关的代码。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_rbdn.png"></p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_tfy2.png"></p>
+<p>根据 AI 的提示，来进行测试。可以打开浏览器，进入插件的加载链接，选择插件代码所在的文件夹。这样一来，就能加载插件，开始后续测试啦！</p>
+<blockquote>
+<p>插件加载链接：chrome:&#x2F;&#x2F;extensions&#x2F;</p>
+</blockquote>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_fctc.png"></p>
+<p>在正式测试前，可以按下 <strong>F12</strong> 打开开发者工具，切换到 <strong>Console</strong> 页签。</p>
+<p>接着点击右上角的“清除”按钮，保持 Console 页面干净，这样可以避免网页本身的错误信息干扰视线。</p>
+<p>这样在测试时，如果出现报错，Console 里显示的基本就是和插件本身相关的错误信息，方便排查问题。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_gjoa.png"></p>
+<p>在第一次测试中发现：选中文字后并未出现浮动按钮，而且 Console 中也没有任何错误提示。</p>
+<p>这些信息可以整理后，反馈给 Cursor，以便它协助排查原因。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_c8b7.png"></p>
+<p>第二次测试发现：选中文字后浮动按钮正常显示了，但点击按钮后侧边栏并未弹出，同时 Console 依旧没有任何错误提示。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182027_520_e5pe.png"></p>
+<p>反馈给 Cursor 后问题顺利修复咯！</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_532.png"></p>
+<p>在测试“<strong>选中文字，点击浮动按钮，显示侧边栏和文字</strong>”这个基础功能时，我发现 Cursor 的代码成功率不太高，经常需要花时间去调试。</p>
+<p>为此，我准备了一个代码模板，后续遇到类似需求时，大家可以直接基于模板开发，提高效率！</p>
+<blockquote>
+<p>后台回复“思维导图插件”领取。</p>
+</blockquote>
+<h4 id="二）实现具体需求"><a href="#二）实现具体需求" class="headerlink" title="二）实现具体需求"></a>二）实现具体需求</h4><p>在基于现有代码进行二次开发时，建议提前把已有的功能告诉 Cursor，这样可以帮助它更好地理解代码背景，从而提高开发的准确性和效率。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533.png"></p>
+<p>再输入完整的提示词（不要复制，注意根据个人实际代码来组合提示词）：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># 目的</span></span><br><span class="line">用户想要快速基于网页内容生成一个思维导图，但是手动整理，或者手动复制到 AI 中再处理都太麻烦了。</span><br><span class="line"></span><br><span class="line"><span class="section"># 用户故事</span></span><br><span class="line">用户，在网页上选择一段文字，点击浮动按钮，可以生成思维导图的图片在侧边栏显示。</span><br><span class="line"></span><br><span class="line"><span class="section"># 生成思维导图接口</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 请求代码</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"><span class="code">curl --location --request POST &#x27;https://api.coze.cn/v1/workflow/run&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;Authorization: 自己的token&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;User-Agent: Apifox/1.0.0 (https://apifox.com)&#x27; \</span></span><br><span class="line"><span class="code">--header &#x27;Content-Type: application/json&#x27; \</span></span><br><span class="line"><span class="code">--data-raw &#x27;&#123;</span></span><br><span class="line"><span class="code">    &quot;workflow_id&quot;: &quot;自己的流程 ID&quot;,</span></span><br><span class="line"><span class="code">    &quot;parameters&quot;: &#123;</span></span><br><span class="line"><span class="code">        &quot;BOT_USER_INPUT&quot;:&quot;就在刚刚! 我的手机忘记关飞行模式，深夜被微信群聊里的各种“滴滴滴”炸醒。\n\n原来 Anthropic 有重磅发布～\n\nClaude3.5 Sonnet 、Claude3.5 Haiku 迎来升级。\n\n此外，还引入了一项突破性的新功能——“Computer Use” 计算机使用。\n\n简单来说，这项功能可以替代人工操作电脑上的网页和软件，帮你自动化完成各种类型的工作：\n\n自动执行任务，测试软件，浏览网站，打开 Excel 修改表格，统统不在话下。\n\n这不就是拥有最强大脑的 RPA 吗？\n\n突然，我的脑海里蹦出了不少于十几种优化日常工作流的思路！\n\n我们一起先来看看这次更新。\n\n一、官方案例\n过去，计划一次旅行，要查信息、找路线、安排攻略，一环扣一环，搞得非常麻烦。\n\n现在有了 Claude，简直轻松太多了！\n\n比如视频中的女生想看金门大桥的日出，她直接告诉 Claude，接下来就什么都不用操心了。\n\nClaude 会自动帮她在网上查找最好的观景位置，规划出行路线，最后还贴心地把整个计划安排到她的日历里。\n\n旅行计划就这样轻松搞定。\n\n最近，我花了不少时间研究 AI 编程，结果这次 Claude 的更新，又一次降低了 AI 编程工具的使用门槛，实在让人惊喜。\n\n在下面的视频案例中，主人公想让 Claude 帮忙做一个“90 年代风格的个人网站”。\n\nClaude 不仅会自动打开浏览器，输入需求，还会生成相关的代码。\n\n更厉害的是，还可以让它自动把代码下载到本地，再导入代码编辑器 VS Code，并直接运行。\n\n如果中间遇到 Bug，只需要一句命令，Claude 就会自动修复！\n\n我觉得这次更新的最大价值在于——工具变得更简单易用了！\n\n或许未来，我们再也不用花大量时间去学习那些复杂的、全是英文的代码编辑器了，只要告诉 Claude 你要做什么，它就能帮你安排得明明白白！\n\n最后一个官方案例在我们日常办公中更具实用性。&quot;</span></span><br><span class="line"><span class="code">    &#125;</span></span><br><span class="line"><span class="code">&#125;&#x27;</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 请求参数介绍</span></span><br><span class="line"><span class="bullet">1.</span> parameters下的BOT<span class="emphasis">_USER_</span>INPUT: 网页内容</span><br><span class="line"><span class="bullet">2.</span> workflow<span class="emphasis">_id为对应用户</span></span><br><span class="line"><span class="emphasis"></span></span><br><span class="line"><span class="emphasis">## 返回数据</span></span><br><span class="line"><span class="emphasis">```</span></span><br><span class="line"><span class="emphasis">&#123;</span></span><br><span class="line"><span class="emphasis">    &quot;code&quot;: 0,</span></span><br><span class="line"><span class="emphasis">    &quot;cost&quot;: &quot;0&quot;,</span></span><br><span class="line"><span class="emphasis">    &quot;data&quot;: &quot;&#123;\&quot;output\&quot;:\&quot;https://static.shutu.cn/shutu/static/open26/2024/10/31/6a1bc6ce204e2d99e4xxxx507ef.jpeg\&quot;&#125;&quot;,</span></span><br><span class="line"><span class="emphasis">    &quot;debug_</span>url&quot;: &quot;https://www.coze.cn/work<span class="emphasis">_flow?execute_</span>id=743173xxxx2xx948&amp;space<span class="emphasis">_id=73933xxx2131&amp;workflow_</span>id=743153xxxx921&quot;,</span><br><span class="line"><span class="code">    &quot;msg&quot;: &quot;Success&quot;,</span></span><br><span class="line"><span class="code">    &quot;token&quot;: 0</span></span><br><span class="line"><span class="code">&#125;</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"><span class="code"></span></span><br><span class="line"><span class="section">## 返回参数介绍</span></span><br><span class="line"><span class="bullet">1.</span> data下方的参数output为思维导图的图片地址。</span><br><span class="line"><span class="bullet">2.</span> code：状态码，不是 0 则代表出错。</span><br><span class="line"><span class="bullet">3.</span> msg: 返回信息</span><br><span class="line"></span><br><span class="line"><span class="section"># 注意:</span></span><br><span class="line"><span class="bullet">1.</span> 注意使用 manifest v3 版本开发。</span><br><span class="line"><span class="bullet">2.</span> 注意中文编码的问题。</span><br><span class="line"></span><br><span class="line"><span class="section"># 任务</span></span><br><span class="line">根据&lt;用户故事&gt;和提供的&lt;生成思维导图接口&gt;,以及相关注意点，请优化当前谷歌插件。</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533_duau.png"></p>
+<p>加载插件后，我们来测试下。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_09-21-02%20(1)_20250920_182029_533.gif"></p>
+<p>不过还是有些问题需要注意，比如：没有关闭按钮、文字不该出现在侧边栏、没有加载状态提示等。</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_image_20250920_182029_533_kzll.png"></p>
+<p>输入提示词，优化下交互方式，优化后的效果如下：</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_09-27-17%20(1)_20250920_182029_533.gif"></p>
+<p>目前还有很多可以优化的地方，比如缺少思维导图的查看和下载功能，样式设计上也不够美观。</p>
+<p>我们可以让 Cursor 继续进行优化，这里就不再具体演示了。</p>
+<p>最终效果如下：</p>
+<p><img src="/images/%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6_2024-11-01_10-42-40%20(2)_20250920_182029_533.gif"></p>
+<h3 id="结尾："><a href="#结尾：" class="headerlink" title="结尾："></a>结尾：</h3><p>如今的 AI 时代，与其单打独斗，不如学会借力。</p>
+<p>Coze 插件就像是一个个现成的乐高积木，而我们要做的，就是用创意把它们拼接成独特的作品。</p>
+<p>不必执着于从零开始写代码，学会借助现有的工具，让创意为你带来无限可能。</p>
+<p>毕竟，在这个快速迭代的 AI 时代，懂得站在巨人肩膀上的人，总能看得更远，走得更快。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>longchao
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="http://mzfnai.com/2025/09/02/212.%E7%BD%91%E9%A1%B5%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE%E7%94%9F%E6%88%90%E6%8F%92%E4%BB%B6/" title="网页思维导图生成插件：基于Coze插件和Cursor的浏览器扩展开发实战">http://mzfnai.com/2025/09/02/212.网页思维导图生成插件/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/" rel="tag"># 浏览器插件</a>
+              <a href="/tags/Cursor/" rel="tag"># Cursor</a>
+              <a href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/" rel="tag"># 前端开发</a>
+              <a href="/tags/Coze%E6%8F%92%E4%BB%B6/" rel="tag"># Coze插件</a>
+              <a href="/tags/%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE/" rel="tag"># 思维导图</a>
+              <a href="/tags/API%E8%B0%83%E7%94%A8/" rel="tag"># API调用</a>
+              <a href="/tags/TreeMind/" rel="tag"># TreeMind</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2025/08/27/211.%E6%B2%BB%E6%84%88%E7%B3%BB%E7%AC%91%E8%AF%9D%E7%94%9F%E6%88%90%E5%99%A8%E8%B0%B7%E6%AD%8C%E6%B5%8F%E8%A7%88%E5%99%A8%E6%8F%92%E4%BB%B6/" rel="prev" title="治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程">
+      <i class="fa fa-chevron-left"></i> 治愈系笑话生成器：零代码开发谷歌浏览器插件实战教程
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">一、完整流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%A6%82%E4%BD%95%E5%AF%BB%E6%89%BE%E5%90%88%E9%80%82%E7%9A%84%E6%8F%92%E4%BB%B6%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">二、如何寻找合适的插件？</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-API-%E8%B0%83%E7%94%A8%E6%8F%92%E4%BB%B6%EF%BC%9F-x20"><span class="nav-number">3.</span> <span class="nav-text">三、如何使用 API 调用插件？ </span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%EF%BC%89%E4%BA%86%E8%A7%A3%E4%BD%BF%E7%94%A8%E9%99%90%E5%88%B6%E5%92%8C%E8%AE%A1%E8%B4%B9%E6%96%B9%E5%BC%8F"><span class="nav-number">3.1.</span> <span class="nav-text">一）了解使用限制和计费方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E4%BA%86%E8%A7%A3-API-%E8%B0%83%E7%94%A8%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%9A%84%E9%99%90%E5%88%B6-x20"><span class="nav-number">3.2.</span> <span class="nav-text">二）了解 API 调用工作流的限制 </span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%EF%BC%89%E5%9C%A8%E7%BA%BF%E6%B5%8B%E8%AF%95-API%EF%BC%88%E6%97%A0%E9%9C%80%E5%AE%89%E8%A3%85%EF%BC%89"><span class="nav-number">3.3.</span> <span class="nav-text">三）在线测试 API（无需安装）</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%A6%82%E4%BD%95%E5%9C%A8-Cursor-%E7%BC%96%E7%A8%8B%E6%97%B6%E9%9B%86%E6%88%90-Coze-%E6%8F%92%E4%BB%B6%EF%BC%9F"><span class="nav-number">4.</span> <span class="nav-text">四、如何在 Cursor 编程时集成 Coze 插件？</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%80%EF%BC%89%E6%90%AD%E5%BB%BA%E5%9F%BA%E7%A1%80%E6%A1%86%E6%9E%B6"><span class="nav-number">4.1.</span> <span class="nav-text">一）搭建基础框架</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%EF%BC%89%E5%AE%9E%E7%8E%B0%E5%85%B7%E4%BD%93%E9%9C%80%E6%B1%82"><span class="nav-number">4.2.</span> <span class="nav-text">二）实现具体需求</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E5%B0%BE%EF%BC%9A"><span class="nav-number">5.</span> <span class="nav-text">结尾：</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="longchao"
+      src="/images/avatar.gif">
+  <p class="site-author-name" itemprop="name">longchao</p>
+  <div class="site-description" itemprop="description">A blog about life, technology, and everything in between.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">249</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">79</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">639</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/longchao012" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:longchao012@gmail.com" title="E-Mail → mailto:longchao012@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://plus.google.com/longchao012" title="Google → https:&#x2F;&#x2F;plus.google.com&#x2F;longchao012" rel="noopener" target="_blank"><i class="fa fa-fw fa-google"></i>Google</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2022 – 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">longchao</span>
+</div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
